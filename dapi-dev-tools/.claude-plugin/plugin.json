@@ -1,0 +1,17 @@
+{
+  "name": "dapi-dev-tools",
+  "description": "Development tools: agents for coding, refactoring, and architecture",
+  "version": "1.0.0",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dapi/claude-code-marketplace.git",
+    "directory": "dapi-dev-tools"
+  },
+  "license": "MIT",
+  "keywords": ["development", "coding", "refactoring", "architecture", "agents"]
+}

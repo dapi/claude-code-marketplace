@@ -1,0 +1,19 @@
+{
+  "name": "dapi",
+  "owner": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "dapi-dev-tools",
+      "source": "./dapi-dev-tools",
+      "description": "Development tools: agents for coding, refactoring, and architecture"
+    },
+    {
+      "name": "dapi-testing-tools",
+      "source": "./dapi-testing-tools",
+      "description": "Testing tools: TDD, test strategies, and coverage analysis"
+    }
+  ]
+}
