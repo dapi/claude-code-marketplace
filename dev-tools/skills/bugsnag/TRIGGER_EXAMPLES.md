@@ -119,12 +119,15 @@
 
 ## ✅ Управление (ДОЛЖНЫ СРАБОТАТЬ)
 
-### Пометка как исправлено
+### Пометка как исправлено (fix/resolve/close - синонимы)
 - "mark bugsnag error ERROR_123 as fixed"
+- "fix error ERROR_123"
 - "resolve error ERROR_123"
 - "close bugsnag error ERROR_123"
 - "отметить ошибку ERROR_123 как решенную"
 - "закрыть ошибку ERROR_123"
+- "исправить ошибку ERROR_123"
+- NOTE: Fix, Resolve, Close - всё это одна операция в Bugsnag
 
 ### Добавление комментария
 - "add comment to bugsnag error ERROR_123"

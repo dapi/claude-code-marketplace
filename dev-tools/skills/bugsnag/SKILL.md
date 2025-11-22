@@ -34,15 +34,18 @@ description: |
   - "bugsnag statistics", "error trends", "что происходит в bugsnag"
 
   ✅ **Management** (write operations):
-  - "mark as fixed/resolved", "close error", "отметить как решенную"
+  - "mark as fixed/resolved", "fix error", "resolve error", "close error"
+  - "закрыть ошибку", "отметить как решенную", "исправить ошибку"
   - "add comment to error", "comment on bugsnag error"
+  - NOTE: Fix/Resolve/Close are synonyms - all mark error as resolved in Bugsnag
 
   TRIGGERS: bugsnag, получить из bugsnag, показать bugsnag, список bugsnag,
   bugsnag data, bugsnag info, check bugsnag, what in bugsnag, bugsnag status,
   error tracking, error monitoring, production errors, stack trace,
   bugsnag organizations, bugsnag projects, bugsnag errors, bugsnag details,
   bugsnag events, bugsnag comments, bugsnag analysis, ошибки в bugsnag,
-  что в bugsnag, проверить bugsnag, данные bugsnag
+  что в bugsnag, проверить bugsnag, данные bugsnag, fix error, resolve error,
+  close error, закрыть ошибку, исправить ошибку, отметить как решенную
 
   This skill provides complete Bugsnag API integration for viewing and managing
   error tracking data via Ruby helper scripts.
