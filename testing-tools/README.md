@@ -1,4 +1,4 @@
-# Dapi Testing Tools
+# Testing Tools
 
 Testing tools plugin for Claude Code with agents and skills for TDD, test strategies, and coverage analysis.
 
@@ -24,13 +24,13 @@ Testing tools plugin for Claude Code with agents and skills for TDD, test strate
 ### From GitHub (after publishing)
 ```bash
 /plugin marketplace add dapi/claude-code-marketplace
-/plugin install dapi-testing-tools@dapi
+/plugin install testing-tools@dapi
 ```
 
 ### Local Development
 ```bash
 /plugin marketplace add /home/danil/code/claude-code-marketplace
-/plugin install dapi-testing-tools@dapi
+/plugin install testing-tools@dapi
 ```
 
 ## Usage

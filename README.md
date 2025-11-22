@@ -4,7 +4,7 @@ Personal marketplace of Claude Code plugins with specialized agents and skills f
 
 ## Available Plugins
 
-### 🛠️ dapi-dev-tools
+### 🛠️ dev-tools
 Development tools for coding, refactoring, and architecture.
 
 **Features:**
@@ -13,9 +13,9 @@ Development tools for coding, refactoring, and architecture.
 - Design pattern recognition and application
 - Systematic code quality improvement
 
-[View Documentation](./dapi-dev-tools/README.md)
+[View Documentation](./dev-tools/README.md)
 
-### 🧪 dapi-testing-tools
+### 🧪 testing-tools
 Testing tools for TDD, test strategies, and coverage analysis.
 
 **Features:**
@@ -24,7 +24,7 @@ Testing tools for TDD, test strategies, and coverage analysis.
 - Test coverage analysis and optimization
 - Quality assurance automation
 
-[View Documentation](./dapi-testing-tools/README.md)
+[View Documentation](./testing-tools/README.md)
 
 ## Installation
 
@@ -38,13 +38,13 @@ Testing tools for TDD, test strategies, and coverage analysis.
 2. **Install desired plugins:**
    ```bash
    # Install development tools
-   /plugin install dapi-dev-tools@dapi
+   /plugin install dev-tools@dapi
 
    # Install testing tools
-   /plugin install dapi-testing-tools@dapi
+   /plugin install testing-tools@dapi
 
    # Install all plugins
-   /plugin install dapi-dev-tools@dapi dapi-testing-tools@dapi
+   /plugin install dev-tools@dapi dapi-testing-tools@dapi
    ```
 
 ### Local Development
@@ -56,8 +56,8 @@ For local development and testing:
 /plugin marketplace add /home/danil/code/claude-code-marketplace
 
 # Install plugins locally
-/plugin install dapi-dev-tools@dapi
-/plugin install dapi-testing-tools@dapi
+/plugin install dev-tools@dapi
+/plugin install testing-tools@dapi
 ```
 
 ## Usage
@@ -89,13 +89,13 @@ Custom slash commands for common workflows:
 claude-code-marketplace/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace configuration
-├── dapi-dev-tools/                # Development tools plugin
+├── dev-tools/                     # Development tools plugin
 │   ├── .claude-plugin/
 │   ├── agents/                    # Specialized agents
 │   ├── skills/                    # Reusable skills
 │   ├── commands/                  # Slash commands
 │   └── README.md
-├── dapi-testing-tools/            # Testing tools plugin
+├── testing-tools/                 # Testing tools plugin
 │   ├── .claude-plugin/
 │   ├── agents/
 │   ├── skills/
@@ -137,9 +137,9 @@ This marketplace follows these principles:
 ## Roadmap
 
 ### Planned Plugins
-- **dapi-code-quality** - Code review, security, and performance analysis
-- **dapi-workflows** - CI/CD, deployment, and automation workflows
-- **dapi-documentation** - Technical writing and documentation generation
+- **code-quality** - Code review, security, and performance analysis
+- **workflows** - CI/CD, deployment, and automation workflows
+- **documentation** - Technical writing and documentation generation
 
 ### Upcoming Features
 - Integration with MCP servers

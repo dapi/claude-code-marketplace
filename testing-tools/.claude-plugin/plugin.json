@@ -1,5 +1,5 @@
 {
-  "name": "dapi-testing-tools",
+  "name": "testing-tools",
   "description": "Testing tools: TDD, test strategies, and coverage analysis",
   "version": "1.0.0",
   "author": {
@@ -7,11 +7,7 @@
     "email": "danilpismenny@gmail.com"
   },
   "homepage": "https://github.com/dapi/claude-code-marketplace",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dapi/claude-code-marketplace.git",
-    "directory": "dapi-testing-tools"
-  },
+  "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
   "keywords": ["testing", "tdd", "test-driven-development", "coverage", "quality"]
 }

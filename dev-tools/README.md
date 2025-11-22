@@ -1,4 +1,4 @@
-# Dapi Dev Tools
+# Dev Tools
 
 Development tools plugin for Claude Code with agents and skills for coding, refactoring, and architecture.
 
@@ -24,13 +24,13 @@ Development tools plugin for Claude Code with agents and skills for coding, refa
 ### From GitHub (after publishing)
 ```bash
 /plugin marketplace add dapi/claude-code-marketplace
-/plugin install dapi-dev-tools@dapi
+/plugin install dev-tools@dapi
 ```
 
 ### Local Development
 ```bash
 /plugin marketplace add /home/danil/code/claude-code-marketplace
-/plugin install dapi-dev-tools@dapi
+/plugin install dev-tools@dapi
 ```
 
 ## Usage
