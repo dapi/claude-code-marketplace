@@ -118,7 +118,7 @@ class BugsnagCLI
     event_limit = limit&.to_i || 10
     puts "📊 Получение событий ошибки #{error_id} (лимит: #{event_limit})..."
     puts ""
-    result = @helper.get_error_events(error_id, event_limit)
+    result = @helper.get_error_events(error_id, limit: event_limit)
     puts result
   end
 
