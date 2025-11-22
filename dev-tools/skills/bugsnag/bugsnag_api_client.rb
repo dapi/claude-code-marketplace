@@ -12,15 +12,8 @@ class BugsnagApiClient
   end
 
   def list_errors(limit: 20, status: nil, severity: nil)
-    require_project_id!
-
-    options = {}
-    options[:limit] = limit if limit
-    options[:status] = status if status
-    options[:severity] = severity if severity
-
-    response = Bugsnag::Api.client.errors(@project_id, nil, options)
-    format_errors_list(response)
+    errors_data = fetch_errors(limit: limit, status: status, severity: severity)
+    format_errors_list(errors_data)
   rescue Bugsnag::Api::Error => e
     handle_api_error(e, "получении списка ошибок")
   end
@@ -75,7 +68,8 @@ class BugsnagApiClient
   end
 
   def analyze_errors
-    errors = list_errors(limit: 50)
+    errors_data = fetch_errors(limit: 50)
+    errors = normalize_errors_array(errors_data)
     analyze_error_patterns(errors)
   end
 
@@ -115,6 +109,21 @@ class BugsnagApiClient
   end
 
   private
+
+  def fetch_errors(limit: 20, status: nil, severity: nil)
+    require_project_id!
+
+    options = {}
+    options[:limit] = limit if limit
+    options[:status] = status if status
+    options[:severity] = severity if severity
+
+    Bugsnag::Api.client.errors(@project_id, nil, options)
+  end
+
+  def normalize_errors_array(errors_data)
+    errors_data.is_a?(Array) ? errors_data : errors_data['errors'] || []
+  end
 
   def validate_api_key
     unless @api_key
@@ -254,7 +263,8 @@ class BugsnagApiClient
     output << "🔴 **Критичные ошибки (#{critical_errors.length}):**"
     if critical_errors.any?
       critical_errors.first(5).each do |error|
-        output << "• #{error['errorClass']} - #{error['eventsCount']} событий (ID: #{error['id']})"
+        events_count = error['events'] || error['events_count'] || 0
+        output << "• #{error['error_class']} - #{events_count} событий (ID: #{error['id']})"
       end
     else
       output << "• Нет критичных ошибок!"
@@ -264,7 +274,8 @@ class BugsnagApiClient
     output << "🟡 **Предупреждения (#{warnings.length}):**"
     if warnings.any?
       warnings.first(5).each do |error|
-        output << "• #{error['errorClass']} - #{error['eventsCount']} событий (ID: #{error['id']})"
+        events_count = error['events'] || error['events_count'] || 0
+        output << "• #{error['error_class']} - #{events_count} событий (ID: #{error['id']})"
       end
     else
       output << "• Нет предупреждений!"
@@ -272,13 +283,13 @@ class BugsnagApiClient
     output << ""
 
     # Частые паттерны ошибок
-    error_classes = errors.group_by { |e| e['errorClass'] }
+    error_classes = errors.group_by { |e| e['error_class'] }
     frequent_errors = error_classes.select { |klass, errs| errs.length > 1 }
 
     if frequent_errors.any?
       output << "🔄 **Повторяющиеся паттерны:**"
       frequent_errors.each do |error_class, errors|
-        total_events = errors.sum { |e| e['eventsCount'] }
+        total_events = errors.sum { |e| e['events'] || e['events_count'] || 0 }
         output << "• #{error_class}: #{errors.length} экземпляров, #{total_events} событий"
       end
     end
