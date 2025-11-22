@@ -57,20 +57,16 @@ Skills activate automatically based on task context:
 - **Best practice patterns** from industry standards
 - **Quality gates** ensuring thorough implementation
 
-### Commands
-Custom slash commands for quick access to tools:
+**Example: Bugsnag Integration** - Automatically activates when you mention bugsnag:
+- "list bugsnag organizations" → Lists all available organizations
+- "show bugsnag projects" → Displays all projects
+- "get bugsnag errors" → Shows error list with filtering
+- "bugsnag details for <id>" → Provides detailed error information
+- "show comments for error <id>" → Displays error comments
+- "mark error <id> as fixed" → Resolves an error
+- Works in English and Russian: "выведи список проектов в bugsnag"
 
-**Bugsnag Integration:**
-- `/bugsnag:list` - List errors with filtering options
-- `/bugsnag:open` - Show only open/unresolved errors
-- `/bugsnag:details <id>` - Get detailed error information
-- `/bugsnag:projects` - List all available projects
-- `/bugsnag:orgs` - List Bugsnag organizations
-- `/bugsnag:comments <id>` - View error comments
-- `/bugsnag:comment <id> "text"` - Add a comment to an error
-- `/bugsnag:fix <id>` - Mark error as resolved
-
-See [dev-tools commands](./dev-tools/commands/) for the complete list.
+See [dev-tools documentation](./dev-tools/README.md) for complete skill reference.
 
 ## Repository Structure
 
@@ -81,8 +77,7 @@ claude-code-marketplace/
 ├── dev-tools/                     # Development tools plugin
 │   ├── .claude-plugin/
 │   ├── agents/                    # Specialized agents
-│   ├── skills/                    # Reusable skills
-│   ├── commands/                  # Slash commands
+│   ├── skills/                    # Auto-activating skills
 │   └── README.md
 ├── README.md                      # This file
 ├── CONTRIBUTING.md                # Contribution guidelines
