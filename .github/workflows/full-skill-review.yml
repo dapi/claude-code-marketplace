@@ -1,0 +1,184 @@
+name: Full Skill Review
+
+on:
+  # Run when review script changes
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'scripts/review_skill_triggers.sh'
+      - 'SKILL_TRIGGER_REVIEW_CHECKLIST.md'
+      - 'SKILL_TRIGGER_QUICK_REFERENCE.md'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  review-all-skills:
+    name: Review All Skills
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make review script executable
+        run: chmod +x scripts/review_skill_triggers.sh
+
+      - name: Review all skills
+        id: review
+        run: |
+          RESULTS_FILE="full-skill-review-results.txt"
+
+          echo "# Complete Skill Quality Review" > "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+
+          # Find all SKILL.md files
+          SKILL_FILES=$(find . -type f -name "SKILL.md" -not -path "*/node_modules/*" -not -path "*/.git/*")
+
+          if [ -z "$SKILL_FILES" ]; then
+            echo "No skills found to review"
+            exit 0
+          fi
+
+          TOTAL_SKILLS=0
+          PASSED_SKILLS=0
+          FAILED_SKILLS=0
+          EXCELLENT_SKILLS=0
+          GOOD_SKILLS=0
+          ACCEPTABLE_SKILLS=0
+          POOR_SKILLS=0
+
+          MIN_SCORE=60
+
+          for SKILL_FILE in $SKILL_FILES; do
+            # Extract plugin/skill path
+            PLUGIN=$(echo "$SKILL_FILE" | cut -d'/' -f2)
+            SKILL=$(echo "$SKILL_FILE" | cut -d'/' -f4)
+
+            if [ -z "$PLUGIN" ] || [ -z "$SKILL" ]; then
+              continue
+            fi
+
+            SKILL_PATH="$PLUGIN/$SKILL"
+            TOTAL_SKILLS=$((TOTAL_SKILLS + 1))
+
+            echo "Reviewing: $SKILL_PATH"
+
+            # Run review and capture output
+            REVIEW_OUTPUT=$(./scripts/review_skill_triggers.sh "$SKILL_PATH" 2>&1 || true)
+
+            # Extract score
+            SCORE=$(echo "$REVIEW_OUTPUT" | grep "FINAL SCORE:" | grep -oE '[0-9]+/100' | cut -d'/' -f1 || echo "0")
+
+            # Categorize by rating
+            if [ "$SCORE" -ge 90 ]; then
+              EXCELLENT_SKILLS=$((EXCELLENT_SKILLS + 1))
+              RATING="⭐⭐⭐⭐⭐ Excellent"
+            elif [ "$SCORE" -ge 75 ]; then
+              GOOD_SKILLS=$((GOOD_SKILLS + 1))
+              RATING="⭐⭐⭐⭐ Good"
+            elif [ "$SCORE" -ge 60 ]; then
+              ACCEPTABLE_SKILLS=$((ACCEPTABLE_SKILLS + 1))
+              RATING="⭐⭐⭐ Acceptable"
+            else
+              POOR_SKILLS=$((POOR_SKILLS + 1))
+              RATING="⭐⭐ Needs Improvement"
+            fi
+
+            # Track pass/fail
+            if [ "$SCORE" -ge "$MIN_SCORE" ]; then
+              PASSED_SKILLS=$((PASSED_SKILLS + 1))
+              STATUS="✅ PASS"
+            else
+              FAILED_SKILLS=$((FAILED_SKILLS + 1))
+              STATUS="❌ FAIL"
+            fi
+
+            # Write to results
+            echo "---" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo "## $SKILL_PATH" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo "**Score:** $SCORE/100 | **Rating:** $RATING | **Status:** $STATUS" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo "<details>" >> "$RESULTS_FILE"
+            echo "<summary>Review Details</summary>" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo '```' >> "$RESULTS_FILE"
+            echo "$REVIEW_OUTPUT" >> "$RESULTS_FILE"
+            echo '```' >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo "</details>" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+          done
+
+          # Summary statistics
+          echo "---" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+          echo "## 📊 Summary Statistics" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+          echo "**Total Skills Reviewed:** $TOTAL_SKILLS" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+          echo "### Pass/Fail Breakdown" >> "$RESULTS_FILE"
+          echo "- ✅ **Passed** (≥60): $PASSED_SKILLS skills" >> "$RESULTS_FILE"
+          echo "- ❌ **Failed** (<60): $FAILED_SKILLS skills" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+          echo "### Quality Distribution" >> "$RESULTS_FILE"
+          echo "- ⭐⭐⭐⭐⭐ **Excellent** (90-100): $EXCELLENT_SKILLS skills" >> "$RESULTS_FILE"
+          echo "- ⭐⭐⭐⭐ **Good** (75-89): $GOOD_SKILLS skills" >> "$RESULTS_FILE"
+          echo "- ⭐⭐⭐ **Acceptable** (60-74): $ACCEPTABLE_SKILLS skills" >> "$RESULTS_FILE"
+          echo "- ⭐⭐ **Needs Improvement** (<60): $POOR_SKILLS skills" >> "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+
+          if [ "$FAILED_SKILLS" -gt 0 ]; then
+            echo "### ⚠️ Action Required" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo "$FAILED_SKILLS skill(s) scored below minimum threshold (60/100)." >> "$RESULTS_FILE"
+            echo "Please review and improve these skills before merging." >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+          fi
+
+          # Output summary for GitHub Actions
+          {
+            echo "## Quality Review Summary"
+            echo ""
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| Total Skills | $TOTAL_SKILLS |"
+            echo "| ✅ Passed (≥60) | $PASSED_SKILLS |"
+            echo "| ❌ Failed (<60) | $FAILED_SKILLS |"
+            echo "| ⭐⭐⭐⭐⭐ Excellent | $EXCELLENT_SKILLS |"
+            echo "| ⭐⭐⭐⭐ Good | $GOOD_SKILLS |"
+            echo "| ⭐⭐⭐ Acceptable | $ACCEPTABLE_SKILLS |"
+            echo "| ⭐⭐ Needs Work | $POOR_SKILLS |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Set output
+          if [ "$FAILED_SKILLS" -gt 0 ]; then
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            echo "failed_count=$FAILED_SKILLS" >> "$GITHUB_OUTPUT"
+            exit 1
+          else
+            echo "status=passed" >> "$GITHUB_OUTPUT"
+          fi
+        continue-on-error: true
+
+      - name: Upload full review results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-skill-review-results
+          path: full-skill-review-results.txt
+          retention-days: 90
+
+      - name: Check overall status
+        if: steps.review.outputs.status == 'failed'
+        run: |
+          # Note: FAILED_COUNT comes from step output (trusted source)
+          echo "❌ Review failed: Some skills are below quality threshold"
+          echo "See full-skill-review-results.txt for details"
+          exit 1

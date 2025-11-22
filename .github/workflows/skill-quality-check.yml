@@ -1,0 +1,194 @@
+name: Skill Quality Check
+
+on:
+  pull_request:
+    paths:
+      - '**/skills/**/SKILL.md'
+      - '**/skills/**/TRIGGER_EXAMPLES.md'
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - '**/skills/**/SKILL.md'
+      - '**/skills/**/TRIGGER_EXAMPLES.md'
+
+jobs:
+  review-skills:
+    name: Review Skill Triggers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate diff
+
+      - name: Make review script executable
+        run: chmod +x scripts/review_skill_triggers.sh
+
+      - name: Find changed skills
+        id: changed-skills
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_HEAD_SHA: ${{ github.sha }}
+        run: |
+          # Get list of changed SKILL.md files
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE_SHA="$PR_BASE_SHA"
+            HEAD_SHA="$PR_HEAD_SHA"
+          else
+            BASE_SHA="$PUSH_BEFORE_SHA"
+            HEAD_SHA="$PUSH_HEAD_SHA"
+          fi
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep "SKILL.md" || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No skill files changed"
+            echo "skills=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract plugin/skill paths
+          SKILLS=""
+          for file in $CHANGED_FILES; do
+            # Extract plugin-name/skills/skill-name from path
+            PLUGIN=$(echo "$file" | cut -d'/' -f1)
+            SKILL=$(echo "$file" | cut -d'/' -f3)
+            if [ -n "$PLUGIN" ] && [ -n "$SKILL" ]; then
+              SKILLS="$SKILLS $PLUGIN/$SKILL"
+            fi
+          done
+
+          echo "Changed skills: $SKILLS"
+          echo "skills=$SKILLS" >> $GITHUB_OUTPUT
+
+      - name: Review changed skills
+        id: review
+        if: steps.changed-skills.outputs.skills != ''
+        env:
+          CHANGED_SKILLS: ${{ steps.changed-skills.outputs.skills }}
+        run: |
+          RESULTS_FILE="skill-review-results.txt"
+
+          echo "# Skill Quality Review Results" > "$RESULTS_FILE"
+          echo "" >> "$RESULTS_FILE"
+
+          OVERALL_PASS=true
+          MIN_SCORE=60  # Minimum acceptable score
+
+          for SKILL in $CHANGED_SKILLS; do
+            echo "Reviewing: $SKILL"
+
+            # Run review and capture output
+            REVIEW_OUTPUT=$(./scripts/review_skill_triggers.sh "$SKILL" 2>&1 || true)
+
+            # Extract score from output
+            SCORE=$(echo "$REVIEW_OUTPUT" | grep "FINAL SCORE:" | grep -oE '[0-9]+/100' | cut -d'/' -f1 || echo "0")
+
+            echo "## $SKILL" >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+            echo '```' >> "$RESULTS_FILE"
+            echo "$REVIEW_OUTPUT" >> "$RESULTS_FILE"
+            echo '```' >> "$RESULTS_FILE"
+            echo "" >> "$RESULTS_FILE"
+
+            # Check if score meets minimum
+            if [ "$SCORE" -lt "$MIN_SCORE" ]; then
+              OVERALL_PASS=false
+              echo "❌ Score $SCORE/100 is below minimum ($MIN_SCORE)" >> "$RESULTS_FILE"
+            else
+              echo "✅ Score $SCORE/100 meets quality standards" >> "$RESULTS_FILE"
+            fi
+            echo "" >> "$RESULTS_FILE"
+          done
+
+          # Set output for next steps
+          if [ "$OVERALL_PASS" = false ]; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && steps.changed-skills.outputs.skills != ''
+        uses: actions/github-script@v7
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          HEAD_REF: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
+        with:
+          script: |
+            const fs = require('fs');
+            const results = fs.readFileSync('skill-review-results.txt', 'utf8');
+
+            const headRef = process.env.HEAD_REF || process.env.REF_NAME;
+
+            const comment = `## 🔍 Skill Quality Review
+
+            ${results}
+
+            ---
+
+            **Quality Standards:**
+            - 90-100: ⭐⭐⭐⭐⭐ Excellent (production ready)
+            - 75-89: ⭐⭐⭐⭐ Good (minor improvements)
+            - 60-74: ⭐⭐⭐ Acceptable (needs refinement)
+            - <60: ⭐⭐ Needs improvement (blocks merge)
+
+            **Minimum Score Required:** 60/100
+
+            📚 See [SKILL_TRIGGER_REVIEW_CHECKLIST.md](https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/blob/${headRef}/SKILL_TRIGGER_REVIEW_CHECKLIST.md) for improvement guidelines.
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Skill Quality Review')
+            );
+
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Upload review results
+        if: always() && steps.changed-skills.outputs.skills != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-review-results
+          path: skill-review-results.txt
+          retention-days: 30
+
+      - name: Check review status
+        if: steps.review.outputs.status == 'failed'
+        run: |
+          echo "❌ One or more skills failed quality check (score < 60)"
+          echo "Please improve the skill triggers before merging."
+          echo "See skill-review-results.txt for details."
+          exit 1

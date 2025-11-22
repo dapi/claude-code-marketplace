@@ -335,28 +335,38 @@ description: |
 - "get [data] from [tool]"
 - "что в [tool]"
 
+#### CI/CD Integration ✅ ENABLED
+
+**GitHub Actions workflows** automatically check skill quality:
+
+**1. Skill Quality Check** (`.github/workflows/skill-quality-check.yml`)
+- **Triggers**: PRs and pushes touching `SKILL.md` or `TRIGGER_EXAMPLES.md`
+- **Actions**: Reviews changed skills, posts results as PR comment
+- **Quality Gate**: ❌ Blocks merge if any skill <60/100
+- **Output**: Detailed review in PR comment + downloadable artifact
+
+**2. Full Skill Review** (`.github/workflows/full-skill-review.yml`)
+- **Triggers**: Changes to review script/docs, or manual workflow dispatch
+- **Actions**: Reviews ALL skills in marketplace
+- **Quality Gate**: Reports if any skill <60/100
+- **Output**: Comprehensive statistics + full report artifact (90-day retention)
+
+**See**: [.github/workflows/README.md](./.github/workflows/README.md) for complete CI/CD documentation.
+
 #### Quality Gate for Pull Requests
 
-**Minimum requirement**: 75/100 score
+**Automated**: ✅ CI checks run automatically on all PRs
+**Minimum requirement**: 60/100 score (blocks merge)
+**Recommended**: 75/100 score for production-ready skills
 
-**Pre-commit workflow**:
+**Pre-commit workflow** (optional local validation):
 ```bash
 # Before committing skill changes
 ./scripts/review_skill_triggers.sh <plugin>/<skill>
 
-# Only commit if score ≥ 75/100
+# Aim for ≥75/100
 # Fix issues based on recommendations
 # Re-run until passing
-```
-
-**CI/CD integration** (recommended):
-```yaml
-# .github/workflows/skill-quality.yml
-- name: Review Skill Triggers
-  run: |
-    ./scripts/review_skill_triggers.sh --all
-    # Exit code 0 if all skills ≥60/100
-    # Exit code 1 if any skill <60/100
 ```
 
 #### TRIGGER_EXAMPLES.md Template
