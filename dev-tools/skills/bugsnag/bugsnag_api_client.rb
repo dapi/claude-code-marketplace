@@ -5,13 +5,15 @@ require 'bugsnag/api'
 class BugsnagApiClient
   def initialize
     @api_key = ENV.fetch('BUGSNAG_DATA_API_KEY')
-    @project_id = ENV.fetch('BUGSNAG_PROJECT_ID')
+    @project_id = ENV['BUGSNAG_PROJECT_ID']  # Optional - needed only for error-specific commands
 
-    validate_credentials
+    validate_api_key
     configure_api
   end
 
   def list_errors(limit: 20, status: nil, severity: nil)
+    require_project_id!
+
     options = {}
     options[:limit] = limit if limit
     options[:status] = status if status
@@ -24,6 +26,8 @@ class BugsnagApiClient
   end
 
   def get_error_details(error_id)
+    require_project_id!
+
     response = Bugsnag::Api.client.error(@project_id, error_id)
     format_error_details(response)
   rescue Bugsnag::Api::Error => e
@@ -31,6 +35,8 @@ class BugsnagApiClient
   end
 
   def resolve_error(error_id)
+    require_project_id!
+
     # Try to resolve via API first
     begin
       Bugsnag::Api.client.update_errors(@project_id, [error_id], "resolve")
@@ -48,6 +54,8 @@ class BugsnagApiClient
   end
 
   def add_comment(error_id, message)
+    require_project_id!
+
     Bugsnag::Api.client.create_comment(@project_id, error_id, message)
     "✅ Комментарий успешно добавлен к ошибке `#{error_id}`"
   rescue Bugsnag::Api::Error => e
@@ -55,6 +63,8 @@ class BugsnagApiClient
   end
 
   def get_error_events(error_id, limit: 10)
+    require_project_id!
+
     options = {}
     options[:limit] = limit if limit
 
@@ -77,13 +87,27 @@ class BugsnagApiClient
   end
 
   def list_projects
-    response = Bugsnag::Api.client.projects
-    format_projects_list(response)
+    # Get all organizations first
+    orgs = Bugsnag::Api.client.organizations
+    all_projects = []
+
+    # Get projects for each organization
+    orgs.each do |org|
+      org_projects = Bugsnag::Api.client.projects(org['id'])
+      all_projects.concat(org_projects)
+    rescue Bugsnag::Api::Error
+      # Skip this org if error, continue with others
+      next
+    end
+
+    format_projects_list(all_projects)
   rescue Bugsnag::Api::Error => e
     handle_api_error(e, "получении списка проектов")
   end
 
   def list_comments(error_id)
+    require_project_id!
+
     response = Bugsnag::Api.client.comments(@project_id, error_id)
     format_comments_list(response)
   rescue Bugsnag::Api::Error => e
@@ -92,9 +116,18 @@ class BugsnagApiClient
 
   private
 
-  def validate_credentials
-    unless @api_key && @project_id
-      raise "Missing required environment variables: BUGSNAG_DATA_API_KEY and BUGSNAG_PROJECT_ID"
+  def validate_api_key
+    unless @api_key
+      raise "Missing required environment variable: BUGSNAG_DATA_API_KEY"
+    end
+  end
+
+  def require_project_id!
+    unless @project_id
+      raise "Missing required environment variable: BUGSNAG_PROJECT_ID\n\n" \
+            "This command requires a project ID. Set it with:\n" \
+            "export BUGSNAG_PROJECT_ID='your_project_id'\n\n" \
+            "Use 'projects' command to list available project IDs."
     end
   end
 

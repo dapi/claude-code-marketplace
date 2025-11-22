@@ -9,8 +9,10 @@ class BugsnagCLI
     puts "❌ Ошибка инициализации: #{e.message}"
     puts ""
     puts "Убедитесь что установлены переменные окружения:"
-    puts "export BUGSNAG_DATA_API_KEY='your_api_key'"
-    puts "export BUGSNAG_PROJECT_ID='your_project_id'"
+    puts "export BUGSNAG_DATA_API_KEY='your_api_key'  # Обязательно для всех команд"
+    puts "export BUGSNAG_PROJECT_ID='your_project_id'  # Обязательно только для команд работы с ошибками"
+    puts ""
+    puts "💡 Команды 'organizations' и 'projects' работают без BUGSNAG_PROJECT_ID"
     exit 1
   end
 
@@ -211,11 +213,13 @@ class BugsnagCLI
       • `help` / `помощь` / `h` - Показать эту справку
 
       **Настройка:**
-      Экспортируйте переменные окружения:
       ```bash
-      export BUGSNAG_DATA_API_KEY="your_api_key"
-      export BUGSNAG_PROJECT_ID="your_project_id"
+      export BUGSNAG_DATA_API_KEY="your_api_key"    # Обязательно для всех команд
+      export BUGSNAG_PROJECT_ID="your_project_id"   # Обязательно для команд работы с ошибками
       ```
+
+      💡 **Важно:** Команды `organizations` и `projects` работают **БЕЗ** BUGSNAG_PROJECT_ID.
+         Используйте их для получения списка доступных проектов и их ID.
 
     HELP
   end
