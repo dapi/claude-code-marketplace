@@ -1,16 +1,51 @@
 ---
 name: bugsnag
 description: |
-  Use when user mentions Bugsnag errors, error tracking, or asks to:
-  - "show bugsnag errors", "check bugsnag", "what errors in bugsnag"
-  - "bugsnag details for <error_id>", "show error stack trace"
-  - "resolve bugsnag error", "mark bugsnag error as fixed"
-  - "analyze bugsnag errors", "bugsnag error patterns"
+  **UNIVERSAL TRIGGER**: Use when user wants to GET/FETCH/RETRIEVE any data FROM Bugsnag.
 
-  Triggers: bugsnag, error tracking, production errors, stack traces, error monitoring
+  Common patterns:
+  - "get/show/list/display [something] from bugsnag"
+  - "получить/показать/вывести [что-то] из bugsnag"
+  - "bugsnag [organizations/projects/errors/details/events/comments/stats]"
+  - "what [data] in bugsnag", "check bugsnag [resource]"
 
-  This skill fetches current errors, retrieves error context and stack traces,
-  and marks errors as resolved using Bugsnag API via helper scripts.
+  Specific data types supported:
+
+  📊 **Organizations & Projects**:
+  - "list bugsnag organizations/orgs", "show organizations"
+  - "list bugsnag projects", "available projects", "проекты bugsnag"
+
+  🐛 **Errors (viewing)**:
+  - "show/list bugsnag errors", "что в bugsnag", "check bugsnag"
+  - "open errors", "error list", "ошибки bugsnag", "открытые ошибки"
+  - "errors with severity error/warning", "filter bugsnag errors"
+
+  🔍 **Error Details**:
+  - "bugsnag details for <id>", "error details", "детали ошибки"
+  - "show stack trace", "error context", "what happened in error"
+  - "events for error", "error timeline", "события ошибки"
+
+  💬 **Comments**:
+  - "show comments for error", "error comments", "комментарии ошибки"
+  - "bugsnag discussion", "what comments on error"
+
+  📈 **Analysis**:
+  - "analyze bugsnag errors", "error patterns", "анализ ошибок"
+  - "bugsnag statistics", "error trends", "что происходит в bugsnag"
+
+  ✅ **Management** (write operations):
+  - "mark as fixed/resolved", "close error", "отметить как решенную"
+  - "add comment to error", "comment on bugsnag error"
+
+  TRIGGERS: bugsnag, получить из bugsnag, показать bugsnag, список bugsnag,
+  bugsnag data, bugsnag info, check bugsnag, what in bugsnag, bugsnag status,
+  error tracking, error monitoring, production errors, stack trace,
+  bugsnag organizations, bugsnag projects, bugsnag errors, bugsnag details,
+  bugsnag events, bugsnag comments, bugsnag analysis, ошибки в bugsnag,
+  что в bugsnag, проверить bugsnag, данные bugsnag
+
+  This skill provides complete Bugsnag API integration for viewing and managing
+  error tracking data via Ruby helper scripts.
 allowed-tools: Bash, Read
 ---
 

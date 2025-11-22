@@ -15,17 +15,6 @@ Development tools for coding, refactoring, and architecture.
 
 [View Documentation](./dev-tools/README.md)
 
-### 🧪 testing-tools
-Testing tools for TDD, test strategies, and coverage analysis.
-
-**Features:**
-- Test-driven development (TDD) workflows
-- Comprehensive test strategy planning
-- Test coverage analysis and optimization
-- Quality assurance automation
-
-[View Documentation](./testing-tools/README.md)
-
 ## Installation
 
 ### Quick Start
@@ -39,12 +28,6 @@ Testing tools for TDD, test strategies, and coverage analysis.
    ```bash
    # Install development tools
    /plugin install dev-tools@dapi
-
-   # Install testing tools
-   /plugin install testing-tools@dapi
-
-   # Install all plugins
-   /plugin install dev-tools@dapi dapi-testing-tools@dapi
    ```
 
 ### Local Development
@@ -57,7 +40,6 @@ For local development and testing:
 
 # Install plugins locally
 /plugin install dev-tools@dapi
-/plugin install testing-tools@dapi
 ```
 
 ## Usage
@@ -67,7 +49,6 @@ Once installed, plugins provide:
 ### Agents
 Access specialized agents through `/agents` command:
 - Architecture and design agents
-- Testing and quality agents
 - Refactoring and optimization agents
 
 ### Skills
@@ -77,11 +58,19 @@ Skills activate automatically based on task context:
 - **Quality gates** ensuring thorough implementation
 
 ### Commands
-Custom slash commands for common workflows:
-- `/refactor` - Intelligent code refactoring
-- `/architect` - System architecture analysis
-- `/tdd` - Test-driven development workflow
-- `/test-strategy` - Test planning and design
+Custom slash commands for quick access to tools:
+
+**Bugsnag Integration:**
+- `/bugsnag:list` - List errors with filtering options
+- `/bugsnag:open` - Show only open/unresolved errors
+- `/bugsnag:details <id>` - Get detailed error information
+- `/bugsnag:projects` - List all available projects
+- `/bugsnag:orgs` - List Bugsnag organizations
+- `/bugsnag:comments <id>` - View error comments
+- `/bugsnag:comment <id> "text"` - Add a comment to an error
+- `/bugsnag:fix <id>` - Mark error as resolved
+
+See [dev-tools commands](./dev-tools/commands/) for the complete list.
 
 ## Repository Structure
 
@@ -94,12 +83,6 @@ claude-code-marketplace/
 │   ├── agents/                    # Specialized agents
 │   ├── skills/                    # Reusable skills
 │   ├── commands/                  # Slash commands
-│   └── README.md
-├── testing-tools/                 # Testing tools plugin
-│   ├── .claude-plugin/
-│   ├── agents/
-│   ├── skills/
-│   ├── commands/
 │   └── README.md
 ├── README.md                      # This file
 ├── CONTRIBUTING.md                # Contribution guidelines

@@ -35,6 +35,122 @@ claude-code-marketplace/
 
 **Marketplace**: The `.claude-plugin/marketplace.json` file registers all plugins and their locations.
 
+## Marketplace Plugin Requirements
+
+### 🚨 Critical: Plugins Are Installed Separately
+
+**Key Concept**: Plugins are NOT used directly from this repository. They are:
+1. **Source**: This repo is the marketplace source
+2. **Installation**: Users run `/plugin install plugin-name@dapi`
+3. **Isolation**: Installed plugin is copied to Claude Code's plugin directory
+4. **Independence**: Plugin must work without access to this repository
+
+### Path Conventions
+
+**ABSOLUTE REQUIREMENT**: All paths must be relative to plugin root.
+
+✅ **Correct Paths**:
+```markdown
+./agents/bugsnag.md
+skills/debugging/SKILL.md
+../commands/bugsnag:list.md
+commands/command-name.md
+```
+
+❌ **FORBIDDEN Paths**:
+```markdown
+/home/danil/code/claude-code-marketplace/dev-tools/agents/...
+/absolute/path/to/anything
+../../.claude-plugin/marketplace.json  # Outside plugin!
+```
+
+**Why**: After installation, the plugin exists in an isolated directory. Absolute paths will break. References to parent marketplace structure will fail.
+
+### Self-Sufficiency Checklist
+
+Every plugin MUST be completely self-contained:
+
+- [ ] All files needed are inside `plugin-name/` directory
+- [ ] No references to `../.claude-plugin/marketplace.json`
+- [ ] No references to other plugins in marketplace
+- [ ] `README.md` is in plugin root: `plugin-name/README.md`
+- [ ] All internal links use relative paths
+- [ ] `plugin.json` only references files within plugin directory
+
+**Test Question**: "Will this work if the plugin is installed alone, without the marketplace repo?"
+
+### Installation Flow
+
+```
+Development Repository:
+claude-code-marketplace/
+└── dev-tools/
+    ├── .claude-plugin/plugin.json
+    ├── agents/
+    ├── skills/
+    └── commands/
+
+                ↓  /plugin install dev-tools@dapi
+
+Installed Plugin (isolated location):
+~/.config/claude-code/plugins/dev-tools@dapi/
+├── .claude-plugin/plugin.json
+├── agents/
+├── skills/
+└── commands/
+```
+
+After installation, the plugin has NO access to:
+- Original marketplace repository
+- Other plugins
+- Marketplace metadata
+- Parent directory structure
+
+### Path Reference Examples
+
+**In Agent Files** (`agents/bugsnag.md`):
+```markdown
+See also:
+- [Commands](../commands/bugsnag:list.md)
+- [Skills](../skills/debugging/SKILL.md)
+```
+
+**In Skill Files** (`skills/debugging/SKILL.md`):
+```markdown
+Related:
+- Agent: [Bugsnag Agent](../../agents/bugsnag.md)
+- Commands: [List Errors](../../commands/bugsnag:list.md)
+```
+
+**In README.md** (`plugin-name/README.md`):
+```markdown
+## Agents
+- [Bugsnag](./agents/bugsnag.md)
+
+## Skills
+- [Debugging](./skills/debugging/SKILL.md)
+```
+
+### Critical Validation Rules
+
+Before committing ANY agent/skill/command:
+
+1. **Path Check**: No absolute paths anywhere
+2. **Reference Check**: All links use relative paths
+3. **Isolation Test**: Would this work if plugin folder was moved?
+4. **Self-Sufficiency**: All required files are in plugin directory
+5. **No Parent References**: No `../../.claude-plugin/` or similar
+
+**Automated Check**:
+```bash
+# From plugin directory
+grep -r "^/" agents/ skills/ commands/ README.md
+# Should return NOTHING (no absolute paths)
+
+grep -r "\.\./\.\./\.claude-plugin" .
+# Should return NOTHING (no marketplace references)
+```
+
 ## Development Workflows
 
 ### Adding a New Plugin
@@ -93,6 +209,251 @@ allowed-tools: Read, Grep, Glob, Bash  # Optional tool restrictions
 ### Creating Slash Commands
 
 Commands are markdown files in `plugin-name/commands/` that expand to full prompts when invoked.
+
+## Quality Tools for Skill Development
+
+### Skill Trigger Quality Review System
+
+**Purpose**: Ensure skills activate correctly with high-quality trigger configurations.
+
+#### Automated Review Tool
+
+**Location**: `scripts/review_skill_triggers.sh`
+
+**Usage**:
+```bash
+# Review single skill
+./scripts/review_skill_triggers.sh dev-tools/bugsnag
+
+# Review all skills in marketplace
+./scripts/review_skill_triggers.sh --all
+```
+
+**What it checks** (100-point system):
+1. **File Structure** (10 pts) - YAML frontmatter, required fields
+2. **Universal Trigger** (15 pts) - Defined universal pattern
+3. **Keyword Count** (15 pts) - Optimal 15-50 keywords
+4. **Categorization** (10 pts) - Visual categories with emoji
+5. **Multilingual Support** (10 pts) - EN + RU triggers
+6. **Action Verb Diversity** (10 pts) - 5+ verbs (get, show, list...)
+7. **Context Patterns** (10 pts) - "what in", "check", "from" patterns
+8. **Test Documentation** (10 pts) - TRIGGER_EXAMPLES.md exists
+9. **Description Length** (5 pts) - Optimal 300-1200 chars
+10. **Negative Examples** (10 pts) - Documented what NOT to activate
+
+**Rating Bands**:
+- 90-100: ⭐⭐⭐⭐⭐ Excellent (production ready)
+- 75-89: ⭐⭐⭐⭐ Good (minor improvements)
+- 60-74: ⭐⭐⭐ Acceptable (needs refinement)
+- <60: ⭐⭐ Poor (major rework required)
+
+**Example Output**:
+```
+╔════════════════════════════════════════════╗
+║  Skill Trigger Quality Review Tool        ║
+╔════════════════════════════════════════════╗
+
+Reviewing skill: dev-tools/bugsnag
+File: dev-tools/skills/bugsnag/SKILL.md
+
+[1/10] File Structure          ✅ 10/10
+[2/10] Universal Trigger        ✅ 15/15
+[3/10] Keyword Count           ✅ 15/15
+...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINAL SCORE: 93/100
+RATING: Excellent ⭐⭐⭐⭐⭐
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 RECOMMENDATIONS:
+  ✅ No major improvements needed!
+```
+
+#### Documentation Resources
+
+**For comprehensive manual review**:
+- `SKILL_TRIGGER_REVIEW_CHECKLIST.md` - 50+ page complete guide
+  - 10-phase review process
+  - Scoring methodology
+  - Best practices
+  - Templates and examples
+
+**For quick reference**:
+- `SKILL_TRIGGER_QUICK_REFERENCE.md` - One-page cheat sheet
+  - 10-point checklist
+  - Copy-paste templates
+  - Action verb cheatsheet
+  - Common mistakes
+
+**For examples**:
+- `dev-tools/skills/bugsnag/TRIGGER_EXAMPLES.md` - Reference implementation
+  - 76 test examples (60+ positive, 5+ negative)
+  - Bilingual (EN + RU)
+  - Comprehensive coverage
+  - 93/100 quality score
+
+#### Universal Trigger Pattern (mandatory for all skills)
+
+**Formula**:
+```
+[ACTION_VERB] + [DATA_TYPE] + from/in [TOOL_NAME]
+```
+
+**Example from bugsnag skill**:
+```yaml
+description: |
+  **UNIVERSAL TRIGGER**: GET/FETCH/RETRIEVE any data FROM Bugsnag
+
+  Common patterns:
+  - "get/show/list [data] from bugsnag"
+  - "получить/показать [данные] из bugsnag"
+
+  Specific data types supported:
+
+  📊 **Organizations & Projects**:
+  - "list bugsnag organizations/projects"
+  - "список проектов bugsnag"
+
+  🐛 **Errors**:
+  - "show/list bugsnag errors"
+  - "открытые ошибки bugsnag"
+
+  TRIGGERS: bugsnag, получить из bugsnag, показать bugsnag,
+    bugsnag data, check bugsnag, what in bugsnag, ...
+```
+
+**Action Verbs to Include** (minimum 5):
+- **Viewing**: get, show, list, display, view, retrieve, fetch
+- **Checking**: check, verify, validate
+- **Analyzing**: analyze, examine, inspect
+- **Russian**: показать, получить, вывести, список, проверить
+
+**Context Patterns** (highly recommended):
+- "what [data] in [tool]"
+- "check [tool]"
+- "get [data] from [tool]"
+- "что в [tool]"
+
+#### Quality Gate for Pull Requests
+
+**Minimum requirement**: 75/100 score
+
+**Pre-commit workflow**:
+```bash
+# Before committing skill changes
+./scripts/review_skill_triggers.sh <plugin>/<skill>
+
+# Only commit if score ≥ 75/100
+# Fix issues based on recommendations
+# Re-run until passing
+```
+
+**CI/CD integration** (recommended):
+```yaml
+# .github/workflows/skill-quality.yml
+- name: Review Skill Triggers
+  run: |
+    ./scripts/review_skill_triggers.sh --all
+    # Exit code 0 if all skills ≥60/100
+    # Exit code 1 if any skill <60/100
+```
+
+#### TRIGGER_EXAMPLES.md Template
+
+**Required file**: `plugin-name/skills/skill-name/TRIGGER_EXAMPLES.md`
+
+**Minimum content**:
+```markdown
+# [Skill Name] Trigger Examples
+
+## ✅ Should Activate (minimum 20 examples)
+
+### Category 1
+- "example query 1"
+- "example query 2"
+
+### Category 2
+- "example query 3"
+
+## ❌ Should NOT Activate (minimum 5 examples)
+
+- "general question about tool"
+- "installation query"
+- "comparison query"
+
+## 🎯 Key Trigger Words
+
+**Verbs**: [list]
+**Nouns**: [list]
+**Context**: [patterns]
+```
+
+#### Development Workflow with Quality Tools
+
+**Step-by-step process**:
+
+1. **Create skill structure**
+   ```bash
+   mkdir -p plugin-name/skills/skill-name
+   touch plugin-name/skills/skill-name/SKILL.md
+   ```
+
+2. **Use template from SKILL_TRIGGER_QUICK_REFERENCE.md**
+   - Copy description template
+   - Fill in universal trigger pattern
+   - Add 3+ categories with examples
+   - List 15+ trigger keywords
+
+3. **Create TRIGGER_EXAMPLES.md**
+   - Add 20+ positive examples
+   - Add 5+ negative examples
+   - Cover all functional categories
+
+4. **Run automated review**
+   ```bash
+   ./scripts/review_skill_triggers.sh plugin-name/skill-name
+   ```
+
+5. **Iterate until ≥75/100**
+   - Read recommendations
+   - Apply fixes
+   - Re-run review
+   - Commit when passing
+
+6. **Manual testing**
+   - Pick 5 random examples from TRIGGER_EXAMPLES.md
+   - Test in new Claude Code session
+   - Verify skill activates correctly
+   - Document any failures → fix triggers
+
+**Time estimate**: 10-15 minutes per skill (with templates)
+
+#### Integration with Git Workflow
+
+**Pre-commit hook** (optional):
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+for file in $(git diff --cached --name-only | grep "SKILL.md"); do
+  skill_path=$(dirname "$file" | sed 's|/skills/|/|')
+  ./scripts/review_skill_triggers.sh "$skill_path" || {
+    echo "❌ Skill quality check failed. Fix issues and retry."
+    exit 1
+  }
+done
+```
+
+**Commit message format**:
+```bash
+# Good examples:
+git commit -m "Improve bugsnag skill triggers: add projects/orgs support (93/100)"
+git commit -m "Add new skill: jira integration (85/100)"
+git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
+
+# Include score for transparency
+```
 
 ## Testing Locally
 

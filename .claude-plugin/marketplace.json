@@ -9,11 +9,6 @@
       "name": "dev-tools",
       "source": "./dev-tools",
       "description": "Development tools: agents for coding, refactoring, and architecture"
-    },
-    {
-      "name": "testing-tools",
-      "source": "./testing-tools",
-      "description": "Testing tools: TDD, test strategies, and coverage analysis"
     }
   ]
 }
