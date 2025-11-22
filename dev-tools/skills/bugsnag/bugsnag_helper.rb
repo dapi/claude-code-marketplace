@@ -26,4 +26,20 @@ class BugsnagHelper
   def analyze_errors
     @client.analyze_errors
   end
+
+  def list_organizations
+    @client.list_organizations
+  end
+
+  def list_projects
+    @client.list_projects
+  end
+
+  def add_comment(error_id, message)
+    @client.add_comment(error_id, message)
+  end
+
+  def list_comments(error_id)
+    @client.list_comments(error_id)
+  end
 end

@@ -34,6 +34,14 @@ class BugsnagCLI
       show_events(args[1], args[2])
     when 'analyze', 'analysis', 'анализ', 'проанализировать'
       analyze_errors
+    when 'organizations', 'orgs', 'организации'
+      list_organizations
+    when 'projects', 'проекты'
+      list_projects
+    when 'comment', 'комментарий'
+      add_error_comment(args[1], args[2..-1].join(' '))
+    when 'comments', 'комментарии'
+      show_error_comments(args[1])
     when 'help', 'помощь', 'h'
       puts show_help
     else
@@ -119,6 +127,45 @@ class BugsnagCLI
     puts result
   end
 
+  def list_organizations
+    puts "🏢 Получение списка организаций..."
+    puts ""
+    result = @helper.list_organizations
+    puts result
+  end
+
+  def list_projects
+    puts "📦 Получение списка проектов..."
+    puts ""
+    result = @helper.list_projects
+    puts result
+  end
+
+  def add_error_comment(error_id, message)
+    unless error_id && !message.empty?
+      puts "❌ Укажите ID ошибки и текст комментария"
+      puts "Пример: bugsnag.rb comment 5f8a9b2c 'Investigating this issue'"
+      return
+    end
+
+    puts "💬 Добавление комментария к ошибке #{error_id}..."
+    result = @helper.add_comment(error_id, message)
+    puts result
+  end
+
+  def show_error_comments(error_id)
+    unless error_id
+      puts "❌ Укажите ID ошибки"
+      puts "Пример: bugsnag.rb comments 5f8a9b2c"
+      return
+    end
+
+    puts "💬 Получение комментариев для ошибки #{error_id}..."
+    puts ""
+    result = @helper.list_comments(error_id)
+    puts result
+  end
+
   def show_help
     <<~HELP
       🚀 **Bugsnag** - Инструмент для работы с Bugsnag API
@@ -149,6 +196,16 @@ class BugsnagCLI
 
       📈 **Анализ:**
       • `analyze` / `analysis` / `анализ` - Анализ паттернов ошибок
+
+      💬 **Комментарии:**
+      • `comment <error_id> "message"` / `комментарий <id> "текст"` - Добавить комментарий
+      • `comments <error_id>` / `комментарии <id>` - Показать все комментарии
+
+      🏢 **Организации:**
+      • `organizations` / `orgs` / `организации` - Список всех организаций
+
+      📦 **Проекты:**
+      • `projects` / `проекты` - Список всех проектов
 
       ❓ **Справка:**
       • `help` / `помощь` / `h` - Показать эту справку

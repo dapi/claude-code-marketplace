@@ -69,6 +69,27 @@ class BugsnagApiClient
     analyze_error_patterns(errors)
   end
 
+  def list_organizations
+    response = Bugsnag::Api.client.organizations
+    format_organizations_list(response)
+  rescue Bugsnag::Api::Error => e
+    handle_api_error(e, "получении списка организаций")
+  end
+
+  def list_projects
+    response = Bugsnag::Api.client.projects
+    format_projects_list(response)
+  rescue Bugsnag::Api::Error => e
+    handle_api_error(e, "получении списка проектов")
+  end
+
+  def list_comments(error_id)
+    response = Bugsnag::Api.client.comments(@project_id, error_id)
+    format_comments_list(response)
+  rescue Bugsnag::Api::Error => e
+    handle_api_error(e, "получении комментариев")
+  end
+
   private
 
   def validate_credentials
@@ -227,6 +248,77 @@ class BugsnagApiClient
         total_events = errors.sum { |e| e['eventsCount'] }
         output << "• #{error_class}: #{errors.length} экземпляров, #{total_events} событий"
       end
+    end
+
+    output.join("\n")
+  end
+
+  def format_organizations_list(orgs_data)
+    orgs = orgs_data.is_a?(Array) ? orgs_data : orgs_data['organizations'] || []
+
+    output = ["🏢 Доступные организации: #{orgs.length}\n"]
+
+    orgs.each_with_index do |org, index|
+      output << "#{index + 1}. **#{org['name']}** (ID: `#{org['id']}`)"
+      output << "   Создана: #{org['created_at']}" if org['created_at']
+      output << "   Коллабораторов: #{org['collaborators_count']}" if org['collaborators_count']
+      output << "   Проектов: #{org['projects_count']}" if org['projects_count']
+      output << "   URL: #{org['url']}" if org['url']
+      output << ""
+    end
+
+    output.join("\n")
+  end
+
+  def format_projects_list(projects_data)
+    projects = projects_data.is_a?(Array) ? projects_data : projects_data['projects'] || []
+
+    output = ["📦 Доступные проекты: #{projects.length}\n"]
+
+    projects.each_with_index do |project, index|
+      output << "#{index + 1}. **#{project['name']}** (ID: `#{project['id']}`)"
+      output << "   Тип: #{project['type']}" if project['type']
+      output << "   Открытых ошибок: #{project['open_error_count']}" if project['open_error_count']
+      output << "   Коллабораторов: #{project['collaborators_count']}" if project['collaborators_count']
+
+      if project['release_stages'] && project['release_stages'].any?
+        output << "   Стадии: #{project['release_stages'].join(', ')}"
+      end
+
+      output << "   URL: #{project['url']}" if project['url']
+      output << ""
+    end
+
+    output.join("\n")
+  end
+
+  def format_comments_list(comments_data)
+    comments = comments_data.is_a?(Array) ? comments_data : comments_data['comments'] || []
+
+    output = ["💬 Комментарии (#{comments.length}):\n"]
+
+    if comments.empty?
+      output << "Нет комментариев для этой ошибки."
+      return output.join("\n")
+    end
+
+    comments.each_with_index do |comment, index|
+      output << "**Комментарий #{index + 1}:**"
+      output << "• ID: `#{comment['id']}`"
+
+      # Author info
+      author = if comment['user'] && comment['user']['name']
+                 comment['user']['name']
+               elsif comment['user'] && comment['user']['email']
+                 comment['user']['email']
+               else
+                 'Unknown'
+               end
+      output << "• Автор: #{author}"
+
+      output << "• Время: #{comment['created_at']}" if comment['created_at']
+      output << "• Текст: #{comment['message']}" if comment['message']
+      output << ""
     end
 
     output.join("\n")
