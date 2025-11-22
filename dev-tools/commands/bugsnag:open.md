@@ -1,60 +1,12 @@
 ---
-name: open
+allowed-tools: Bash
 description: Display only open (unresolved) Bugsnag errors
 ---
 
-Show currently open (unresolved) errors from Bugsnag project.
+Execute the bugsnag skill to show only open (unresolved) errors.
 
-## Usage
+Use Bash tool to run the bugsnag.rb script with the `open` command and any provided arguments. The script is located in the dev-tools plugin at `skills/bugsnag/bugsnag.rb`.
 
-```
-/bugsnag:open
-/bugsnag:open --limit 30
-/bugsnag:open --severity error
-```
+Supported arguments: `--limit N`, `--severity error|warning`
 
-## Parameters
-
-- `--limit N` - Maximum errors to show (default: 20)
-- `--severity error|warning` - Filter by severity level
-
-## Examples
-
-**Basic usage:**
-```
-/bugsnag:open
-```
-Shows 20 most recent open errors.
-
-**Limit results:**
-```
-/bugsnag:open --limit 50
-```
-Shows up to 50 open errors.
-
-**Only critical errors:**
-```
-/bugsnag:open --severity error
-```
-Shows only open errors with error severity (excludes warnings).
-
-**Combined:**
-```
-/bugsnag:open --severity error --limit 10
-```
-Shows up to 10 most critical open errors.
-
-## Output
-
-For each error displays:
-- Error class and event count
-- Error ID for further investigation
-- Severity level (error/warning)
-- First and last occurrence timestamps
-- Direct URL to Bugsnag dashboard
-
-## Execution
-
-```bash
-cd dev-tools/skills/bugsnag && ./bugsnag.rb open "$@"
-```
+Display the output directly to the user without any additional commentary.
