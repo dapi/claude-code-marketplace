@@ -98,12 +98,36 @@ argument-hint: <issue-url>
    ```
    С этого момента `${WORKTREE_PATH}` — текущий рабочий каталог (CWD). Вся дальнейшая работа должна проводиться в этом каталоге.
 
-6. **Выполни init.sh** (если существует):
+6. **Создай init.sh** (если не существует):
    ```bash
-   [ -f "./init.sh" ] && ./init.sh
+   if [ ! -f "./init.sh" ]; then
+     cat > init.sh << 'INIT_EOF'
+   #!/usr/bin/env bash
+   mise trust
+   git submodule init
+   git submodule update
+
+   # Copy .envrc from base branch worktree
+   BASE_DIR=$(git worktree list | grep "\[${BASE_BRANCH}\]" | awk '{print $1}')
+   if [ -n "$BASE_DIR" ] && [ -f "$BASE_DIR/.envrc" ]; then
+     cp "$BASE_DIR/.envrc" .envrc
+     echo "Copied .envrc from $BASE_DIR"
+   else
+     echo "Warning: Could not find .envrc in ${BASE_BRANCH} worktree"
+   fi
+
+   direnv allow
+   INIT_EOF
+     chmod +x init.sh
+   fi
    ```
 
-7. **Выведи результат:**
+7. **Выполни init.sh:**
+   ```bash
+   ./init.sh
+   ```
+
+8. **Выведи результат:**
    ```
    ✅ Worktree создан: ${WORKTREE_PATH}
    📋 Issue: ${ISSUE_URL}
