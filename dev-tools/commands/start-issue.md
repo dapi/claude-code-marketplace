@@ -1,3 +1,8 @@
+---
+description: Start working on a GitHub issue by creating git worktree with proper branch naming
+argument-hint: <issue-url>
+---
+
 # Start Issue
 
 Начни работу над GitHub issue.
