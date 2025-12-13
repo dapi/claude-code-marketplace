@@ -1,28 +1,21 @@
 # Dev Tools
 
-Development tools plugin for Claude Code with agents and skills for coding, refactoring, and architecture.
+Development tools plugin for Claude Code.
 
 ## Features
 
-### Agents
-- **Code Architect** - System design and architectural analysis
-- **Code Refactorer** - Code refactoring and optimization
-- **Pattern Detector** - Design pattern recognition and application
-
 ### Skills
-- **Systematic Refactoring** - Step-by-step refactoring methodology
-- **Architecture Analysis** - System architecture evaluation
-- **Code Quality Assessment** - Comprehensive code review framework
+
+- **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
+- **long-running-harness** - Manage multi-session development projects with progress tracking
 
 ### Commands
+
 - `/dev-tools:start-issue <url>` - Start work on GitHub issue (creates worktree, branch)
-- `/refactor` - Intelligent code refactoring
-- `/architect` - System architecture analysis
-- `/patterns` - Design pattern identification
 
 ## Installation
 
-### From GitHub (after publishing)
+### From GitHub
 ```bash
 /plugin marketplace add dapi/claude-code-marketplace
 /plugin install dev-tools@dapi
@@ -30,40 +23,36 @@ Development tools plugin for Claude Code with agents and skills for coding, refa
 
 ### Local Development
 ```bash
-/plugin marketplace add /home/danil/code/claude-code-marketplace
+/plugin marketplace add /path/to/claude-code-marketplace
 /plugin install dev-tools@dapi
 ```
 
 ## Usage
 
-Once installed, agents are available through `/agents` command and skills activate automatically when relevant tasks are detected.
-
-### Example: Code Refactoring
-```
-"Refactor this authentication module to use dependency injection"
-→ systematic-refactoring skill activates
-→ code-refactorer agent assists with implementation
-```
-
-### Example: Architecture Review
-```
-"Review the microservices architecture for this system"
-→ architecture-analysis skill activates
-→ code-architect agent provides comprehensive analysis
-```
-
-### Example: Start Issue
+### Start Issue
 ```bash
 /dev-tools:start-issue https://github.com/owner/repo/issues/123
 ```
 Creates:
-- Git worktree in `../worktrees/feature/123-issue-title`
+- Git worktree in `../worktrees/<type>/<number>-<description>`
 - Branch named by type: `feature/`, `fix/`, or `chore/`
 - Runs `./init.sh` if exists
 
-## Contributing
+### Bugsnag Skill
+Activates automatically when you ask about Bugsnag data:
+```
+"show bugsnag errors"
+"list bugsnag projects"
+"что в bugsnag"
+```
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on adding new agents and skills.
+### Long-Running Harness Skill
+Activates for multi-session project management:
+```
+"start new multi-session project"
+"continue project work"
+"продолжить работу над проектом"
+```
 
 ## License
 
