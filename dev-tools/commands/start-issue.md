@@ -62,42 +62,56 @@ argument-hint: <issue-url>
    - Labels (для определения типа)
    - Описание (если нужно для понимания типа)
 
-2. **Определи базовую ветку:**
+2. **Определи базовую ветку и обнови её:**
    ```bash
-   git rev-parse --verify main 2>/dev/null && echo "main" || \
-   git rev-parse --verify master 2>/dev/null && echo "master" || \
-   git branch --show-current
+   # Определи базовую ветку
+   BASE_BRANCH=$(git rev-parse --verify main 2>/dev/null && echo "main" || \
+                 git rev-parse --verify master 2>/dev/null && echo "master" || \
+                 git branch --show-current)
+
+   # Обнови базовую ветку с remote
+   git fetch origin "${BASE_BRANCH}" 2>/dev/null || true
    ```
 
 3. **Сформируй имя ветки** по шаблону `<тип>/<номер>-<slug>`
 
-4. **Создай git worktree:**
+4. **Проверь, что ветка не существует:**
+   ```bash
+   if git show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
+     echo "❌ Ветка ${BRANCH_NAME} уже существует"
+     exit 1
+   fi
+   ```
+
+5. **Создай git worktree:**
    ```bash
    BRANCH_NAME="<сформированное-имя>"
-   WORKTREE_PATH="../worktrees/${BRANCH_NAME}"
+
+   # Имя директории: заменяем / на - для плоской структуры
+   WORKTREE_NAME=$(echo "${BRANCH_NAME}" | tr '/' '-')
+
+   # Абсолютный путь от корня репозитория
+   REPO_ROOT=$(git rev-parse --show-toplevel)
+   WORKTREE_PATH="${REPO_ROOT}/../worktrees/${WORKTREE_NAME}"
 
    # Создай директорию worktrees если не существует
-   mkdir -p "../worktrees"
+   mkdir -p "${REPO_ROOT}/../worktrees"
 
-   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" <базовая-ветка>
+   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" "${BASE_BRANCH}"
    ```
-   Сохрани `WORKTREE_PATH` как `BRANCH_DIR`
 
-5. **Выполни init.sh** (если существует):
+6. **Перейди в созданный каталог и выполни init.sh:**
    ```bash
-   cd "${BRANCH_DIR}"
+   cd "${WORKTREE_PATH}"
+
+   # Выполни init.sh если существует
    [ -f "./init.sh" ] && ./init.sh
    ```
-
-6. **Перейди в созданный каталог:**
-   ```bash
-   cd "${BRANCH_DIR}"
-   ```
-   С этого момента воспринимай `${BRANCH_DIR}` как текущий рабочий каталог (CWD). Вся дальнейшая работа должна проводиться в этом каталоге.
+   С этого момента воспринимай `${WORKTREE_PATH}` как текущий рабочий каталог (CWD). Вся дальнейшая работа должна проводиться в этом каталоге.
 
 7. **Выведи результат:**
    ```
-   ✅ Worktree создан: ${BRANCH_DIR}
+   ✅ Worktree создан: ${WORKTREE_PATH}
    📋 Issue: ${ISSUE_URL}
    🌿 Ветка: ${BRANCH_NAME}
    ```
