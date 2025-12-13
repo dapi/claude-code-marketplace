@@ -15,6 +15,7 @@ Development tools plugin for Claude Code with agents and skills for coding, refa
 - **Code Quality Assessment** - Comprehensive code review framework
 
 ### Commands
+- `/dev-tools:start-issue <url>` - Start work on GitHub issue (creates worktree, branch)
 - `/refactor` - Intelligent code refactoring
 - `/architect` - System architecture analysis
 - `/patterns` - Design pattern identification
@@ -50,6 +51,15 @@ Once installed, agents are available through `/agents` command and skills activa
 → architecture-analysis skill activates
 → code-architect agent provides comprehensive analysis
 ```
+
+### Example: Start Issue
+```bash
+/dev-tools:start-issue https://github.com/owner/repo/issues/123
+```
+Creates:
+- Git worktree in `../worktrees/feature/123-issue-title`
+- Branch named by type: `feature/`, `fix/`, or `chore/`
+- Runs `./init.sh` if exists
 
 ## Contributing
 
