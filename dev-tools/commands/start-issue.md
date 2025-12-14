@@ -47,13 +47,6 @@ argument-hint: <issue-url>
 - `fix/456-null-pointer-in-parser`
 - `chore/789-update-eslint-config`
 
-## Определение базовой ветки
-
-Используй первую существующую из списка:
-1. `main`
-2. `master`
-3. Текущая ветка (результат `git branch --show-current`)
-
 ## Шаги выполнения
 
 1. **Прочитай GitHub issue** по ISSUE_URL:
@@ -62,20 +55,9 @@ argument-hint: <issue-url>
    - Labels (для определения типа)
    - Описание (если нужно для понимания типа)
 
-2. **Определи базовую ветку и обнови её:**
-   ```bash
-   # Определи базовую ветку
-   BASE_BRANCH=$(git rev-parse --verify main 2>/dev/null && echo "main" || \
-                 git rev-parse --verify master 2>/dev/null && echo "master" || \
-                 git branch --show-current)
+2. **Сформируй имя ветки** по шаблону `<тип>/<номер>-<slug>`
 
-   # Обнови базовую ветку с remote
-   git fetch origin "${BASE_BRANCH}" 2>/dev/null || true
-   ```
-
-3. **Сформируй имя ветки** по шаблону `<тип>/<номер>-<slug>`
-
-4. **Создай git worktree:**
+3. **Создай git worktree от текущей ветки:**
    ```bash
    BRANCH_NAME="<сформированное-имя>"
 
@@ -89,16 +71,17 @@ argument-hint: <issue-url>
    # Создай директорию worktrees если не существует
    mkdir -p "${REPO_ROOT}/../worktrees"
 
-   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" "${BASE_BRANCH}"
+   # Создай worktree от текущей ветки (HEAD)
+   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" HEAD
    ```
 
-5. **Перейди в созданный каталог:**
+4. **Перейди в созданный каталог:**
    ```bash
    cd "${WORKTREE_PATH}"
    ```
    С этого момента `${WORKTREE_PATH}` — текущий рабочий каталог (CWD). Вся дальнейшая работа должна проводиться в этом каталоге.
 
-6. **Создай init.sh** (если не существует):
+5. **Создай init.sh** (если не существует):
    ```bash
    if [ ! -f "./init.sh" ]; then
      cat > init.sh << 'INIT_EOF'
@@ -107,13 +90,13 @@ argument-hint: <issue-url>
    git submodule init
    git submodule update
 
-   # Copy .envrc from base branch worktree
-   BASE_DIR=$(git worktree list | grep "\[${BASE_BRANCH}\]" | awk '{print $1}')
+   # Copy .envrc from main/master worktree
+   BASE_DIR=$(git worktree list | grep -E '\[(main|master)\]' | head -1 | awk '{print $1}')
    if [ -n "$BASE_DIR" ] && [ -f "$BASE_DIR/.envrc" ]; then
      cp "$BASE_DIR/.envrc" .envrc
      echo "Copied .envrc from $BASE_DIR"
    else
-     echo "Warning: Could not find .envrc in ${BASE_BRANCH} worktree"
+     echo "Warning: Could not find .envrc in main/master worktree"
    fi
 
    direnv allow
@@ -122,12 +105,12 @@ argument-hint: <issue-url>
    fi
    ```
 
-7. **Выполни init.sh:**
+6. **Выполни init.sh:**
    ```bash
    ./init.sh
    ```
 
-8. **Выведи результат:**
+7. **Выведи результат:**
    ```
    ✅ Worktree создан: ${WORKTREE_PATH}
    📋 Issue: ${ISSUE_URL}
