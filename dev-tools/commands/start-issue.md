@@ -80,30 +80,11 @@ argument-hint: <issue-url>
 
 5. **Создай init.sh** (если не существует):
 
-   Если файл `init.sh` не существует в каталоге, создай его с помощью Write tool:
-
+   Если файл `init.sh` не существует в каталоге, скопируй шаблон:
    ```bash
-   #!/usr/bin/env bash
-   mise trust
-   git submodule init
-   git submodule update
-
-   # Copy .envrc from main/master worktree
-   BASE_DIR=$(git worktree list | grep -E '\[(main|master)\]' | head -1 | awk '{print $1}')
-   if [ -n "$BASE_DIR" ] && [ -f "$BASE_DIR/.envrc" ]; then
-     cp "$BASE_DIR/.envrc" .envrc
-     echo "Copied .envrc from $BASE_DIR"
-   else
-     echo "Warning: Could not find .envrc in main/master worktree"
-   fi
-
-   direnv allow
+   cp <plugin-path>/templates/init.sh ./init.sh
    ```
-
-   Затем сделай файл исполняемым:
-   ```bash
-   chmod +x init.sh
-   ```
+   Где `<plugin-path>` — путь к плагину dev-tools.
 
 6. **Выполни init.sh:**
    ```bash
