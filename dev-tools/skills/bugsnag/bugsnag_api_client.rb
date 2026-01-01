@@ -143,6 +143,11 @@ class BugsnagApiClient
   def configure_api
     Bugsnag::Api.configure do |config|
       config.auth_token = @api_key
+
+      # Поддержка HTTP прокси через переменную окружения
+      if ENV['BUGSNAG_HTTP_PROXY']
+        config.proxy = { uri: ENV['BUGSNAG_HTTP_PROXY'] }
+      end
     end
   end
 

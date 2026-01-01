@@ -87,8 +87,12 @@ Skill для интеграции с Bugsnag API, позволяющий про�
 #### Переменные окружения
 
 ```bash
+# Обязательные
 export BUGSNAG_DATA_API_KEY="your_api_key_here"
 export BUGSNAG_PROJECT_ID="your_project_id_here"
+
+# Опциональные
+export BUGSNAG_HTTP_PROXY="http://proxy.example.com:8080"  # HTTP прокси для всех запросов
 ```
 
 ## Подробная документация

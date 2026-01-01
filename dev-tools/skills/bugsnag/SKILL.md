@@ -150,9 +150,20 @@ bash -c "cd [skill_dir] && ./bugsnag.rb help"
 ❌ `--help` - используется `help` без дефисов
 �️ Использовать команды не описанные выше
 
+## Переменные окружения
+
+```bash
+# Обязательные
+export BUGSNAG_DATA_API_KEY="your_api_key_here"
+export BUGSNAG_PROJECT_ID="your_project_id_here"
+
+# Опциональные
+export BUGSNAG_HTTP_PROXY="http://proxy.example.com:8080"  # HTTP прокси для всех запросов
+```
+
 ## Безопасность
 
 - API ключи хранятся только в переменных окружения
-- Все запросы выполняются через HTTPS
+- Все запросы выполняются через HTTPS (или через прокси при наличии BUGSNAG_HTTP_PROXY)
 - Минимальные необходимые права доступа к API
 - Логирование чувствительных данных отключено
