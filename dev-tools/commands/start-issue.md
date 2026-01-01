@@ -69,11 +69,11 @@ argument-hint: <issue-url>
    Сформируй переменные:
    - `BRANCH_NAME` — имя ветки из шага 3 (например `fix/123-some-bug`)
    - `WORKTREE_NAME` — имя директории: замени `/` на `-` (например `fix-123-some-bug`)
-   - `WORKTREE_PATH` — полный путь: `<repo-root>/../worktrees/<WORKTREE_NAME>`
+   - `WORKTREE_PATH` — полный путь: `~/worktrees/<WORKTREE_NAME>`
 
    Выполни команды последовательно:
    ```bash
-   mkdir -p /path/to/worktrees
+   mkdir -p ~/worktrees
    ```
    ```bash
    git worktree add -b "<BRANCH_NAME>" "<WORKTREE_PATH>" HEAD
