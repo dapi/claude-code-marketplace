@@ -13,7 +13,10 @@ update-plugin:
 	claude plugin update dev-tools@dapi
 
 # Full reinstall (uninstall + install)
-reinstall:
+reinstall: uninstall install
+
+uninstall:
 	claude plugin uninstall dev-tools@dapi || true
+
+install:
 	claude plugin install dev-tools@dapi
-	@echo "✅ Plugin reinstalled. Restart Claude to apply changes."
