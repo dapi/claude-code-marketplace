@@ -16,13 +16,24 @@ Iteratively review and fix PR until no critical/important issues remain.
 └─────────────────────────────────────────────────────────┘
          │
          ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Review Agent   │ ──▶ │   Fix Agent     │ ──▶ │  Review Agent   │ ──▶ ...
-│  (subagent)     │     │  (subagent)     │     │  (subagent)     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-         │                      │                       │
-         ▼                      ▼                       ▼
-   issues.json            fixes applied           issues.json
+┌─────────────────────────────────────┐
+│  /pr-review-toolkit:review-pr       │
+│  (Skill - launches 4 agents)        │
+├─────────────────────────────────────┤
+│ ├─ code-reviewer        (parallel)  │
+│ ├─ pr-test-analyzer     (parallel)  │
+│ ├─ silent-failure-hunter(parallel)  │
+│ └─ comment-analyzer     (parallel)  │
+└─────────────────────────────────────┘
+         │
+         ▼ (consolidated issues)
+┌─────────────────┐
+│   Fix Agent     │ ──▶ [Loop back to review if issues remain]
+│  (subagent)     │
+└─────────────────┘
+         │
+         ▼
+   fixup commit
 ```
 
 ## Configuration
@@ -46,16 +57,23 @@ Iteratively review and fix PR until no critical/important issues remain.
    }
    ```
 
-### Step 1: Run Review (Subagent)
+### Step 1: Run Review (Skill)
 
-Launch Task tool with `subagent_type: "pr-review-toolkit:code-reviewer"`:
+**IMPORTANT:** Use Skill tool to invoke `/pr-review-toolkit:review-pr` — this runs 4 specialized agents in parallel:
+- code-reviewer
+- pr-test-analyzer
+- silent-failure-hunter
+- comment-analyzer
 
 ```
-Prompt for subagent:
----
-Review the current PR changes.
+Skill tool invocation:
+  skill: "pr-review-toolkit:review-pr"
+```
 
-Output ONLY a JSON object with this exact structure:
+Wait for all 4 agents to complete and collect their results.
+
+After review completes, consolidate results into JSON:
+```json
 {
   "issues": [
     {
@@ -63,7 +81,8 @@ Output ONLY a JSON object with this exact structure:
       "file": "path/to/file.ts",
       "line": 42,
       "description": "Brief description of the issue",
-      "fix_hint": "How to fix it"
+      "fix_hint": "How to fix it",
+      "source": "code-reviewer|test-analyzer|silent-failure|comment-analyzer"
     }
   ],
   "summary": {
@@ -73,11 +92,9 @@ Output ONLY a JSON object with this exact structure:
     "nitpick": 0
   }
 }
-
-Focus on code quality, bugs, security issues.
-Do NOT include suggestions or nitpicks in the issues array - only critical and important.
----
 ```
+
+Extract only `critical` and `important` issues for fixing.
 
 ### Step 2: Parse Review Results
 
@@ -175,12 +192,12 @@ def fix_pr(max_iterations=5):
     for iteration in range(1, max_iterations + 1):
         state.iteration = iteration
 
-        # Review phase (subagent)
-        review_result = run_subagent(
-            type="pr-review-toolkit:code-reviewer",
-            prompt=REVIEW_PROMPT
-        )
-        issues = parse_issues(review_result)
+        # Review phase - invoke skill (runs 4 agents in parallel)
+        review_result = invoke_skill("pr-review-toolkit:review-pr")
+        # This launches: code-reviewer, pr-test-analyzer,
+        #                silent-failure-hunter, comment-analyzer
+
+        issues = consolidate_issues(review_result)
         state.history.append({"iteration": iteration, "action": "review", **issues.summary})
 
         # Check stop condition
@@ -192,7 +209,7 @@ def fix_pr(max_iterations=5):
         # Fix phase (subagent)
         fix_result = run_subagent(
             type="general-purpose",
-            prompt=FIX_PROMPT.format(issues=issues.to_json())
+            prompt=FIX_PROMPT.format(issues=issues.critical_and_important())
         )
         state.history.append({"iteration": iteration, "action": "fix"})
         save_state(state)
