@@ -23,19 +23,48 @@ Execute action based on argument:
 
 ### If `init`
 
-1. Tell the user to:
-   - Open template: https://docs.google.com/spreadsheets/d/18PAEXIvcRTyyP1THm60NiqmfTQEnuljc8obcpGOfx8c
-   - File → Make a copy
-   - Rename the copy (e.g., "ProjectName Requirements")
-   - Copy ID from the copy's URL (between `/d/` and `/edit`)
-2. Ask user for the copied spreadsheet ID
-3. Add section to project's CLAUDE.md:
-   ```markdown
-   # Requirements Management
+**Step 1: Determine project name**
+- Extract from `git remote get-url origin` (repo name)
+- Or use current directory name as fallback
 
-   - **spreadsheet_id:** <ID>
-   - **spreadsheet_url:** https://docs.google.com/spreadsheets/d/<ID>
-   ```
+**Step 2: Automatically create spreadsheet copy**
+
+Try to create a copy programmatically using Google Workspace MCP:
+
+1. Create new spreadsheet via `create_spreadsheet`:
+   - Title: "{ProjectName} Requirements"
+   - Sheets: ["Requirements", "Changelog"]
+
+2. Read template data via `read_sheet_values`:
+   - Template ID: `18PAEXIvcRTyyP1THm60NiqmfTQEnuljc8obcpGOfx8c`
+   - Read "Requirements" sheet (A1:Z1000)
+   - Read "Changelog" sheet (A1:Z100)
+
+3. Write data to new spreadsheet via `modify_sheet_values`:
+   - Copy all data preserving structure
+   - Apply header formatting via `format_sheet_range` (bold, background color)
+
+4. Share spreadsheet via `share_drive_file`:
+   - Share with user's email as owner (already owner by default)
+
+**Step 3: On success**
+- Save to project's CLAUDE.md:
+  ```markdown
+  # Requirements Management
+
+  - **spreadsheet_id:** <NEW_ID>
+  - **spreadsheet_url:** https://docs.google.com/spreadsheets/d/<NEW_ID>
+  ```
+- Show success message with link to new spreadsheet
+
+**Step 4: On failure (fallback to manual)**
+
+If automatic creation fails, instruct the user:
+1. Open template: https://docs.google.com/spreadsheets/d/18PAEXIvcRTyyP1THm60NiqmfTQEnuljc8obcpGOfx8c
+2. File → Make a copy
+3. Rename the copy (e.g., "ProjectName Requirements")
+4. Provide the copied spreadsheet ID (between `/d/` and `/edit` in URL)
+5. Then save to CLAUDE.md as above
 
 ### If `status` or empty
 
