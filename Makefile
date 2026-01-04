@@ -1,4 +1,9 @@
-.PHONY: update update-marketplace update-plugin reinstall
+.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major
+
+PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
+
+# Get current version from plugin.json
+CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
 
 # Update marketplace and plugin
 update: update-marketplace update-plugin
@@ -20,3 +25,51 @@ uninstall:
 
 install:
 	claude plugin install dev-tools@dapi
+
+# Release targets
+# Usage: make release (auto patch) or make release VERSION=1.3.0
+
+release: release-patch
+
+release-patch:
+	@$(MAKE) _release INCREMENT=patch
+
+release-minor:
+	@$(MAKE) _release INCREMENT=minor
+
+release-major:
+	@$(MAKE) _release INCREMENT=major
+
+_release:
+ifdef VERSION
+	@NEW_VERSION=$(VERSION); \
+	echo "📦 Releasing v$$NEW_VERSION..."; \
+	sed -i 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
+	git add $(PLUGIN_JSON); \
+	git commit -m "Bump version to $$NEW_VERSION"; \
+	git tag v$$NEW_VERSION; \
+	git push origin master --tags; \
+	echo "✅ Released v$$NEW_VERSION"
+else
+	@MAJOR=$$(echo $(CURRENT_VERSION) | cut -d. -f1); \
+	MINOR=$$(echo $(CURRENT_VERSION) | cut -d. -f2); \
+	PATCH=$$(echo $(CURRENT_VERSION) | cut -d. -f3); \
+	if [ "$(INCREMENT)" = "major" ]; then \
+		NEW_VERSION=$$((MAJOR + 1)).0.0; \
+	elif [ "$(INCREMENT)" = "minor" ]; then \
+		NEW_VERSION=$$MAJOR.$$((MINOR + 1)).0; \
+	else \
+		NEW_VERSION=$$MAJOR.$$MINOR.$$((PATCH + 1)); \
+	fi; \
+	echo "📦 Releasing v$$NEW_VERSION (was $(CURRENT_VERSION))..."; \
+	sed -i 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
+	git add $(PLUGIN_JSON); \
+	git commit -m "Bump version to $$NEW_VERSION"; \
+	git tag v$$NEW_VERSION; \
+	git push origin master --tags; \
+	echo "✅ Released v$$NEW_VERSION"
+endif
+
+# Show current version
+version:
+	@echo "Current version: $(CURRENT_VERSION)"
