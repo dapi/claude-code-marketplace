@@ -27,9 +27,9 @@ install:
 	claude plugin install dev-tools@dapi
 
 # Release targets
-# Usage: make release (auto patch) or make release VERSION=1.3.0
+# Usage: make release (auto minor) or make release VERSION=1.3.0
 
-release: release-patch
+release: release-minor
 
 release-patch:
 	@$(MAKE) _release INCREMENT=patch
