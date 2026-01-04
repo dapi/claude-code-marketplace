@@ -68,16 +68,42 @@ Skills activate automatically based on task context:
 
 See [dev-tools documentation](./dev-tools/README.md) for complete skill reference.
 
+### Commands
+
+**`/requirements`** - Manage project requirements registry via Google Spreadsheet.
+
+Uses this [Requirements Spreadsheet Template](https://docs.google.com/spreadsheets/d/18PAEXIvcRTyyP1THm60NiqmfTQEnuljc8obcpGOfx8c/edit?gid=2036655286#gid=2036655286).
+
+```bash
+# Initialize requirements for a new project
+/requirements init
+
+# View requirements status
+/requirements status
+
+# Sync with GitHub issues
+/requirements sync
+
+# Add new requirement
+/requirements add "New feature description"
+
+# Update requirement
+/requirements update FR-1.2.3 Development Complete
+```
+
 ## Repository Structure
 
 ```
 claude-code-marketplace/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace configuration
+│   └── marketplace.json           # Marketplace configuration
 ├── dev-tools/                     # Development tools plugin
 │   ├── .claude-plugin/
 │   ├── agents/                    # Specialized agents
 │   ├── skills/                    # Auto-activating skills
+│   ├── commands/                  # Slash commands
+│   │   ├── requirements.md        # Requirements management
+│   │   └── start-issue.md         # GitHub issue workflow
 │   └── README.md
 ├── README.md                      # This file
 ├── CONTRIBUTING.md                # Contribution guidelines
