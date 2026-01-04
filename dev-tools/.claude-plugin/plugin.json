@@ -1,7 +1,7 @@
 {
   "name": "dev-tools",
   "description": "Development tools: agents for coding, refactoring, and architecture",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
@@ -9,10 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["development", "coding", "refactoring", "architecture", "agents"],
-  "commands": [
-    "commands/fix-pr.md",
-    "commands/requirements.md",
-    "commands/start-issue.md"
-  ]
+  "keywords": ["development", "coding", "refactoring", "architecture", "agents"]
 }
