@@ -1,171 +1,89 @@
 # Dapi Claude Code Marketplace
 
-Personal marketplace of Claude Code plugins with specialized agents and skills for development workflows.
-
-## Available Plugins
-
-### 🛠️ dev-tools
-Development tools for coding, refactoring, and architecture.
-
-**Features:**
-- Code architecture analysis
-- Intelligent refactoring workflows
-- Design pattern recognition and application
-- Systematic code quality improvement
-
-[View Documentation](./dev-tools/README.md)
+Personal marketplace of Claude Code plugins for development workflows.
 
 ## Installation
 
-### Quick Start
-
-1. **Add the marketplace:**
-   ```bash
-   /plugin marketplace add dapi/claude-code-marketplace
-   ```
-
-2. **Install desired plugins:**
-   ```bash
-   # Install development tools
-   /plugin install dev-tools@dapi
-   ```
-
-### Local Development
-
-For local development and testing:
-
 ```bash
-# Add local marketplace
-/plugin marketplace add /home/danil/code/claude-code-marketplace
+# Add marketplace
+/plugin marketplace add dapi/claude-code-marketplace
 
-# Install plugins locally
+# Install plugin
 /plugin install dev-tools@dapi
 ```
 
-## Usage
-
-Once installed, plugins provide:
-
-### Agents
-Access specialized agents through `/agents` command:
-- Architecture and design agents
-- Refactoring and optimization agents
-
-### Skills
-Skills activate automatically based on task context:
-- **Systematic workflows** for complex operations
-- **Best practice patterns** from industry standards
-- **Quality gates** ensuring thorough implementation
-
-**Example: Bugsnag Integration** - Automatically activates when you mention bugsnag:
-- "list bugsnag organizations" → Lists all available organizations
-- "show bugsnag projects" → Displays all projects
-- "get bugsnag errors" → Shows error list with filtering
-- "bugsnag details for <id>" → Provides detailed error information
-- "show comments for error <id>" → Displays error comments
-- "mark error <id> as fixed" → Resolves an error
-- Works in English and Russian: "выведи список проектов в bugsnag"
-
-See [dev-tools documentation](./dev-tools/README.md) for complete skill reference.
+## dev-tools Plugin
 
 ### Commands
 
-**`/requirements`** - Manage project requirements registry via Google Spreadsheet.
+| Command | Description |
+|---------|-------------|
+| `/dev-tools:start-issue <url>` | Start work on GitHub issue (creates worktree + branch) |
+| `/dev-tools:fix-pr` | Iterative PR review & fix cycle until clean |
+| `/dev-tools:requirements <action>` | Manage requirements via Google Spreadsheet |
 
-Uses this [Requirements Spreadsheet Template](https://docs.google.com/spreadsheets/d/18PAEXIvcRTyyP1THm60NiqmfTQEnuljc8obcpGOfx8c/edit?gid=2036655286#gid=2036655286).
+#### start-issue
 
 ```bash
-# Initialize requirements for a new project
-/requirements init
-
-# View requirements status
-/requirements status
-
-# Sync with GitHub issues
-/requirements sync
-
-# Add new requirement
-/requirements add "New feature description"
-
-# Update requirement
-/requirements update FR-1.2.3 Development Complete
+/dev-tools:start-issue https://github.com/owner/repo/issues/123
 ```
 
-## Repository Structure
+Creates git worktree in `~/worktrees/<type>/<number>-<slug>` with proper branch naming (`feature/`, `fix/`, `chore/`).
+
+#### fix-pr
+
+```bash
+/dev-tools:fix-pr                    # up to 5 iterations
+/dev-tools:fix-pr --max-iterations=3
+```
+
+Runs 4 review agents in parallel (code-reviewer, pr-test-analyzer, silent-failure-hunter, comment-analyzer), fixes critical/important issues, repeats until clean.
+
+**Requires:** `pr-review-toolkit@claude-code-plugins`
+
+#### requirements
+
+```bash
+/dev-tools:requirements init    # Create project spreadsheet
+/dev-tools:requirements status  # Show summary
+/dev-tools:requirements sync    # Sync with GitHub issues
+/dev-tools:requirements add "Feature title"
+```
+
+### Skills (auto-activate)
+
+| Skill | Triggers |
+|-------|----------|
+| **bugsnag** | "show bugsnag errors", "list bugsnag projects", "что в bugsnag" |
+| **long-running-harness** | "start multi-session project", "continue project work" |
+
+## Development
+
+```bash
+make version        # Show current version
+make release        # Release minor version (1.3.0 → 1.4.0)
+make release-patch  # Release patch (1.3.0 → 1.3.1)
+make update         # Update marketplace + plugin
+make reinstall      # Full reinstall
+```
+
+## Structure
 
 ```
 claude-code-marketplace/
-├── .claude-plugin/
-│   └── marketplace.json           # Marketplace configuration
-├── dev-tools/                     # Development tools plugin
-│   ├── .claude-plugin/
-│   ├── agents/                    # Specialized agents
-│   ├── skills/                    # Auto-activating skills
-│   ├── commands/                  # Slash commands
-│   │   ├── requirements.md        # Requirements management
-│   │   └── start-issue.md         # GitHub issue workflow
+├── dev-tools/
+│   ├── commands/
+│   │   ├── fix-pr.md
+│   │   ├── requirements.md
+│   │   └── start-issue.md
+│   ├── skills/
+│   │   ├── bugsnag/
+│   │   └── long-running-harness/
 │   └── README.md
-├── README.md                      # This file
-├── CONTRIBUTING.md                # Contribution guidelines
-└── LICENSE                        # MIT License
+├── Makefile
+└── README.md
 ```
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on:
-- Adding new agents and skills
-- Creating new plugins
-- Testing and quality standards
-- Pull request process
-
-## Philosophy
-
-This marketplace follows these principles:
-
-**🎯 Practical over Theoretical**
-- Agents and skills solve real development problems
-- Focus on actionable guidance over abstract concepts
-
-**🔧 Systematic over Ad-hoc**
-- Structured workflows for complex operations
-- Repeatable patterns for consistency
-
-**📊 Evidence over Assumptions**
-- Data-driven recommendations
-- Measurable quality improvements
-
-**🚀 Efficiency over Verbosity**
-- Concise, actionable output
-- Token-optimized communication
-
-## Roadmap
-
-### Planned Plugins
-- **code-quality** - Code review, security, and performance analysis
-- **workflows** - CI/CD, deployment, and automation workflows
-- **documentation** - Technical writing and documentation generation
-
-### Upcoming Features
-- Integration with MCP servers
-- Cross-plugin agent collaboration
-- Enhanced skill discovery and activation
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE)
-
-## Author
-
-**Danil Pismenny**
-- Email: danilpismenny@gmail.com
-- GitHub: [@dapi](https://github.com/dapi)
-
-## Support
-
-- 🐛 [Report Issues](https://github.com/dapi/claude-code-marketplace/issues)
-- 💡 [Request Features](https://github.com/dapi/claude-code-marketplace/issues/new)
-- 📖 [Documentation](https://github.com/dapi/claude-code-marketplace/wiki)
-
----
-
-**Built for [Claude Code](https://www.anthropic.com/claude/code)**
+MIT — [Danil Pismenny](https://github.com/dapi)
