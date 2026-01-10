@@ -12,6 +12,15 @@ Personal marketplace of Claude Code plugins for development workflows.
 /plugin install dev-tools@dapi
 ```
 
+## Dependencies
+
+Some skills require GitHub CLI extensions:
+
+| Extension | Purpose | Install |
+|-----------|---------|---------|
+| [gh-pmu](https://github.com/rubrical-studios/gh-pmu) | Project management, sub-issues, batch ops | `gh extension install rubrical-studios/gh-pmu` |
+| [gh-sub-issue](https://github.com/yahsan2/gh-sub-issue) | Parent-child issue relationships | `gh extension install yahsan2/gh-sub-issue` |
+
 ## dev-tools Plugin
 
 ### Commands
