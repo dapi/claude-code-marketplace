@@ -6,6 +6,7 @@ Development tools plugin for Claude Code.
 
 ### Skills
 
+- **github-issues** - Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues
 - **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
 - **long-running-harness** - Manage multi-session development projects with progress tracking
 
@@ -31,6 +32,13 @@ Development tools plugin for Claude Code.
 
 ## Dependencies
 
+Some skills require GitHub CLI extensions:
+
+| Extension | Purpose | Install |
+|-----------|---------|---------|
+| [gh-sub-issue](https://github.com/yahsan2/gh-sub-issue) | Sub-issue hierarchy | `gh extension install yahsan2/gh-sub-issue` |
+| [gh-pmu](https://github.com/rubrical-studios/gh-pmu) | Project management | `gh extension install rubrical-studios/gh-pmu` |
+
 Some commands require additional plugins:
 
 | Command | Dependency | Install |
@@ -47,6 +55,16 @@ Creates:
 - Git worktree in `../worktrees/<type>/<number>-<description>`
 - Branch named by type: `feature/`, `fix/`, or `chore/`
 - Runs `./init.sh` if exists
+
+### GitHub Issues Skill
+Activates automatically when you mention GitHub issue URLs or ask to work with issues:
+```
+"прочитай https://github.com/owner/repo/issues/123"
+"read issue #45"
+"отметь пункт 1 как выполненный"
+"create sub-issue for #123"
+```
+Uses `gh` CLI instead of WebFetch. Supports atomic checkbox operations for parallel work.
 
 ### Bugsnag Skill
 Activates automatically when you ask about Bugsnag data:
