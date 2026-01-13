@@ -31,6 +31,10 @@ description: |
   - "edit issue body", "add checkbox", "update task"
   - "close issue", "reopen issue"
 
+  🖼️ **Images/Attachments**:
+  - "download images from issue", "get issue attachments"
+  - "скачать картинки из issue", "получить изображения"
+
   TRIGGERS: github.com/issues, github issue, issue #, issue url, read issue,
   show issue, view issue, open issue, get issue, fetch issue, display issue,
   list issues, create issue, edit issue, close issue, reopen issue,
@@ -40,7 +44,9 @@ description: |
   закрой пункт, выполни пункт, этап, шаг,
   sub-issue, subissue, subtask, child issue, parent issue, подзадача,
   дочерний issue, дочерняя задача, создай подзадачу,
-  issue body, issue title, issue labels, issue assignee
+  issue body, issue title, issue labels, issue assignee,
+  download images, issue images, issue attachments, скачать картинки,
+  изображения из issue, вложения issue
 
   This skill manages GitHub issues via `gh` CLI with atomic checkbox operations
   to support parallel work by multiple agents.
@@ -218,6 +224,19 @@ NUMBER=$(echo "$URL" | sed -E 's|https://github.com/([^/]+/[^/]+)/issues/([0-9]+
 2. **Точное совпадение**: Используй точный текст checkbox, включая пробелы
 3. **Проверка результата**: После изменения можно проверить `gh issue view` что checkbox отмечен
 4. **Параллельная работа**: Атомарная операция минимизирует риск конфликтов, но не исключает их полностью при одновременном редактировании одного пункта
+
+## Скачивание изображений из issue
+
+Если в issue прикреплены изображения и нужно их скачать:
+
+```bash
+# Получить body и извлечь URL изображений, затем скачать каждое
+gh api repos/OWNER/REPO/issues/123 --jq '.body' | grep -oP 'https://user-images\.githubusercontent\.com/[^)]+' | while read url; do
+    curl -O "$url"
+done
+```
+
+**Примечание**: Изображения хранятся на `user-images.githubusercontent.com`. Этот паттерн работает для стандартных вложений GitHub. Для изображений из других источников (внешние URL) может потребоваться модификация regex.
 
 ## Примеры сценариев
 

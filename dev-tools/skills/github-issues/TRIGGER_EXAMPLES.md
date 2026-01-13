@@ -69,6 +69,15 @@
 - "открой задачу и покажи невыполненные пункты"
 - "check issue #45 progress"
 
+### Images/Attachments
+
+- "download images from issue #123"
+- "скачать картинки из issue"
+- "get attachments from https://github.com/owner/repo/issues/45"
+- "получи изображения из задачи"
+- "save issue images locally"
+- "скачай вложения из issue #12"
+
 ## ❌ Should NOT Activate (negative examples)
 
 ### General GitHub (not issues)
@@ -128,17 +137,20 @@ issue \d+
 - mark, complete, check, close
 - create, add, edit, update
 - list, get, fetch
+- download, save (images/attachments)
 
 ### Action Verbs (Russian)
 - прочитай, покажи, открой, посмотри
 - отметь, выполни, закрой, заверши
 - создай, добавь, редактируй
 - список, получи
+- скачай, сохрани (картинки/вложения)
 
 ### Key Nouns
 - issue, task, задача, задание
 - checkbox, step, пункт, этап, шаг
 - sub-issue, subtask, подзадача, дочерний
+- images, attachments, картинки, изображения, вложения
 
 ### Context Patterns
 - "from issue", "in issue", "из issue", "в задаче"
