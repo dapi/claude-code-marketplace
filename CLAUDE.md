@@ -518,6 +518,59 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 - **Evidence over Assumptions**: Data-driven recommendations
 - **Efficiency over Verbosity**: Concise, token-optimized output
 
+## Makefile Targets
+
+Используй `make` для типовых операций с плагинами и релизами.
+
+### Обновление плагинов
+
+```bash
+# Обновить marketplace + plugin (после git pull или изменений)
+make update
+
+# Только обновить плагин dev-tools
+make update-plugin
+
+# Только обновить marketplace metadata
+make update-marketplace
+
+# Полная переустановка (uninstall + install)
+make reinstall
+```
+
+**Когда использовать:**
+- `make update-plugin` — после `git pull` или локальных изменений в skills/agents/commands
+- `make reinstall` — если плагин сломался или нужна чистая установка
+
+### Релизы
+
+```bash
+# Показать текущую версию
+make version
+
+# Релиз с автоинкрементом patch (1.5.2 → 1.5.3)
+make release-patch
+
+# Релиз с автоинкрементом minor (1.5.2 → 1.6.0)
+make release-minor
+# или просто:
+make release
+
+# Релиз с автоинкрементом major (1.5.2 → 2.0.0)
+make release-major
+
+# Релиз с конкретной версией
+make release VERSION=2.0.0
+```
+
+**Что делает `make release-*`:**
+1. Обновляет версию в `plugin.json`
+2. Коммитит изменение
+3. Создаёт git tag
+4. Пушит в origin с тегами
+
+**ВАЖНО:** После `make release-*` НЕ создаётся GitHub Release — только tag. Для полного релиза используй `gh release create`.
+
 ## Git Workflow
 
 ```bash
