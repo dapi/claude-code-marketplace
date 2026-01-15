@@ -170,8 +170,12 @@ gh sub-issue list 123 -R owner/repo
 # Создать новый sub-issue
 gh sub-issue create --parent 123 --title "Подзадача" -R owner/repo
 
-# Связать существующий issue как sub-issue
+# Связать существующий issue как sub-issue (ОДИН репозиторий)
 gh sub-issue add 123 456 -R owner/repo
+
+# Связать issue из РАЗНЫХ репозиториев — используй ПОЛНЫЕ URL!
+# ВАЖНО: формат owner/repo#123 НЕ работает, только полные URL
+gh sub-issue add https://github.com/owner/repo/issues/123 https://github.com/other-owner/other-repo/issues/456
 
 # Удалить связь
 gh sub-issue remove 123 456 -R owner/repo
@@ -266,4 +270,8 @@ gh sub-issue list 123 -R owner/repo
 
 # 3. Создать подзадачу для сложного пункта
 gh sub-issue create --parent 123 --title "Реализовать API авторизации" -R owner/repo
+
+# 4. Связать issue из ДРУГОГО репозитория как sub-issue
+#    ВАЖНО: только полные URL работают для cross-repo!
+gh sub-issue add https://github.com/owner/parent-repo/issues/123 https://github.com/owner/child-repo/issues/456
 ```
