@@ -5,51 +5,22 @@ description: |
 
   **CRITICAL RULE**: ALWAYS use `gh` CLI for GitHub issues, NEVER use WebFetch!
 
-  Common patterns:
-  - Any URL containing `github.com/.../issues/...`
-  - "read issue #N", "show issue", "open task"
-  - "прочитай issue", "покажи задачу", "открой issue #N"
-  - "mark checkbox done", "complete step", "отметь пункт"
-  - "create sub-issue", "add subtask", "создай подзадачу"
+  📖 **Reading**: "read issue #N", "show issue", "прочитай задачу"
+  ✅ **Checkboxes**: "mark done", "complete step", "отметь пункт"
+  🔗 **Sub-issues**: "create sub-issue", "link as child", "подзадача"
+  📝 **Management**: "edit issue", "close issue", "add label"
+  🖼️ **Images**: "download images from issue", "скачать картинки"
 
-  Specific operations:
-
-  📖 **Reading issues**:
-  - "read issue https://github.com/owner/repo/issues/123"
-  - "show task #45", "what's in issue #12"
-  - "прочитай задачу", "покажи issue"
-
-  ✅ **Marking checkboxes**:
-  - "mark step 1 as done", "complete checkbox"
-  - "отметь пункт выполненным", "закрой этап 2"
-
-  🔗 **Sub-issues**:
-  - "create sub-issue for #123", "list sub-issues"
-  - "создай подзадачу", "покажи дочерние issues"
-
-  📝 **Issue management**:
-  - "edit issue body", "add checkbox", "update task"
-  - "close issue", "reopen issue"
-
-  🖼️ **Images/Attachments**:
-  - "download images from issue", "get issue attachments"
-  - "скачать картинки из issue", "получить изображения"
-
-  TRIGGERS: github.com/issues, github issue, issue #, issue url, read issue,
-  show issue, view issue, open issue, get issue, fetch issue, display issue,
-  list issues, create issue, edit issue, close issue, reopen issue,
-  прочитай issue, покажи issue, открой issue, посмотри issue, задача, задачу,
-  checkbox, check box, task list, tasklist, mark done, mark complete,
-  complete step, complete task, check off, отметь выполненным, отметь пункт,
-  закрой пункт, выполни пункт, этап, шаг,
-  sub-issue, subissue, subtask, child issue, parent issue, подзадача,
-  дочерний issue, дочерняя задача, создай подзадачу,
-  issue body, issue title, issue labels, issue assignee,
-  download images, issue images, issue attachments, скачать картинки,
-  изображения из issue, вложения issue
-
-  This skill manages GitHub issues via `gh` CLI with atomic checkbox operations
-  to support parallel work by multiple agents.
+  TRIGGERS:
+  📖 github.com/issues, issue #, read issue, show issue, view issue,
+     прочитай issue, покажи issue, задача
+  ✅ checkbox, mark done, complete step, check off,
+     отметь пункт, закрой этап
+  🔗 sub-issue, subtask, child issue, parent issue,
+     подзадача, создай подзадачу
+  📝 edit issue, close issue, reopen issue, issue labels,
+     create issue, update task
+  🖼️ download images, issue attachments, скачать картинки
 allowed-tools: Bash, Read
 ---
 
