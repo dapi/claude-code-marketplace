@@ -127,6 +127,7 @@ make version        # Show current version
 make release        # Release minor version (1.3.0 → 1.4.0)
 make release-patch  # Release patch (1.3.0 → 1.3.1)
 make update         # Update marketplace + plugin
+make update-plugin  # Update only plugin (after git pull)
 make reinstall      # Full reinstall
 ```
 
