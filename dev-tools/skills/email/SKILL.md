@@ -52,8 +52,8 @@ CLI-based email management using Himalaya email client with IMAP/SMTP support.
 **CRITICAL**: Always locate email.sh before executing commands.
 
 ```bash
-# Find email.sh location
-SKILL_DIR=$(find ~/.claude -name "email.sh" -path "*/skills/email/*" -type f 2>/dev/null | head -1 | xargs dirname)
+# Find email.sh location (use latest version via sort -V)
+SKILL_DIR=$(find ~/.claude -name "email.sh" -path "*/skills/email/*" -type f 2>/dev/null | sort -V | tail -1 | xargs dirname)
 
 # Execute commands
 bash "$SKILL_DIR/email.sh" <command> [options]
