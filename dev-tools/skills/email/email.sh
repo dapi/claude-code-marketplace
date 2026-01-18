@@ -275,11 +275,8 @@ generate_config() {
         generate_account_config "$account" >> "$CONFIG_FILE"
     done
 
-    # Set default account
-    if [[ ${#accounts[@]} -gt 0 ]]; then
-        echo "[default]" >> "$CONFIG_FILE"
-        echo "account = \"${accounts[0]}\"" >> "$CONFIG_FILE"
-    fi
+    # Note: himalaya v1.1+ doesn't support [default] section
+    # Default account is selected via -a flag or first account in config
 }
 
 cleanup() {
@@ -295,14 +292,29 @@ trap cleanup EXIT
 # ============================================================================
 
 run_himalaya() {
+    # himalaya v1.1+ requires -a/--account as subcommand option
+    # Usage: run_himalaya <subcommand> <sub-subcommand> [args...]
     local account="${SELECTED_ACCOUNT:-}"
     local args=("--config" "$CONFIG_FILE")
 
+    # Add all arguments first
+    args+=("$@")
+
+    # Fallback to first available account if none selected
+    if [[ -z "$account" ]]; then
+        local accounts
+        read -ra accounts <<< "$(discover_accounts)"
+        if [[ ${#accounts[@]} -gt 0 ]]; then
+            account="${accounts[0]}"
+        fi
+    fi
+
+    # Append account at the end (required for himalaya v1.1+)
     if [[ -n "$account" ]]; then
         args+=("-a" "$account")
     fi
 
-    himalaya "${args[@]}" "$@"
+    himalaya "${args[@]}"
 }
 
 # ============================================================================
