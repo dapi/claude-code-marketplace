@@ -473,7 +473,8 @@ cmd_search() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    run_himalaya envelope list -q "$query"
+    # himalaya v1.1+ uses positional args for query, not -q flag
+    run_himalaya envelope list "$query"
 }
 
 cmd_folders() {
@@ -885,7 +886,8 @@ cmd_move() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    run_himalaya message move "$id" -f "$folder"
+    # himalaya v1.1+: message move <TARGET> <ID>
+    run_himalaya message move "$folder" "$id"
     log_success "Message $id moved to $folder"
 }
 
@@ -925,7 +927,8 @@ cmd_delete() {
         run_himalaya message delete "$id"
         log_success "Message $id permanently deleted"
     else
-        run_himalaya message move "$id" -f Trash
+        # himalaya v1.1+: message move <TARGET> <ID>
+        run_himalaya message move Trash "$id"
         log_success "Message $id moved to Trash"
     fi
 }
@@ -956,9 +959,10 @@ cmd_download() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    mkdir -p "$ATTACHMENT_DIR"
-    run_himalaya attachment download "$id" -o "$ATTACHMENT_DIR"
-    log_success "Attachments downloaded to: $ATTACHMENT_DIR"
+    # himalaya v1.1+ downloads to configured downloads-dir (default: ~/Downloads)
+    # No -o flag available
+    run_himalaya attachment download "$id"
+    log_success "Attachments downloaded to downloads directory"
 }
 
 cmd_accounts() {
