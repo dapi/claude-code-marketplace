@@ -623,6 +623,9 @@ ${body}"
 }
 
 cmd_reply() {
+    log_warn "reply command requires interactive editor (\$EDITOR)"
+    log_warn "For non-interactive use, use 'send' command with proper headers"
+
     local id="${1:-}"
     shift || true
 
@@ -658,11 +661,13 @@ cmd_reply() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    echo "$body" | run_himalaya message reply "$id"
-    log_success "Reply sent"
+    # Note: This opens interactive editor in himalaya v1.1+
+    run_himalaya message reply "$id" "$body"
 }
 
 cmd_reply_all() {
+    log_warn "reply-all command requires interactive editor (\$EDITOR)"
+
     local id="${1:-}"
     shift || true
 
@@ -703,6 +708,8 @@ cmd_reply_all() {
 }
 
 cmd_forward() {
+    log_warn "forward command requires interactive editor (\$EDITOR)"
+
     local id="${1:-}"
     shift || true
 
@@ -753,6 +760,8 @@ cmd_forward() {
 }
 
 cmd_draft() {
+    log_warn "draft command requires interactive editor for himalaya v1.1+"
+
     local to=""
     local cc=""
     local subject=""
