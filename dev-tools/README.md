@@ -6,6 +6,7 @@ Development tools plugin for Claude Code.
 
 ### Skills
 
+- **email** - Read/send email via IMAP/SMTP using Himalaya CLI
 - **github-issues** - Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues
 - **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
 - **long-running-harness** - Manage multi-session development projects with progress tracking
@@ -80,6 +81,31 @@ Activates for multi-session project management:
 "start new multi-session project"
 "continue project work"
 "продолжить работу над проектом"
+```
+
+### Email Skill
+Activates when you ask to read/send email:
+```
+"check my inbox"
+"send email to user@example.com"
+"проверь мою почту"
+"отправь письмо"
+```
+
+**Setup:** Set environment variables:
+```bash
+export EMAIL_ADDRESS="user@example.com"
+export EMAIL_USER="user@example.com"
+export EMAIL_PASSWORD="app_password"
+export IMAP_HOST="imap.gmail.com"
+export SMTP_HOST="smtp.gmail.com"
+```
+
+For multiple accounts, use `EMAIL_{NAME}_*` pattern:
+```bash
+export EMAIL_WORK_ADDRESS="work@company.com"
+export EMAIL_WORK_USER="work@company.com"
+# ... etc
 ```
 
 ### Fix PR
