@@ -352,16 +352,23 @@ cmd_inbox() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    local query_args=()
-    query_args+=("-f" "INBOX")
-    query_args+=("-s" "$limit")
-
-    if [[ "$unread" == true ]]; then
-        query_args+=("-q" "UNSEEN")
+    # himalaya v1.1+: query must be LAST, no -q flag
+    local account_to_use="${SELECTED_ACCOUNT:-}"
+    if [[ -z "$account_to_use" ]]; then
+        local accounts
+        read -ra accounts <<< "$(discover_accounts)"
+        if [[ ${#accounts[@]} -gt 0 ]]; then
+            account_to_use="${accounts[0]}"
+        fi
     fi
 
     local result
-    result=$(run_himalaya envelope list "${query_args[@]}" 2>&1) || true
+    if [[ "$unread" == true ]]; then
+        # himalaya v1.1+ filter syntax: "not flag seen" for unread
+        result=$(himalaya --config "$CONFIG_FILE" envelope list -f INBOX -s "$limit" -a "$account_to_use" "not flag seen" 2>&1) || true
+    else
+        result=$(himalaya --config "$CONFIG_FILE" envelope list -f INBOX -s "$limit" -a "$account_to_use" 2>&1) || true
+    fi
 
     if [[ -z "$result" || "$result" == *"no envelope"* ]]; then
         echo "No messages in INBOX."
@@ -473,8 +480,18 @@ cmd_search() {
         SELECTED_ACCOUNT="$account"
     fi
 
-    # himalaya v1.1+ uses positional args for query, not -q flag
-    run_himalaya envelope list "$query"
+    # himalaya v1.1+: query must be LAST argument (after all flags)
+    # So we call himalaya directly with proper order
+    local account_to_use="${SELECTED_ACCOUNT:-}"
+    if [[ -z "$account_to_use" ]]; then
+        local accounts
+        read -ra accounts <<< "$(discover_accounts)"
+        if [[ ${#accounts[@]} -gt 0 ]]; then
+            account_to_use="${accounts[0]}"
+        fi
+    fi
+
+    himalaya --config "$CONFIG_FILE" envelope list -a "$account_to_use" "$query"
 }
 
 cmd_folders() {
