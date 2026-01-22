@@ -6,7 +6,7 @@ description: |
 
   Анализирует технические аспекты: архитектуру, интеграции, безопасность,
   производительность, error handling, масштабируемость.
-allowed-tools: Read, Glob, Grep, WebFetch
+tools: Read, Glob, Grep, WebFetch
 ---
 
 # Spec Architect Agent

@@ -1,29 +1,16 @@
 ---
-name: spec-reviewer
-description: |
-  **UNIVERSAL TRIGGER**: Ревью спецификаций и ТЗ на гапы, нестыковки и противоречия.
-
-  Используй когда:
-  - "проверь спецификацию/ТЗ", "ревью спеки", "review spec"
-  - "найди гапы в требованиях", "проанализируй ТЗ"
-  - "найди нестыковки/противоречия в спецификации"
-  - пользователь дал ссылку на Google Doc или GitHub issue со спецификацией
-
-  Оркестратор запускает ПАРАЛЛЕЛЬНО двух субагентов:
-  - **spec-architect** — технический анализ
-  - **spec-analyst** — бизнес-анализ
-allowed-tools: Bash, Read, Edit, Write, Glob, Grep, WebFetch, Task, AskUserQuestion, mcp__google_workspace__get_doc_content, mcp__google_workspace__modify_doc_text, mcp__google_workspace__read_sheet_values
+description: Ревью спецификации или ТЗ на гапы, нестыковки и противоречия
+argument-hint: [Google Doc URL | GitHub Issue URL | file path]
 ---
 
-# Spec Reviewer Agent (Оркестратор)
+# Spec Review Command
 
-Агент-оркестратор для комплексного ревью спецификаций.
-**Запускает параллельно** двух специализированных субагентов.
+Комплексное ревью спецификации с параллельным техническим и бизнес-анализом.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   spec-reviewer                         │
-│                   (оркестратор)                         │
+│                   /spec-review                          │
+│                   (команда)                             │
 └────────────────────────┬────────────────────────────────┘
                          │
          ┌───────────────┴───────────────┐
@@ -75,8 +62,8 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep, WebFetch, Task, AskUserQuest
 | **GitHub Issue** | CLI: `gh issue view <number> --json body,title` |
 | **Локальный файл** | Tool: `Read` |
 
-**Если спецификация не указана:**
-- Спроси: "Укажи ссылку на Google Doc, номер GitHub issue или путь к файлу"
+**Аргумент команды:** `$ARGUMENTS`
+- Если пусто — спроси: "Укажи ссылку на Google Doc, номер GitHub issue или путь к файлу"
 
 **Извлечение ID:**
 - Google Doc: `https://docs.google.com/document/d/{DOCUMENT_ID}/edit` → `{DOCUMENT_ID}`
@@ -92,7 +79,7 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep, WebFetch, Task, AskUserQuest
 
 ```
 Task 1:
-  subagent_type: "spec-architect"
+  subagent_type: "dev-tools:spec-architect"
   description: "Архитектурный анализ спецификации"
   prompt: |
     Проанализируй следующую спецификацию с технической точки зрения.
@@ -103,7 +90,7 @@ Task 1:
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task 2:
-  subagent_type: "spec-analyst"
+  subagent_type: "dev-tools:spec-analyst"
   description: "Бизнес-анализ спецификации"
   prompt: |
     Проанализируй следующую спецификацию с бизнес точки зрения.
@@ -223,7 +210,7 @@ gh issue create \
 {recommendation}
 
 ---
-_Spec Review Agent | {дата}_
+_Spec Review | {дата}_
 EOF
 )"
 ```
@@ -316,7 +303,7 @@ mcp__google_workspace__modify_doc_text
 
 ---
 
-## Чеклист оркестратора
+## Чеклист
 
 - [ ] Спецификация получена
 - [ ] Запущены ОБА субагента ПАРАЛЛЕЛЬНО (в одном сообщении)

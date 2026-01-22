@@ -6,7 +6,7 @@ description: |
 
   Анализирует бизнес-аспекты: цели, user stories, acceptance criteria,
   бизнес-правила, роли, права доступа, edge cases.
-allowed-tools: Read, Glob, Grep, WebFetch
+tools: Read, Glob, Grep, WebFetch
 ---
 
 # Spec Analyst Agent
