@@ -1,6 +1,7 @@
-.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major
+.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major ensure-marketplace
 
 PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
+MARKETPLACE_PATH = $(shell pwd)
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
@@ -23,7 +24,12 @@ reinstall: uninstall install
 uninstall:
 	claude plugin uninstall dev-tools@dapi || true
 
-install:
+# Ensure marketplace is registered
+ensure-marketplace:
+	@claude plugin marketplace list 2>/dev/null | grep -q "dapi" || \
+		(echo "📦 Adding marketplace 'dapi'..." && claude plugin marketplace add $(MARKETPLACE_PATH))
+
+install: ensure-marketplace
 	claude plugin install dev-tools@dapi
 
 # Release targets
