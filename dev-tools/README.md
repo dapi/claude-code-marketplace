@@ -6,7 +6,7 @@ Development tools plugin for Claude Code.
 
 ### Skills
 
-- **email** - Read/send email via IMAP/SMTP using Himalaya CLI
+- **email** - Read/send email via [Himalaya](https://github.com/pimalaya/himalaya) CLI
 - **github-issues** - Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues
 - **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
 - **long-running-harness** - Manage multi-session development projects with progress tracking
@@ -33,6 +33,12 @@ Development tools plugin for Claude Code.
 
 ## Dependencies
 
+Some skills require external tools:
+
+| Tool | Purpose | Install |
+|------|---------|---------|
+| [Himalaya](https://github.com/pimalaya/himalaya) | Email CLI client | `cargo install himalaya` or [releases](https://github.com/pimalaya/himalaya/releases) |
+
 Some skills require GitHub CLI extensions:
 
 | Extension | Purpose | Install |
@@ -56,6 +62,17 @@ Creates:
 - Git worktree in `../worktrees/<type>/<number>-<description>`
 - Branch named by type: `feature/`, `fix/`, or `chore/`
 - Runs `./init.sh` if exists
+
+### Email Skill
+Activates when you ask to read or send email:
+```
+"check my inbox"
+"send email to user@example.com"
+"проверь мою почту"
+"отправь письмо"
+```
+
+**Requires:** [Himalaya](https://github.com/pimalaya/himalaya) installed and configured.
 
 ### GitHub Issues Skill
 Activates automatically when you mention GitHub issue URLs or ask to work with issues:
@@ -81,31 +98,6 @@ Activates for multi-session project management:
 "start new multi-session project"
 "continue project work"
 "продолжить работу над проектом"
-```
-
-### Email Skill
-Activates when you ask to read/send email:
-```
-"check my inbox"
-"send email to user@example.com"
-"проверь мою почту"
-"отправь письмо"
-```
-
-**Setup:** Set environment variables:
-```bash
-export EMAIL_ADDRESS="user@example.com"
-export EMAIL_USER="user@example.com"
-export EMAIL_PASSWORD="app_password"
-export IMAP_HOST="imap.gmail.com"
-export SMTP_HOST="smtp.gmail.com"
-```
-
-For multiple accounts, use `EMAIL_{NAME}_*` pattern:
-```bash
-export EMAIL_WORK_ADDRESS="work@company.com"
-export EMAIL_WORK_USER="work@company.com"
-# ... etc
 ```
 
 ### Fix PR

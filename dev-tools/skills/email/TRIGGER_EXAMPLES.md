@@ -1,237 +1,128 @@
-# Email Skill Trigger Examples
+# Email Skill - Trigger Examples
 
-## ✅ Should Activate (60+ examples)
+## ✅ Should Activate
 
-### 📥 Reading Inbox
+### 📥 Reading - English
 
-**English:**
 - "check my email"
 - "check my inbox"
-- "show my inbox"
-- "what's in my mail"
+- "show my emails"
 - "what's in my inbox"
-- "any new emails"
 - "show unread emails"
-- "show me my emails"
+- "any new emails?"
 - "read my mail"
-- "check for new messages"
-- "do I have any new emails"
-- "show latest emails"
-- "get my inbox"
-- "list my emails"
-- "open my inbox"
-
-**Russian:**
-- "проверить почту"
-- "проверь мою почту"
-- "покажи входящие"
-- "что в почте"
-- "что у меня в почте"
-- "есть ли новые письма"
-- "показать непрочитанные"
-- "прочитать почту"
-- "открой входящие"
-- "проверь inbox"
-
-### 📤 Sending Emails
-
-**English:**
-- "send an email"
-- "send email to john@example.com"
-- "compose an email"
-- "write an email"
-- "send a message to boss"
-- "email support about my issue"
-- "send mail with attachment"
-- "draft an email"
-- "write a letter"
-- "send this to marketing team"
-
-**Russian:**
-- "отправить письмо"
-- "отправь email на support@company.com"
-- "написать письмо"
-- "напиши письмо"
-- "послать email"
-- "отправить сообщение"
-- "написать email"
-- "отправь почту"
-
-### 💬 Replying and Forwarding
-
-**English:**
-- "reply to this email"
-- "reply to message from boss"
-- "forward this email"
-- "forward to marketing"
-- "reply all"
-- "respond to that email"
-- "answer the email from support"
-- "forward email to colleague"
-
-**Russian:**
-- "ответить на письмо"
-- "ответь на это письмо"
-- "переслать email"
-- "перешли письмо"
-- "ответить всем"
-
-### 🔍 Searching Emails
-
-**English:**
-- "find emails from john"
+- "list emails from today"
+- "find emails from john@example.com"
 - "search emails about meeting"
-- "find all emails with attachments"
-- "search for emails from support"
-- "look for emails about project"
-- "find messages from last week"
-- "search inbox for invoice"
-- "find unread emails"
+- "show emails with subject invoice"
 
-**Russian:**
-- "найти письма от босса"
-- "поиск писем про митинг"
-- "найди email от support"
-- "искать письма"
-- "найти письмо с вложением"
+### 📥 Reading - Russian
 
-### 📁 Folders and Organization
+- "проверь почту"
+- "проверить мою почту"
+- "что в почте"
+- "покажи входящие"
+- "есть новые письма?"
+- "непрочитанные письма"
+- "найди письма от boss@company.com"
+- "письма за сегодня"
+- "покажи письма с темой отчёт"
 
-**English:**
-- "show sent folder"
-- "list drafts"
-- "check spam folder"
-- "show trash"
-- "what folders do I have"
-- "move email to archive"
-- "delete this email"
-- "mark as read"
-- "mark as unread"
+### 📤 Sending - English
 
-**Russian:**
-- "показать отправленные"
-- "покажи черновики"
-- "проверить спам"
-- "показать корзину"
-- "какие папки есть"
-- "удалить письмо"
-- "отметить как прочитанное"
+- "send email to user@example.com"
+- "send an email"
+- "compose new email"
+- "write email to client"
+- "reply to this email"
+- "forward email to team@company.com"
+- "email john about the project"
 
-### 📎 Attachments
+### 📤 Sending - Russian
 
-**English:**
-- "download attachments"
-- "download attachment from email"
-- "send with attachment"
-- "attach file to email"
-- "get attachments from that email"
-- "save email attachments"
+- "отправь письмо на user@example.com"
+- "написать письмо"
+- "отправить email"
+- "ответить на письмо"
+- "переслать письмо"
+- "напиши письмо клиенту"
 
-**Russian:**
-- "скачать вложения"
-- "скачай файлы из письма"
-- "отправить с вложением"
-- "прикрепить файл"
+### 📋 Account Management - English
 
-### 👥 Multi-Account
-
-**English:**
-- "check work email"
-- "send from personal account"
-- "show work inbox"
-- "list my email accounts"
+- "list email accounts"
+- "show my email accounts"
 - "switch to work email"
-- "check personal inbox"
+- "use my personal email"
+- "which email accounts do I have?"
 
-**Russian:**
-- "проверь рабочую почту"
-- "отправь с личного аккаунта"
-- "показать рабочий inbox"
-- "какие email аккаунты есть"
+### 📋 Account Management - Russian
 
-## ❌ Should NOT Activate (10+ examples)
+- "список почтовых аккаунтов"
+- "покажи мои email аккаунты"
+- "переключись на рабочую почту"
+- "используй личную почту"
 
-### General Questions (no action needed)
-- "what is SMTP protocol"
-- "explain IMAP vs POP3"
-- "how does email work"
-- "what is an email server"
-- "email history and evolution"
+### 📁 Folders
 
-### Programming/Technical
-- "email regex validation"
-- "validate email address format"
-- "send email using python"
-- "nodemailer setup"
-- "smtp client implementation"
-- "email parsing library"
+- "show email folders"
+- "list mail folders"
+- "what folders do I have?"
+- "покажи папки почты"
 
-### Comparisons and Recommendations
+## ❌ Should NOT Activate
+
+### General Questions (not email operations)
+
+- "what is SMTP protocol?"
+- "how does IMAP work?"
+- "explain email headers"
+- "what is MX record?"
+
+### Programming Tasks
+
+- "validate email with regex"
+- "parse email address in Python"
+- "send email using nodemailer"
+- "email library for Ruby"
+
+### Setup/Installation
+
+- "install himalaya"
+- "configure email client"
+- "set up IMAP server"
+- "how to get app password for Gmail"
+
+### Comparisons
+
 - "gmail vs outlook"
 - "best email client"
-- "which email provider is better"
-- "compare email services"
-- "recommend email app"
+- "compare email providers"
 
-### Configuration (out of scope)
-- "set up email server"
-- "configure postfix"
-- "install mail server"
-- "email hosting setup"
+### Other Tools
 
-### Other Apps/Services
-- "slack message to team"
-- "send SMS"
-- "telegram message"
-- "whatsapp message"
+- "send slack message"
+- "check telegram"
+- "post to discord"
 
 ## 🎯 Key Trigger Words
 
-### Action Verbs
-**English:** check, send, read, show, list, search, find, compose, write, reply, forward, download, delete, move, mark, open, get, fetch, retrieve
+### Verbs (English)
+check, read, show, list, send, compose, write, reply, forward, find, search, email
 
-**Russian:** проверить, отправить, прочитать, показать, найти, написать, ответить, переслать, скачать, удалить, переместить, открыть, получить
+### Verbs (Russian)
+проверить, прочитать, показать, отправить, написать, ответить, переслать, найти
 
-### Nouns
-**English:** email, mail, inbox, message, letter, folder, draft, attachment, spam, trash, sent, outbox
+### Nouns (English)
+email, mail, inbox, message, unread, folder, account
 
-**Russian:** почта, письмо, входящие, сообщение, папка, черновик, вложение, спам, корзина, отправленные, исходящие
+### Nouns (Russian)
+почта, письмо, входящие, сообщение, непрочитанные, папка, аккаунт
 
 ### Context Patterns
 - "my email/mail/inbox"
-- "check/show/read email"
-- "send/write/compose email"
-- "email to [recipient]"
-- "from [sender]"
-- "about [topic]"
-- "with attachment"
-- "unread/new emails"
-- "work/personal email"
-
-## 📊 Coverage Metrics
-
-| Category | Examples | Languages |
-|----------|----------|-----------|
-| Reading | 25 | EN, RU |
-| Sending | 18 | EN, RU |
-| Reply/Forward | 13 | EN, RU |
-| Search | 13 | EN, RU |
-| Folders | 14 | EN, RU |
-| Attachments | 10 | EN, RU |
-| Multi-Account | 10 | EN, RU |
-| **Positive Total** | **103** | **EN, RU** |
-| **Negative Total** | **20** | **EN** |
-
-## 🔄 Edge Cases
-
-### Should Activate (borderline cases)
-- "mail" (context: checking mail)
-- "inbox" (context: showing inbox)
-- "new messages" (context: email messages)
-- "любые письма" (context: email)
-
-### Should NOT Activate (borderline cases)
-- "email template" (designing templates)
-- "email marketing" (marketing context)
-- "email signature" (settings)
-- "mailing list" (list management, not reading/sending)
+- "email to [address]"
+- "emails from [sender]"
+- "emails about [topic]"
+- "моя почта"
+- "письмо на [адрес]"
+- "письма от [отправитель]"
