@@ -145,7 +145,7 @@ tools: Read, Glob, Grep, WebFetch
   },
   "issues": [
     {
-      "id": "N-001",
+      "id": "INF-GAP-001",
       "type": "gap",
       "severity": "high",
       "title": "Краткое название",
@@ -170,8 +170,15 @@ tools: Read, Glob, Grep, WebFetch
 - `medium` — желательно уточнить
 - `low` — рекомендация
 
-### ID prefix
-- `N-XXX` — все проблемы от infra агента (N = Non-functional/iNfra)
+### ID формат: `INF-ТИП-XXX`
+
+| Тип проблемы | Prefix |
+|--------------|--------|
+| gap | `INF-GAP-XXX` |
+| inconsistency | `INF-INC-XXX` |
+| ambiguity | `INF-AMB-XXX` |
+| infeasibility | `INF-FEA-XXX` |
+| untestability | `INF-TST-XXX` |
 
 ---
 
@@ -180,7 +187,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Критичный гап
 ```json
 {
-  "id": "N-001",
+  "id": "INF-GAP-001",
   "type": "gap",
   "severity": "critical",
   "title": "Отсутствует описание аутентификации",
@@ -193,7 +200,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нестыковка
 ```json
 {
-  "id": "N-002",
+  "id": "INF-INC-001",
   "type": "inconsistency",
   "severity": "high",
   "title": "SLA не достижимо с single instance",
@@ -206,7 +213,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Неоднозначность
 ```json
 {
-  "id": "N-003",
+  "id": "INF-AMB-001",
   "type": "ambiguity",
   "severity": "medium",
   "title": "Неопределённые требования к производительности",
@@ -219,7 +226,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нереализуемость
 ```json
 {
-  "id": "N-004",
+  "id": "INF-FEA-001",
   "type": "infeasibility",
   "severity": "high",
   "title": "Бюджет не покрывает требуемую инфраструктуру",

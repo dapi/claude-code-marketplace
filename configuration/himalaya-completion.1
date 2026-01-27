@@ -1,0 +1,22 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH completion 1  "completion " 
+.SH NAME
+completion \- Print completion script for the given shell to stdout
+.SH SYNOPSIS
+\fBcompletion\fR [\fB\-h\fR|\fB\-\-help\fR] <\fISHELL\fR> 
+.SH DESCRIPTION
+Print completion script for the given shell to stdout.
+.PP
+This command allows you to generate completion script for a given shell. The script is printed to the standard output. If you want to write it to a file, just use unix redirection.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+<\fISHELL\fR>
+Shell for which completion script should be generated for
+.br
+
+.br
+[\fIpossible values: \fRbash, elvish, fish, powershell, zsh]

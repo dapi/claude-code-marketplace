@@ -116,7 +116,7 @@ tools: Read, Glob, Grep, WebFetch
   },
   "issues": [
     {
-      "id": "P-001",
+      "id": "API-GAP-001",
       "type": "gap",
       "severity": "high",
       "title": "Краткое название",
@@ -141,8 +141,15 @@ tools: Read, Glob, Grep, WebFetch
 - `medium` — желательно уточнить
 - `low` — рекомендация
 
-### ID prefix
-- `P-XXX` — все проблемы от api агента (P = Protocol/API)
+### ID формат: `API-ТИП-XXX`
+
+| Тип проблемы | Prefix |
+|--------------|--------|
+| gap | `API-GAP-XXX` |
+| inconsistency | `API-INC-XXX` |
+| ambiguity | `API-AMB-XXX` |
+| infeasibility | `API-FEA-XXX` |
+| untestability | `API-TST-XXX` |
 
 ---
 
@@ -151,7 +158,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Критичный гап
 ```json
 {
-  "id": "P-001",
+  "id": "API-GAP-001",
   "type": "gap",
   "severity": "critical",
   "title": "Отсутствует описание формата ошибок API",
@@ -164,7 +171,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нестыковка
 ```json
 {
-  "id": "P-002",
+  "id": "API-INC-001",
   "type": "inconsistency",
   "severity": "high",
   "title": "Конфликт naming conventions",
@@ -177,7 +184,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Неоднозначность
 ```json
 {
-  "id": "P-003",
+  "id": "API-AMB-001",
   "type": "ambiguity",
   "severity": "medium",
   "title": "Неопределённая пагинация",
@@ -190,7 +197,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нереализуемость
 ```json
 {
-  "id": "P-004",
+  "id": "API-FEA-001",
   "type": "infeasibility",
   "severity": "high",
   "title": "Превышение rate limit внешнего API",

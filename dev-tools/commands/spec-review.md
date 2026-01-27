@@ -1,7 +1,7 @@
 ---
 description: Ревью спецификации или ТЗ на гапы, нестыковки, противоречия и оценку объёма
 argument-hint: [Google Doc URL | GitHub Issue URL | file path]
-version: "1.1.0"
+version: "1.2.0"
 ---
 
 # Spec Review Command
@@ -102,7 +102,7 @@ version: "1.1.0"
 ## Переменные состояния
 
 ```
-VERSION = "1.1.0"                # Версия команды (синхронизирована с frontmatter)
+VERSION = "1.2.0"                # Версия команды (синхронизирована с frontmatter)
 iteration = 1                    # Текущая итерация (начинаем с 1)
 max_iterations = 3               # Максимум итераций
 spec_content = ""                # Текст спецификации
@@ -211,10 +211,10 @@ Task 5:
 ### 3.1 Парсинг результатов
 
 ```
-data_result = JSON.parse(data_output)       # D-XXX issues
-api_result = JSON.parse(api_output)         # P-XXX issues
-infra_result = JSON.parse(infra_output)     # N-XXX issues
-analyst_result = JSON.parse(analyst_output) # B-XXX issues (business)
+data_result = JSON.parse(data_output)       # DAT-TYPE-XXX issues
+api_result = JSON.parse(api_output)         # API-TYPE-XXX issues
+infra_result = JSON.parse(infra_output)     # INF-TYPE-XXX issues
+analyst_result = JSON.parse(analyst_output) # BIZ-TYPE-XXX issues
 scoper_result = JSON.parse(scoper_output)   # scope analysis
 ```
 
@@ -367,10 +367,10 @@ EOF
 
 | Источник | 🔴 Крит. | 🟠 Выс. | 🟡 Сред. | 🟢 Низ. |
 |----------|----------|---------|----------|---------|
-| 🗄️ Data (D-XXX) | N | N | N | N |
-| 🔌 API (P-XXX) | N | N | N | N |
-| 🛡️ Infra (N-XXX) | N | N | N | N |
-| 📊 Analyst (B-XXX) | N | N | N | N |
+| 🗄️ Data (DAT-*) | N | N | N | N |
+| 🔌 API (API-*) | N | N | N | N |
+| 🛡️ Infra (INF-*) | N | N | N | N |
+| 📊 Analyst (BIZ-*) | N | N | N | N |
 | **Итого** | **N** | **N** | **N** | **N** |
 
 ### 🔴 Критичные проблемы
@@ -574,14 +574,36 @@ ELIF has_blocking_issues AND NOT can_iterate:
 
 ---
 
-## ID префиксы по агентам
+## ID формат: `АГЕНТ-ТИП-XXX`
 
-| Агент | Prefix | Описание |
-|-------|--------|----------|
-| spec-data | D-XXX | Проблемы с данными |
-| spec-api | P-XXX | Проблемы с API/интеграциями |
-| spec-infra | N-XXX | Проблемы с инфраструктурой/NFR |
-| spec-analyst | B-XXX | Бизнес-проблемы |
+### Префиксы агентов
+
+| Агент | Prefix |
+|-------|--------|
+| spec-data | `DAT-` |
+| spec-api | `API-` |
+| spec-infra | `INF-` |
+| spec-analyst | `BIZ-` |
+
+### Префиксы типов проблем
+
+| Тип | Prefix | Описание |
+|-----|--------|----------|
+| gap | `-GAP-` | Пропущенная информация |
+| inconsistency | `-INC-` | Противоречие |
+| ambiguity | `-AMB-` | Неоднозначность |
+| infeasibility | `-FEA-` | Нереализуемость |
+| unverifiability | `-VER-` | Непроверяемость |
+| untestability | `-TST-` | Нетестируемость |
+
+### Примеры ID
+
+```
+DAT-GAP-001   # Data: пропущено описание модели
+API-INC-001   # API: противоречие в форматах
+INF-AMB-001   # Infra: неоднозначное требование
+BIZ-VER-001   # Business: непроверяемый критерий
+```
 
 ## Символы для типов проблем
 

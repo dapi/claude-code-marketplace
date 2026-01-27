@@ -1,0 +1,28 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH flag 1  "flag " 
+.SH NAME
+flag \- Add, change and remove your envelopes flags
+.SH SYNOPSIS
+\fBflag\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Add, change and remove your envelopes flags.
+.PP
+A flag is a tag associated to an envelope. Existing flags are seen, answered, flagged, deleted, draft. Other flags are considered custom, which are not always supported.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.SH SUBCOMMANDS
+.TP
+flag\-add(1)
+Add flag(s) to the given envelope
+.TP
+flag\-set(1)
+Replace flag(s) of a given envelope
+.TP
+flag\-remove(1)
+Remove flag(s) from a given envelope
+.TP
+flag\-help(1)
+Print this message or the help of the given subcommand(s)

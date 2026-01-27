@@ -1,0 +1,34 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH folder 1  "folder " 
+.SH NAME
+folder \- Create, list and purge your folders (as known as mailboxes)
+.SH SYNOPSIS
+\fBfolder\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Create, list and purge your folders (as known as mailboxes).
+.PP
+A folder (as known as mailbox, or directory) is a messages container. This subcommand allows you to manage them.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.SH SUBCOMMANDS
+.TP
+folder\-add(1)
+Create the given folder
+.TP
+folder\-list(1)
+List all folders
+.TP
+folder\-expunge(1)
+Expunge the given folder
+.TP
+folder\-purge(1)
+Purge the given folder
+.TP
+folder\-delete(1)
+Delete the given folder
+.TP
+folder\-help(1)
+Print this message or the help of the given subcommand(s)

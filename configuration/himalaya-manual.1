@@ -1,0 +1,18 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH manual 1  "manual " 
+.SH NAME
+manual \- Generate manual pages to the given directory
+.SH SYNOPSIS
+\fBmanual\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIDIR\fR> 
+.SH DESCRIPTION
+Generate manual pages to the given directory.
+.PP
+This command allows you to generate manual pages (following the man page format) to the given directory. If the directory does not exist, it will be created. Any existing man pages will be overriden.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+<\fIDIR\fR>
+Directory where man files should be generated in

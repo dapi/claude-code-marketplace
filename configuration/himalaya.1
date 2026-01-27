@@ -1,0 +1,86 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH himalaya 1  "himalaya 1.1.0" 
+.SH NAME
+himalaya \- CLI to manage emails
+.SH SYNOPSIS
+\fBhimalaya\fR [\fB\-c\fR|\fB\-\-config\fR] [\fB\-o\fR|\fB\-\-output\fR] [\fB\-\-debug\fR] [\fB\-\-trace\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] [\fIsubcommands\fR]
+.SH DESCRIPTION
+CLI to manage emails
+.SH OPTIONS
+.TP
+\fB\-c\fR, \fB\-\-config\fR=\fIPATH\fR
+Override the default configuration file path.
+
+The given paths are shell\-expanded then canonicalized (if applicable). If the first path does not point to a valid file, the wizard will propose to assist you in the creation of the configuration file. Other paths are merged with the first one, which allows you to separate your public config from your private(s) one(s).
+.RS
+May also be specified with the \fBHIMALAYA_CONFIG\fR environment variable. 
+.RE
+.TP
+\fB\-o\fR, \fB\-\-output\fR=\fIFORMAT\fR [default: plain]
+Customize the output format.
+
+The output format determine how to display commands output to the terminal.
+
+The possible values are:
+
+\- json: output will be in a form of a JSON\-compatible object
+
+\- plain: output will be in a form of either a plain text or table, depending on the command
+.br
+
+.br
+[\fIpossible values: \fRplain, json]
+.TP
+\fB\-\-debug\fR
+Enable logs with spantrace.
+
+This is the same as running the command with `RUST_LOG=debug` environment variable.
+.TP
+\fB\-\-trace\fR
+Enable verbose logs with backtrace.
+
+This is the same as running the command with `RUST_LOG=trace` and `RUST_BACKTRACE=1` environment variables.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version
+.SH SUBCOMMANDS
+.TP
+himalaya\-account(1)
+Configure, list and diagnose your accounts
+.TP
+himalaya\-folder(1)
+Create, list and purge your folders (as known as mailboxes)
+.TP
+himalaya\-envelope(1)
+List, search and sort your envelopes
+.TP
+himalaya\-flag(1)
+Add, change and remove your envelopes flags
+.TP
+himalaya\-message(1)
+Read, write, send, copy, move and delete your messages
+.TP
+himalaya\-attachment(1)
+Download your message attachments
+.TP
+himalaya\-template(1)
+Generate, save and send message templates
+.TP
+himalaya\-manual(1)
+Generate manual pages to the given directory
+.TP
+himalaya\-completion(1)
+Print completion script for the given shell to stdout
+.TP
+himalaya\-help(1)
+Print this message or the help of the given subcommand(s)
+.SH VERSION
+vv1.1.0 +wizard +sendmail +imap +pgp\-commands +smtp +maildir
+build: linux musl x86_64
+git: nix\-flake\-20250111144424, rev 5632fdac3b1ca386b37957c772f288c5fc953a3a
+.SH AUTHORS
+soywod <clement.douin@posteo.net>

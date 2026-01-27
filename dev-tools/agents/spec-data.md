@@ -101,7 +101,7 @@ tools: Read, Glob, Grep, WebFetch
   },
   "issues": [
     {
-      "id": "D-001",
+      "id": "DAT-GAP-001",
       "type": "gap",
       "severity": "high",
       "title": "Краткое название",
@@ -126,8 +126,15 @@ tools: Read, Glob, Grep, WebFetch
 - `medium` — желательно уточнить
 - `low` — рекомендация
 
-### ID prefix
-- `D-XXX` — все проблемы от data агента
+### ID формат: `DAT-ТИП-XXX`
+
+| Тип проблемы | Prefix |
+|--------------|--------|
+| gap | `DAT-GAP-XXX` |
+| inconsistency | `DAT-INC-XXX` |
+| ambiguity | `DAT-AMB-XXX` |
+| infeasibility | `DAT-FEA-XXX` |
+| untestability | `DAT-TST-XXX` |
 
 ---
 
@@ -136,7 +143,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Критичный гап
 ```json
 {
-  "id": "D-001",
+  "id": "DAT-GAP-001",
   "type": "gap",
   "severity": "critical",
   "title": "Отсутствует описание модели User",
@@ -149,7 +156,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нестыковка
 ```json
 {
-  "id": "D-002",
+  "id": "DAT-INC-001",
   "type": "inconsistency",
   "severity": "high",
   "title": "Конфликт типов поля status",
@@ -162,7 +169,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Неоднозначность
 ```json
 {
-  "id": "D-003",
+  "id": "DAT-AMB-001",
   "type": "ambiguity",
   "severity": "medium",
   "title": "Неопределённый срок хранения истории",

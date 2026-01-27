@@ -91,7 +91,7 @@ tools: Read, Glob, Grep, WebFetch
   },
   "issues": [
     {
-      "id": "G-101",
+      "id": "BIZ-GAP-001",
       "type": "gap",
       "severity": "high",
       "title": "Краткое название",
@@ -116,12 +116,15 @@ tools: Read, Glob, Grep, WebFetch
 - `medium` — желательно уточнить
 - `low` — рекомендация
 
-### ID prefix (начинаются с 100+ чтобы не пересекаться с architect)
-- `G-1XX` — gap
-- `I-1XX` — inconsistency
-- `A-1XX` — ambiguity
-- `V-1XX` — unverifiability
-- `T-1XX` — untestability
+### ID формат: `BIZ-ТИП-XXX`
+
+| Тип проблемы | Prefix |
+|--------------|--------|
+| gap | `BIZ-GAP-XXX` |
+| inconsistency | `BIZ-INC-XXX` |
+| ambiguity | `BIZ-AMB-XXX` |
+| unverifiability | `BIZ-VER-XXX` |
+| untestability | `BIZ-TST-XXX` |
 
 ---
 
@@ -130,7 +133,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Критичный гап
 ```json
 {
-  "id": "G-101",
+  "id": "BIZ-GAP-001",
   "type": "gap",
   "severity": "critical",
   "title": "Отсутствуют acceptance criteria",
@@ -143,7 +146,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Нестыковка
 ```json
 {
-  "id": "I-101",
+  "id": "BIZ-INC-001",
   "type": "inconsistency",
   "severity": "high",
   "title": "Несогласованные роли пользователей",
@@ -156,7 +159,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Неоднозначность
 ```json
 {
-  "id": "A-101",
+  "id": "BIZ-AMB-001",
   "type": "ambiguity",
   "severity": "medium",
   "title": "Неясно какой пользователь",
@@ -169,7 +172,7 @@ tools: Read, Glob, Grep, WebFetch
 ### Непроверяемость
 ```json
 {
-  "id": "V-101",
+  "id": "BIZ-VER-001",
   "type": "unverifiability",
   "severity": "medium",
   "title": "Субъективный критерий UX",

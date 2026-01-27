@@ -1,0 +1,58 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH message 1  "message " 
+.SH NAME
+message \- Read, write, send, copy, move and delete your messages
+.SH SYNOPSIS
+\fBmessage\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Read, write, send, copy, move and delete your messages.
+.PP
+A message is the content of an email. It is composed of headers (located at the top of the message) and a body (located at the bottom of the message). Both are separated by two new lines. This subcommand allows you to manage them.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.SH SUBCOMMANDS
+.TP
+message\-read(1)
+Read a human\-friendly version of the message associated to the given envelope id(s)
+.TP
+message\-export(1)
+Export the message associated to the given envelope id
+.TP
+message\-thread(1)
+Read human\-friendly version of messages associated to the given envelope id\*(Aqs thread
+.TP
+message\-write(1)
+Compose a new message, from scratch
+.TP
+message\-reply(1)
+Reply to the message associated to the given envelope id
+.TP
+message\-forward(1)
+Forward the message associated to the given envelope id
+.TP
+message\-edit(1)
+Edit the message associated to the given envelope id
+.TP
+message\-mailto(1)
+Parse and edit a message from the given mailto URL string
+.TP
+message\-save(1)
+Save the given raw message to the given folder
+.TP
+message\-send(1)
+Send the given raw message
+.TP
+message\-copy(1)
+Copy the message associated to the given envelope id(s) to the given target folder
+.TP
+message\-move(1)
+Move the message associated to the given envelope id(s) to the given target folder
+.TP
+message\-delete(1)
+Mark as deleted the message associated to the given envelope id(s)
+.TP
+message\-help(1)
+Print this message or the help of the given subcommand(s)

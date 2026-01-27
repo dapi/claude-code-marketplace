@@ -1,0 +1,22 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH attachment 1  "attachment " 
+.SH NAME
+attachment \- Download your message attachments
+.SH SYNOPSIS
+\fBattachment\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Download your message attachments.
+.PP
+A message body can be composed of multiple MIME parts. An attachment is the representation of a binary part of a message body.
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.SH SUBCOMMANDS
+.TP
+attachment\-download(1)
+Download all attachments found in the given message
+.TP
+attachment\-help(1)
+Print this message or the help of the given subcommand(s)
