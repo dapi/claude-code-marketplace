@@ -10,12 +10,14 @@ Development tools plugin for Claude Code.
 - **github-issues** - Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues
 - **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
 - **long-running-harness** - Manage multi-session development projects with progress tracking
+- **cluster-efficiency** - Kubernetes cluster resource efficiency analysis (nodes, workloads, Karpenter)
 
 ### Commands
 
 - `/dev-tools:start-issue <url>` - Start work on GitHub issue (creates worktree, branch)
 - `/dev-tools:fix-pr` - Iterative PR review and fix cycle (requires `pr-review-toolkit` plugin)
 - `/dev-tools:requirements` - Manage project requirements via Google Spreadsheet
+- `/dev-tools:cluster-efficiency` - Kubernetes cluster resource efficiency analysis
 
 ## Installation
 
@@ -38,6 +40,8 @@ Some skills require external tools:
 | Tool | Purpose | Install |
 |------|---------|---------|
 | [Himalaya](https://github.com/pimalaya/himalaya) | Email CLI client | `cargo install himalaya` or [releases](https://github.com/pimalaya/himalaya/releases) |
+| kubectl | Kubernetes CLI | [Install kubectl](https://kubernetes.io/docs/tasks/tools/) |
+| Prometheus | Historical metrics (optional) | Available in cluster via port-forward |
 
 Some skills require GitHub CLI extensions:
 
@@ -116,6 +120,32 @@ Manage project requirements via Google Spreadsheet:
 /dev-tools:requirements sync    # Sync with GitHub issues
 /dev-tools:requirements add "Feature description"
 ```
+
+### Cluster Efficiency
+Analyze Kubernetes cluster resource utilization:
+```bash
+/dev-tools:cluster-efficiency                          # Basic analysis
+/dev-tools:cluster-efficiency --context=production     # Specific cluster
+/dev-tools:cluster-efficiency --namespace=app --focus=workloads
+/dev-tools:cluster-efficiency --prometheus --period=7d # With historical data
+/dev-tools:cluster-efficiency --deep                   # Deep analysis with subagents
+/dev-tools:cluster-efficiency --save --compare         # Save and compare reports
+```
+
+**Analysis areas:**
+- **Nodes** - CPU/memory utilization, over-provisioned nodes
+- **Workloads** - Pod resource requests vs actual usage
+- **Karpenter** - Consolidation opportunities, NodePool efficiency
+- **Cost** - Potential savings from right-sizing
+
+**Efficiency thresholds:**
+| Metric | Good | Acceptable | Poor |
+|--------|------|------------|------|
+| CPU utilization | >70% | 40-70% | <40% |
+| Memory utilization | >60% | 40-60% | <40% |
+| Requests efficiency | >60% | 30-60% | <30% |
+
+**Requires:** kubectl configured with cluster access. Prometheus optional for historical metrics.
 
 ## License
 
