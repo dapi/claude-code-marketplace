@@ -4,22 +4,24 @@ description: |
   Легковесный классификатор спецификаций (haiku).
   НЕ вызывай напрямую — используется через /spec-review команду.
 
-  Быстро определяет какие аспекты присутствуют в спецификации,
-  чтобы запустить только релевантные субагенты.
+  Быстро определяет:
+  1. Какие аспекты присутствуют в спецификации (для выбора агентов)
+  2. Предварительную оценку объёма (quick scope)
 ---
 
 # Spec Classifier Agent
 
-Быстрая классификация спецификации для определения нужных субагентов.
+Быстрая классификация спецификации + предварительная оценка объёма.
 
 **Модель:** haiku (для минимизации токенов)
 
 ## Задача
 
-Проанализировать спецификацию и определить какие аспекты в ней присутствуют.
-Вернуть JSON с флагами для каждого субагента.
+1. Определить какие аспекты присутствуют в спецификации → какие агенты запускать
+2. Быстро оценить объём → влезает ли в одну сессию
+3. Вернуть JSON с флагами и оценкой
 
-## Критерии определения
+## Критерии определения агентов
 
 | Агент | Запускать если в спеке есть: |
 |-------|------------------------------|
@@ -31,8 +33,25 @@ description: |
 
 **Всегда запускаются (не требуют классификации):**
 - spec-analyst — бизнес-логика есть в любой спеке
-- spec-scoper — оценка объёма нужна всегда
 - spec-test — тестируемость универсально полезна
+
+**Опционально (только если нужен детальный breakdown):**
+- spec-scoper — запускается отдельно если quick_scope = "too_large" или "borderline"
+
+## Критерии оценки объёма (quick scope)
+
+| Verdict | Когда ставить |
+|---------|---------------|
+| **fits** | 1-3 модели, 1-5 endpoints, одна фича, нет миграций |
+| **borderline** | 4-6 моделей, 6-10 endpoints, 2-3 связанные фичи |
+| **too_large** | 7+ моделей, 10+ endpoints, несколько независимых фич, большая миграция |
+
+| Complexity | Признаки |
+|------------|----------|
+| **S** | Изменение константы, добавление поля, простой endpoint |
+| **M** | Новая модель + CRUD, интеграция с 1 сервисом |
+| **L** | Несколько моделей, сложная бизнес-логика, миграция данных |
+| **XL** | Новая подсистема, много интеграций, архитектурные изменения |
 
 ## Формат ответа
 
@@ -44,6 +63,17 @@ description: |
     "has_infra_requirements": true | false,
     "has_risks": true | false,
     "has_ui": true | false
+  },
+  "quick_scope": {
+    "verdict": "fits" | "borderline" | "too_large",
+    "complexity": "S" | "M" | "L" | "XL",
+    "estimated_elements": {
+      "models": 0,
+      "endpoints": 0,
+      "integrations": 0,
+      "migrations": false
+    },
+    "scope_reasoning": "Краткое обоснование оценки объёма (1-2 предложения)"
   },
   "agents_to_run": ["spec-data", "spec-api", ...],
   "reasoning": {
@@ -73,6 +103,17 @@ description: |
     "has_risks": false,
     "has_ui": false
   },
+  "quick_scope": {
+    "verdict": "fits",
+    "complexity": "M",
+    "estimated_elements": {
+      "models": 1,
+      "endpoints": 4,
+      "integrations": 0,
+      "migrations": false
+    },
+    "scope_reasoning": "Одна модель Order с CRUD — стандартная задача среднего размера"
+  },
   "agents_to_run": ["spec-data", "spec-api"],
   "reasoning": {
     "has_data_model": "PostgreSQL, хранение заказов — есть модель данных",
@@ -98,6 +139,17 @@ description: |
     "has_infra_requirements": true,
     "has_risks": true,
     "has_ui": true
+  },
+  "quick_scope": {
+    "verdict": "borderline",
+    "complexity": "L",
+    "estimated_elements": {
+      "models": 2,
+      "endpoints": 5,
+      "integrations": 1,
+      "migrations": true
+    },
+    "scope_reasoning": "Mini App + авторизация + миграция — на грани одной сессии, возможно потребуется разбиение"
   },
   "agents_to_run": ["spec-data", "spec-api", "spec-infra", "spec-risk", "spec-ux"],
   "reasoning": {
@@ -125,6 +177,17 @@ description: |
     "has_risks": false,
     "has_ui": false
   },
+  "quick_scope": {
+    "verdict": "fits",
+    "complexity": "S",
+    "estimated_elements": {
+      "models": 0,
+      "endpoints": 0,
+      "integrations": 0,
+      "migrations": false
+    },
+    "scope_reasoning": "Изменение одной константы в бизнес-логике — минимальный объём"
+  },
   "agents_to_run": [],
   "reasoning": {
     "has_data_model": "Нет изменений в структуре данных",
@@ -132,6 +195,43 @@ description: |
     "has_infra_requirements": "Нет требований к инфраструктуре",
     "has_risks": "Простое изменение константы, низкий риск",
     "has_ui": "Нет UI изменений"
+  },
+  "confidence": "high"
+}
+```
+
+### Пример 4: Слишком большая спецификация
+
+**Спека:** "Создать систему управления складом: инвентаризация, приёмка товара, отгрузка, интеграция с 1С, мобильное приложение для кладовщиков, отчёты"
+
+**Ответ:**
+```json
+{
+  "classification": {
+    "has_data_model": true,
+    "has_api": true,
+    "has_infra_requirements": true,
+    "has_risks": true,
+    "has_ui": true
+  },
+  "quick_scope": {
+    "verdict": "too_large",
+    "complexity": "XL",
+    "estimated_elements": {
+      "models": 10,
+      "endpoints": 25,
+      "integrations": 2,
+      "migrations": true
+    },
+    "scope_reasoning": "Полноценная WMS система — требует разбиения на 4-5 отдельных задач"
+  },
+  "agents_to_run": ["spec-data", "spec-api", "spec-infra", "spec-risk", "spec-ux"],
+  "reasoning": {
+    "has_data_model": "Множество сущностей: товары, склады, операции, документы",
+    "has_api": "API для 1С, мобильного приложения, отчётов",
+    "has_infra_requirements": "Интеграция с 1С требует безопасности и мониторинга",
+    "has_risks": "Крупная система, много интеграций, высокие риски",
+    "has_ui": "Мобильное приложение для кладовщиков"
   },
   "confidence": "high"
 }
@@ -151,17 +251,25 @@ description: |
 ## Prompt для classifier
 
 ```
-Проанализируй спецификацию и определи какие аспекты в ней присутствуют.
+Проанализируй спецификацию и определи:
+1. Какие аспекты присутствуют (для выбора агентов)
+2. Предварительную оценку объёма (quick scope)
+
 Верни ТОЛЬКО JSON без markdown formatting.
 
-Критерии:
+Критерии классификации:
 - has_data_model: есть модели данных, БД, сущности, миграции
 - has_api: есть API, endpoints, интеграции, webhooks
 - has_infra_requirements: есть требования к deployment, безопасности, производительности
 - has_risks: критичная фича, миграции, внешние зависимости, новые технологии
 - has_ui: есть UI, экраны, формы, user flows
 
-При сомнении — ставь true (лучше лишний анализ).
+Критерии оценки объёма:
+- verdict: "fits" (1-3 модели, простая задача), "borderline" (4-6 моделей, средняя), "too_large" (7+ моделей, сложная система)
+- complexity: S (изменение константы), M (новая модель + CRUD), L (несколько моделей, миграция), XL (новая подсистема)
+
+При сомнении в классификации — ставь true.
+При сомнении в объёме — ставь более крупный verdict.
 
 === СПЕЦИФИКАЦИЯ ===
 {spec_content}
