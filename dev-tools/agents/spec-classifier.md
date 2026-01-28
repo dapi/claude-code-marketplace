@@ -40,18 +40,35 @@ description: |
 
 ## Критерии оценки объёма (quick scope)
 
-| Verdict | Когда ставить |
-|---------|---------------|
-| **fits** | 1-3 модели, 1-5 endpoints, одна фича, нет миграций |
-| **borderline** | 4-6 моделей, 6-10 endpoints, 2-3 связанные фичи |
-| **too_large** | 7+ моделей, 10+ endpoints, несколько независимых фич, большая миграция |
+### Лимиты контекстного окна
 
-| Complexity | Признаки |
-|------------|----------|
-| **S** | Изменение константы, добавление поля, простой endpoint |
-| **M** | Новая модель + CRUD, интеграция с 1 сервисом |
-| **L** | Несколько моделей, сложная бизнес-логика, миграция данных |
-| **XL** | Новая подсистема, много интеграций, архитектурные изменения |
+```yaml
+context_budget:
+  total_window: 150000        # Рабочее окно (200k тупит)
+  available_for_work: 90000   # После вычета system/history/output
+  max_part_tokens: 45000      # Максимум на одну сессию
+```
+
+### Быстрая формула оценки
+
+```
+estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integrations*8000
+```
+
+### Пороги verdict
+
+| estimated_tokens | verdict | Элементы (ориентир) |
+|------------------|---------|---------------------|
+| < 30000 | **fits** | ≤3 модели, ≤5 endpoints, ≤2 компонента |
+| 30000-45000 | **borderline** | 4-5 моделей, 6-10 endpoints |
+| > 45000 | **too_large** | 6+ моделей, 10+ endpoints, интеграции |
+
+| Complexity | estimated_tokens | Признаки |
+|------------|------------------|----------|
+| **S** | < 10000 | Изменение константы, добавление поля |
+| **M** | 10000-25000 | Новая модель + CRUD |
+| **L** | 25000-45000 | Несколько моделей, бизнес-логика |
+| **XL** | > 45000 | Новая подсистема, много интеграций |
 
 ## Формат ответа
 
@@ -67,13 +84,16 @@ description: |
   "quick_scope": {
     "verdict": "fits" | "borderline" | "too_large",
     "complexity": "S" | "M" | "L" | "XL",
+    "estimated_tokens": 25000,
+    "max_session_tokens": 45000,
     "estimated_elements": {
-      "models": 0,
-      "endpoints": 0,
-      "integrations": 0,
-      "migrations": false
+      "models": 2,
+      "endpoints": 5,
+      "components": 1,
+      "integrations": 0
     },
-    "scope_reasoning": "Краткое обоснование оценки объёма (1-2 предложения)"
+    "token_calculation": "2*3000 + 5*2000 + 1*4000 + 0*8000 = 20000 + 30% tests = 26000",
+    "scope_reasoning": "Краткое обоснование (1-2 предложения)"
   },
   "agents_to_run": ["spec-data", "spec-api", ...],
   "reasoning": {
@@ -106,13 +126,16 @@ description: |
   "quick_scope": {
     "verdict": "fits",
     "complexity": "M",
+    "estimated_tokens": 14300,
+    "max_session_tokens": 45000,
     "estimated_elements": {
       "models": 1,
       "endpoints": 4,
-      "integrations": 0,
-      "migrations": false
+      "components": 0,
+      "integrations": 0
     },
-    "scope_reasoning": "Одна модель Order с CRUD — стандартная задача среднего размера"
+    "token_calculation": "1*3000 + 4*2000 + 0 + 0 = 11000 + 30% = 14300",
+    "scope_reasoning": "14k << 45k лимита. Одна модель с CRUD влезает легко."
   },
   "agents_to_run": ["spec-data", "spec-api"],
   "reasoning": {
@@ -143,13 +166,16 @@ description: |
   "quick_scope": {
     "verdict": "borderline",
     "complexity": "L",
+    "estimated_tokens": 36400,
+    "max_session_tokens": 45000,
     "estimated_elements": {
       "models": 2,
       "endpoints": 5,
-      "integrations": 1,
-      "migrations": true
+      "components": 2,
+      "integrations": 1
     },
-    "scope_reasoning": "Mini App + авторизация + миграция — на грани одной сессии, возможно потребуется разбиение"
+    "token_calculation": "2*3000 + 5*2000 + 2*4000 + 1*8000 = 28000 + 30% = 36400",
+    "scope_reasoning": "36k близко к 45k лимиту. Mini App + миграция — на грани, рекомендуется разбиение."
   },
   "agents_to_run": ["spec-data", "spec-api", "spec-infra", "spec-risk", "spec-ux"],
   "reasoning": {
@@ -180,13 +206,16 @@ description: |
   "quick_scope": {
     "verdict": "fits",
     "complexity": "S",
+    "estimated_tokens": 1300,
+    "max_session_tokens": 45000,
     "estimated_elements": {
       "models": 0,
       "endpoints": 0,
-      "integrations": 0,
-      "migrations": false
+      "components": 0,
+      "integrations": 0
     },
-    "scope_reasoning": "Изменение одной константы в бизнес-логике — минимальный объём"
+    "token_calculation": "~1000 изменение + 30% = 1300",
+    "scope_reasoning": "1.3k << 45k. Тривиальное изменение константы."
   },
   "agents_to_run": [],
   "reasoning": {
@@ -217,13 +246,16 @@ description: |
   "quick_scope": {
     "verdict": "too_large",
     "complexity": "XL",
+    "estimated_tokens": 135200,
+    "max_session_tokens": 45000,
     "estimated_elements": {
       "models": 10,
       "endpoints": 25,
-      "integrations": 2,
-      "migrations": true
+      "components": 8,
+      "integrations": 2
     },
-    "scope_reasoning": "Полноценная WMS система — требует разбиения на 4-5 отдельных задач"
+    "token_calculation": "10*3000 + 25*2000 + 8*4000 + 2*8000 = 104000 + 30% = 135200",
+    "scope_reasoning": "135k >> 45k лимита. Требует разбиения минимум на 4 части."
   },
   "agents_to_run": ["spec-data", "spec-api", "spec-infra", "spec-risk", "spec-ux"],
   "reasoning": {
@@ -253,7 +285,7 @@ description: |
 ```
 Проанализируй спецификацию и определи:
 1. Какие аспекты присутствуют (для выбора агентов)
-2. Предварительную оценку объёма (quick scope)
+2. Предварительную оценку объёма в токенах (quick scope)
 
 Верни ТОЛЬКО JSON без markdown formatting.
 
@@ -264,9 +296,15 @@ description: |
 - has_risks: критичная фича, миграции, внешние зависимости, новые технологии
 - has_ui: есть UI, экраны, формы, user flows
 
-Критерии оценки объёма:
-- verdict: "fits" (1-3 модели, простая задача), "borderline" (4-6 моделей, средняя), "too_large" (7+ моделей, сложная система)
-- complexity: S (изменение константы), M (новая модель + CRUD), L (несколько моделей, миграция), XL (новая подсистема)
+Формула оценки токенов:
+  estimated_tokens = models*3000 + endpoints*2000 + components*4000 + integrations*8000
+  + 30% на тесты
+
+Лимиты:
+- max_session_tokens = 45000
+- fits: estimated_tokens < 30000
+- borderline: 30000-45000
+- too_large: > 45000
 
 При сомнении в классификации — ставь true.
 При сомнении в объёме — ставь более крупный verdict.
