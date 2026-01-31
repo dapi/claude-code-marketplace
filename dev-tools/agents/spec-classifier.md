@@ -30,6 +30,7 @@ description: |
 | **spec-infra** | Требования к deployment, безопасности, производительности, мониторингу, масштабированию |
 | **spec-risk** | Критичная фича, внешние зависимости, миграции, новые технологии, жёсткие сроки |
 | **spec-ux** | UI компоненты, экраны, страницы, формы, user flows, мобильное/web приложение |
+| **spec-ai-readiness** | AI/LLM агенты, автономные системы, боты, автоматизация с принятием решений, Claude/GPT |
 
 **Всегда запускаются (не требуют классификации):**
 - spec-analyst — бизнес-логика есть в любой спеке
@@ -79,7 +80,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": true | false,
     "has_infra_requirements": true | false,
     "has_risks": true | false,
-    "has_ui": true | false
+    "has_ui": true | false,
+    "has_ai_execution": true | false
   },
   "quick_scope": {
     "verdict": "fits" | "borderline" | "too_large",
@@ -101,7 +103,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": "...",
     "has_infra_requirements": "...",
     "has_risks": "...",
-    "has_ui": "..."
+    "has_ui": "...",
+    "has_ai_execution": "..."
   },
   "confidence": "high | medium | low"
 }
@@ -121,7 +124,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": true,
     "has_infra_requirements": false,
     "has_risks": false,
-    "has_ui": false
+    "has_ui": false,
+    "has_ai_execution": false
   },
   "quick_scope": {
     "verdict": "fits",
@@ -143,7 +147,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": "REST API, CRUD операции — явно описан API",
     "has_infra_requirements": "Нет требований к deployment/безопасности",
     "has_risks": "Стандартный CRUD, нет сложных зависимостей",
-    "has_ui": "Нет упоминания интерфейса"
+    "has_ui": "Нет упоминания интерфейса",
+    "has_ai_execution": "Нет AI/LLM агентов в спецификации"
   },
   "confidence": "high"
 }
@@ -161,7 +166,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": true,
     "has_infra_requirements": true,
     "has_risks": true,
-    "has_ui": true
+    "has_ui": true,
+    "has_ai_execution": false
   },
   "quick_scope": {
     "verdict": "borderline",
@@ -183,7 +189,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": "initData авторизация — API интеграция с Telegram",
     "has_infra_requirements": "Авторизация через внешний сервис — безопасность",
     "has_risks": "Миграция существующих данных, внешняя зависимость от Telegram",
-    "has_ui": "Mini App — это UI компонент"
+    "has_ui": "Mini App — это UI компонент",
+    "has_ai_execution": "Нет AI/LLM агентов в спецификации"
   },
   "confidence": "high"
 }
@@ -201,7 +208,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": false,
     "has_infra_requirements": false,
     "has_risks": false,
-    "has_ui": false
+    "has_ui": false,
+    "has_ai_execution": false
   },
   "quick_scope": {
     "verdict": "fits",
@@ -223,7 +231,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": "Нет новых/изменённых endpoints",
     "has_infra_requirements": "Нет требований к инфраструктуре",
     "has_risks": "Простое изменение константы, низкий риск",
-    "has_ui": "Нет UI изменений"
+    "has_ui": "Нет UI изменений",
+    "has_ai_execution": "Нет AI/LLM агентов"
   },
   "confidence": "high"
 }
@@ -241,7 +250,8 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": true,
     "has_infra_requirements": true,
     "has_risks": true,
-    "has_ui": true
+    "has_ui": true,
+    "has_ai_execution": false
   },
   "quick_scope": {
     "verdict": "too_large",
@@ -263,7 +273,50 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
     "has_api": "API для 1С, мобильного приложения, отчётов",
     "has_infra_requirements": "Интеграция с 1С требует безопасности и мониторинга",
     "has_risks": "Крупная система, много интеграций, высокие риски",
-    "has_ui": "Мобильное приложение для кладовщиков"
+    "has_ui": "Мобильное приложение для кладовщиков",
+    "has_ai_execution": "Нет AI/LLM агентов"
+  },
+  "confidence": "high"
+}
+```
+
+### Пример 5: Спецификация с AI-агентом
+
+**Спека:** "Создать AI-агента для обработки обращений в техподдержку: классификация тикетов, автоответы на типовые вопросы, эскалация сложных случаев"
+
+**Ответ:**
+```json
+{
+  "classification": {
+    "has_data_model": true,
+    "has_api": true,
+    "has_infra_requirements": true,
+    "has_risks": true,
+    "has_ui": false,
+    "has_ai_execution": true
+  },
+  "quick_scope": {
+    "verdict": "borderline",
+    "complexity": "L",
+    "estimated_tokens": 39000,
+    "max_session_tokens": 45000,
+    "estimated_elements": {
+      "models": 3,
+      "endpoints": 5,
+      "components": 0,
+      "integrations": 2
+    },
+    "token_calculation": "3*3000 + 5*2000 + 0 + 2*8000 = 35000 + AI-readiness analysis = 39000",
+    "scope_reasoning": "AI-агент требует детальной проработки границ, примеров, эскалации."
+  },
+  "agents_to_run": ["spec-data", "spec-api", "spec-infra", "spec-risk", "spec-ai-readiness"],
+  "reasoning": {
+    "has_data_model": "Тикеты, категории, история обращений — модели данных",
+    "has_api": "Интеграция с системой тикетов, возможно внешние LLM API",
+    "has_infra_requirements": "AI требует мониторинга качества, rate limits, fallbacks",
+    "has_risks": "AI может давать некорректные ответы, репутационные риски",
+    "has_ui": "Нет явного UI, работает через API",
+    "has_ai_execution": "Явно описан AI-агент с классификацией и автоответами"
   },
   "confidence": "high"
 }
@@ -273,7 +326,13 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
 
 1. **При сомнении — включай агент** (лучше лишний анализ, чем пропущенная проблема)
 2. **Confidence = low** если спецификация неполная или неоднозначная
-3. **has_risks = true** если:
+3. **has_ai_execution = true** если:
+   - Упомянуты AI/LLM/GPT/Claude агенты
+   - Автоматическое принятие решений
+   - Чат-боты с NLP
+   - Классификация/генерация контента
+   - "Умная" автоматизация
+4. **has_risks = true** если:
    - Упомянута миграция данных
    - Интеграция с внешним сервисом
    - Новая технология
@@ -295,6 +354,7 @@ estimated_tokens ≈ models*3000 + endpoints*2000 + components*4000 + integratio
 - has_infra_requirements: есть требования к deployment, безопасности, производительности
 - has_risks: критичная фича, миграции, внешние зависимости, новые технологии
 - has_ui: есть UI, экраны, формы, user flows
+- has_ai_execution: AI/LLM агенты, боты, автоматизация с принятием решений, Claude/GPT
 
 Формула оценки токенов:
   estimated_tokens = models*3000 + endpoints*2000 + components*4000 + integrations*8000
