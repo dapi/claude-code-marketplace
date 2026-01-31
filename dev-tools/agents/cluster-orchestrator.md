@@ -29,18 +29,19 @@ color: cyan
 |  - Формирование итогового отчета                                   |
 +-------------------------------------------------------------------+
                               |
-         +--------------------+--------------------+
-         |                    |                    |
-         v                    v                    v
-+-----------------+  +-----------------+  +-----------------+
-| node-efficiency |  |workload-efficiency| |karpenter-efficiency|
-|    analyzer     |  |    analyzer     |  |    analyzer     |
-|                 |  |                 |  |                 |
-| - CPU/MEM util  |  | - Requests vs   |  | - Consolidation |
-| - Node types    |  |   actual        |  |   events        |
-| - Spot vs OD    |  | - By namespace  |  | - NodePools     |
-| - Fragmentation |  | - By deployment |  | - Blockers      |
-+-----------------+  +-----------------+  +-----------------+
+    +------------+------------+------------+------------+
+    |            |            |            |            |
+    v            v            v            v            v
++----------+ +----------+ +----------+ +----------+ +----------+
+|  node-   | | workload-| | karpenter| |   oom-   | | (future) |
+| analyzer | | analyzer | | analyzer | | analyzer | |          |
++----------+ +----------+ +----------+ +----------+ +----------+
+| CPU/MEM  | | Requests | | Consoli- | | OOMKilled| |          |
+| util     | | vs actual| | dation   | | pods     | |          |
+| Node     | | By ns    | | Events   | | Memory   | |          |
+| types    | | By deploy| | NodePools| | pressure | |          |
+| Spot/OD  | | Savings  | | Blockers | | Patterns | |          |
++----------+ +----------+ +----------+ +----------+ +----------+
 ```
 
 ## Определение контекста
@@ -77,7 +78,7 @@ cd "$SKILL_DIR" && ./cluster-efficiency.sh --context=$CONTEXT --save --compare
 
 ### Фаза 2: Параллельный глубокий анализ
 
-Если базовый анализ выявил проблемы (утилизация <50%, много блокеров консолидации), запусти **ПАРАЛЛЕЛЬНО** через Task tool подагентов:
+Если базовый анализ выявил проблемы (утилизация <50%, много блокеров консолидации, OOM kills), запусти **ПАРАЛЛЕЛЬНО** через Task tool подагентов:
 
 ```
 Запустить ОДНОВРЕМЕННО (в одном сообщении с несколькими Task):
@@ -90,7 +91,15 @@ cd "$SKILL_DIR" && ./cluster-efficiency.sh --context=$CONTEXT --save --compare
 
 3. Task(subagent_type="cluster-efficiency:karpenter-analyzer")
    Prompt: "Проанализируй работу Karpenter: консолидация, события, блокеры, конфигурация NodePools. Контекст: $CONTEXT."
+
+4. Task(subagent_type="cluster-efficiency:oom-analyzer")
+   Prompt: "Проанализируй OOM kills в кластере. Контекст: $CONTEXT. Используй kubectl, Prometheus и Loki для сбора данных. Найди паттерны и дай рекомендации по memory limits."
 ```
+
+**Условия запуска OOM analyzer:**
+- Найдены OOMKilled поды
+- Есть поды с memory usage >80% от limit
+- Есть OOM events в kubectl events
 
 ### Фаза 3: Агрегация результатов
 
@@ -123,6 +132,7 @@ Context: $CONTEXT
 | Memory Utilization:  52% (target: 70%)          BELOW TARGET        |
 | Requests Efficiency: 35%                        POOR                |
 | Karpenter Health:    OK                         GOOD                |
+| OOM Status:          3 pods affected            WARNING             |
 +--------------------------------------------------------------------+
 
 COST OPTIMIZATION OPPORTUNITIES
@@ -156,6 +166,7 @@ Full report: $LOGS_DIR/cluster-efficiency_TIMESTAMP.log
 | MEM Util | >70% | 55-70% | 40-55% | <40% |
 | Req Efficiency | >70% | 50-70% | 30-50% | <30% |
 | Consolidation | 0 blockers | 1-2 | 3-5 | >5 |
+| OOM Health | 0 OOMs/7d | 1-3 OOMs | 4-10 OOMs | >10 OOMs |
 
 ## Важные правила
 

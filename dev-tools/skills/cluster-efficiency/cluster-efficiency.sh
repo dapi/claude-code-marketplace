@@ -10,13 +10,14 @@
 # Options:
 #   --context=NAME    Kubernetes context (priority: CLI > ENV > current-context)
 #   --namespace=NS    Filter by namespace (default: all)
-#   --focus=AREA      Focus: all|nodes|workloads|karpenter|cost (default: all)
+#   --focus=AREA      Focus: all|nodes|workloads|oom|karpenter|cost (default: all)
 #   --json            Output in JSON format
 #   --save            Save report to logs/
 #   --compare         Compare with previous report
 #   --deep            Hint for deep analysis with subagents
 #   --prometheus      Use Prometheus for historical data (7 days)
-#   --period=PERIOD   Period for Prometheus: 1d, 7d, 14d (default: 7d)
+#   --loki            Use Loki for OOM logs analysis
+#   --period=PERIOD   Period for Prometheus/Loki: 1d, 7d, 14d (default: 7d)
 #   --quiet           Minimal output (only problems)
 #   -h, --help        Show help
 #
@@ -27,6 +28,9 @@
 #   CLUSTER_EFFICIENCY_MEM_WARNING  Memory efficiency warning threshold (default: 50)
 #   CLUSTER_EFFICIENCY_NODE_LOW     Low node utilization threshold (default: 30)
 #   CLUSTER_EFFICIENCY_PROMETHEUS_NS Prometheus namespace (default: monitoring)
+#   CLUSTER_EFFICIENCY_LOKI_NS       Loki namespace (default: monitoring)
+#   CLUSTER_EFFICIENCY_OOM_RISK      Memory usage % threshold for "at risk" (default: 80)
+#   CLUSTER_EFFICIENCY_OOM_HOURS     Hours to look back for OOM events (default: 24)
 #
 # Examples:
 #   ./cluster-efficiency.sh
@@ -62,6 +66,15 @@ PROMETHEUS_PERIOD="7d"
 # Prometheus configuration
 PROMETHEUS_POD=""
 PROMETHEUS_NAMESPACE="${CLUSTER_EFFICIENCY_PROMETHEUS_NS:-monitoring}"
+
+# Loki configuration
+LOKI_POD=""
+LOKI_NAMESPACE="${CLUSTER_EFFICIENCY_LOKI_NS:-monitoring}"
+USE_LOKI=false
+
+# OOM thresholds
+OOM_MEMORY_RISK_THRESHOLD="${CLUSTER_EFFICIENCY_OOM_RISK:-80}"  # % of limit = at risk
+OOM_EVENTS_HOURS="${CLUSTER_EFFICIENCY_OOM_HOURS:-24}"          # hours to look back for events
 
 # Temporary directory (cleaned up on exit)
 TMP_DIR=""
@@ -183,6 +196,7 @@ parse_args() {
             --quiet) QUIET=true; shift ;;
             --deep) DEEP_ANALYSIS=true; shift ;;
             --prometheus) USE_PROMETHEUS=true; shift ;;
+            --loki) USE_LOKI=true; shift ;;
             --period=*) PROMETHEUS_PERIOD="${1#*=}"; shift ;;
             -h|--help) usage ;;
             *) log_error "Unknown option: $1"; usage ;;
@@ -356,6 +370,114 @@ get_prom_value() {
 }
 
 # ==============================================================================
+# Loki Functions
+# ==============================================================================
+
+init_loki() {
+    if [[ "$USE_LOKI" != true ]]; then
+        return 0
+    fi
+
+    log_info "Initializing Loki connection..."
+
+    # Auto-discovery: try common labels
+    local labels=(
+        "app.kubernetes.io/name=loki"
+        "app=loki"
+        "app.kubernetes.io/instance=loki"
+        "app=loki-gateway"
+        "app.kubernetes.io/component=gateway,app.kubernetes.io/name=loki"
+    )
+
+    for label in "${labels[@]}"; do
+        LOKI_POD=$(kubectl --context="$CONTEXT" get pods -n "$LOKI_NAMESPACE" \
+            -l "$label" \
+            -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+        if [[ -n "$LOKI_POD" ]]; then
+            log_info "Found Loki pod with label: $label"
+            break
+        fi
+    done
+
+    if [[ -z "$LOKI_POD" ]]; then
+        # Try to find any pod with "loki" in name
+        LOKI_POD=$(kubectl --context="$CONTEXT" get pods -n "$LOKI_NAMESPACE" \
+            -o jsonpath='{.items[?(@.metadata.name contains "loki")].metadata.name}' 2>/dev/null | awk '{print $1}')
+    fi
+
+    if [[ -z "$LOKI_POD" ]]; then
+        log_error "Loki pod not found in namespace $LOKI_NAMESPACE"
+        log_warn "Falling back to kubectl events for OOM data"
+        USE_LOKI=false
+        return 1
+    fi
+
+    # Detect Loki port (3100 for loki, 80 for gateway)
+    local loki_port="3100"
+    if [[ "$LOKI_POD" == *"gateway"* ]]; then
+        loki_port="80"
+    fi
+
+    # Test connection
+    local test_result=$(kubectl --context="$CONTEXT" exec -n "$LOKI_NAMESPACE" "$LOKI_POD" -- \
+        wget -qO- "http://localhost:${loki_port}/ready" 2>/dev/null || echo "failed")
+
+    if [[ "$test_result" == "failed" || -z "$test_result" ]]; then
+        log_error "Failed to connect to Loki"
+        log_warn "Falling back to kubectl events for OOM data"
+        USE_LOKI=false
+        return 1
+    fi
+
+    LOKI_PORT="$loki_port"
+    log_ok "Loki connected: $LOKI_POD (port $loki_port)"
+    return 0
+}
+
+loki_query() {
+    local query="$1"
+    local start="${2:-$(date -d "-${OOM_EVENTS_HOURS} hours" -Iseconds 2>/dev/null || date -v-${OOM_EVENTS_HOURS}H -Iseconds)}"
+    local end="${3:-$(date -Iseconds)}"
+    local limit="${4:-1000}"
+
+    if [[ -z "$LOKI_POD" ]]; then
+        echo ""
+        return 1
+    fi
+
+    local encoded_query=$(echo -n "$query" | jq -sRr @uri)
+    local encoded_start=$(echo -n "$start" | jq -sRr @uri)
+    local encoded_end=$(echo -n "$end" | jq -sRr @uri)
+
+    kubectl --context="$CONTEXT" exec -n "$LOKI_NAMESPACE" "$LOKI_POD" -- \
+        wget -qO- "http://localhost:${LOKI_PORT}/loki/api/v1/query_range?query=${encoded_query}&start=${encoded_start}&end=${encoded_end}&limit=${limit}" 2>/dev/null
+}
+
+collect_loki_oom_events() {
+    if [[ "$USE_LOKI" != true || -z "$LOKI_POD" ]]; then
+        return 0
+    fi
+
+    log_info "Collecting OOM events from Loki (last ${OOM_EVENTS_HOURS}h)..."
+
+    # Query 1: Kernel OOM killer logs
+    local kernel_query='{job=~"systemd-journal|syslog|kernel"} |~ "oom.kill|Out of memory|Killed process"'
+    loki_query "$kernel_query" | jq -r '.data.result[]?.values[]?[1]' > "$TMP_DIR/loki_kernel_oom.txt" 2>/dev/null || true
+
+    # Query 2: Kubelet OOM events
+    local kubelet_query='{job=~"kubelet|kubernetes-pods"} |~ "OOMKill|oom-kill|memory cgroup out of memory"'
+    loki_query "$kubelet_query" | jq -r '.data.result[] | "\(.stream.namespace // "unknown")|\(.stream.pod // "unknown")|\(.values[][1])"' > "$TMP_DIR/loki_kubelet_oom.txt" 2>/dev/null || true
+
+    # Query 3: Container last logs before OOM (for pods we know had OOM)
+    # This will be populated after we know which pods had OOM
+
+    local kernel_count=$(wc -l < "$TMP_DIR/loki_kernel_oom.txt" 2>/dev/null || echo "0")
+    local kubelet_count=$(wc -l < "$TMP_DIR/loki_kubelet_oom.txt" 2>/dev/null || echo "0")
+
+    log_ok "Loki OOM events: kernel=$kernel_count, kubelet=$kubelet_count"
+}
+
+# ==============================================================================
 # Data Collection Functions
 # ==============================================================================
 
@@ -389,6 +511,53 @@ collect_karpenter_data() {
     kubectl --context="$CONTEXT" get nodepools -o json 2>/dev/null > "$TMP_DIR/nodepools.json" || echo '{"items":[]}' > "$TMP_DIR/nodepools.json"
     kubectl --context="$CONTEXT" get nodeclaims -o json 2>/dev/null > "$TMP_DIR/nodeclaims.json" || echo '{"items":[]}' > "$TMP_DIR/nodeclaims.json"
     kubectl --context="$CONTEXT" get events -A --field-selector reason=Unconsolidatable -o json 2>/dev/null > "$TMP_DIR/karpenter_events.json" || echo '{"items":[]}' > "$TMP_DIR/karpenter_events.json"
+}
+
+collect_oom_data() {
+    log_info "Collecting OOM data..."
+
+    local ns_flag=""
+    [[ -n "$NAMESPACE" ]] && ns_flag="-n $NAMESPACE" || ns_flag="-A"
+
+    # OOM events from kubectl (last N hours via --since if supported, otherwise all)
+    kubectl --context="$CONTEXT" get events $ns_flag \
+        --field-selector reason=OOMKilling \
+        -o json 2>/dev/null > "$TMP_DIR/oom_events.json" || echo '{"items":[]}' > "$TMP_DIR/oom_events.json"
+
+    # Also get OOMKilled reason events
+    kubectl --context="$CONTEXT" get events $ns_flag \
+        --field-selector reason=OOMKilled \
+        -o json 2>/dev/null > "$TMP_DIR/oom_killed_events.json" || echo '{"items":[]}' > "$TMP_DIR/oom_killed_events.json"
+
+    # Extract pods with OOMKilled from pods.json (already collected)
+    jq -r '.items[] |
+        select(.status.containerStatuses[]?.lastState.terminated.reason == "OOMKilled" or
+               .status.containerStatuses[]?.state.terminated.reason == "OOMKilled") |
+        "\(.metadata.namespace)|\(.metadata.name)|\(.status.containerStatuses[].name)|\(.status.containerStatuses[].restartCount)|\(.status.containerStatuses[].lastState.terminated.finishedAt // .status.containerStatuses[].state.terminated.finishedAt // "unknown")"
+    ' "$TMP_DIR/pods.json" 2>/dev/null | sort -u > "$TMP_DIR/oom_killed_pods.txt" || true
+
+    # Prometheus OOM metrics if enabled
+    if [[ "$USE_PROMETHEUS" == true && -n "$PROMETHEUS_POD" ]]; then
+        log_info "Collecting OOM metrics from Prometheus..."
+
+        # Total OOM events counter
+        local oom_total_query="sum by (namespace, pod, container) (increase(container_oom_events_total[${PROMETHEUS_PERIOD}]))"
+        prometheus_query "$oom_total_query" | jq -r '.data.result[] | "\(.metric.namespace)|\(.metric.pod)|\(.metric.container)|\(.value[1])"' > "$TMP_DIR/prom_oom_total.txt" 2>/dev/null || true
+
+        # Memory usage vs limits for risk assessment
+        local mem_usage_query="sum by (namespace, pod, container) (container_memory_working_set_bytes{image!=\"\"})"
+        local mem_limit_query="sum by (namespace, pod, container) (container_spec_memory_limit_bytes{image!=\"\"} > 0)"
+
+        prometheus_query "$mem_usage_query" | jq -r '.data.result[] | "\(.metric.namespace)|\(.metric.pod)|\(.metric.container)|\(.value[1])"' > "$TMP_DIR/prom_mem_usage.txt" 2>/dev/null || true
+        prometheus_query "$mem_limit_query" | jq -r '.data.result[] | "\(.metric.namespace)|\(.metric.pod)|\(.metric.container)|\(.value[1])"' > "$TMP_DIR/prom_mem_limit.txt" 2>/dev/null || true
+
+        log_ok "Prometheus OOM metrics collected"
+    fi
+
+    # Loki OOM logs if enabled
+    [[ "$USE_LOKI" == true ]] && collect_loki_oom_events
+
+    log_ok "OOM data collection complete"
 }
 
 # ==============================================================================
@@ -565,10 +734,186 @@ analyze_workloads() {
     done
 }
 
+analyze_oom() {
+    echo ""
+    echo -e "${BOLD}+==============================================================================+${NC}"
+    echo -e "${BOLD}|                            3. OOM ANALYSIS                                   |${NC}"
+    echo -e "${BOLD}+==============================================================================+${NC}"
+    echo ""
+
+    local total_oom_pods=0
+    local total_at_risk=0
+    local affected_namespaces=()
+
+    # Section 1: Recent OOMKilled Pods
+    echo -e "${CYAN}Recent OOMKilled Pods:${NC}"
+    printf "%-15s %-35s %-15s %-10s %-20s\n" "NAMESPACE" "POD" "CONTAINER" "RESTARTS" "LAST_OOM"
+    printf "%s\n" "--------------------------------------------------------------------------------"
+
+    if [[ -s "$TMP_DIR/oom_killed_pods.txt" ]]; then
+        while IFS='|' read -r ns pod container restarts last_oom; do
+            [[ -z "$ns" ]] && continue
+            printf "%-15s %-35s %-15s %-10s %-20s\n" \
+                "${ns:0:15}" "${pod:0:35}" "${container:0:15}" "$restarts" "${last_oom:0:20}"
+            ((++total_oom_pods)) || true
+            if [[ ! " ${affected_namespaces[*]} " =~ " ${ns} " ]]; then
+                affected_namespaces+=("$ns")
+            fi
+        done < "$TMP_DIR/oom_killed_pods.txt"
+    else
+        echo -e "  ${GREEN}No OOMKilled pods found${NC}"
+    fi
+
+    # Section 2: OOM Events
+    echo ""
+    echo -e "${CYAN}OOMKilling Events (from kubectl events):${NC}"
+
+    local oom_events=$(jq -r '.items[] | "\(.involvedObject.namespace)/\(.involvedObject.name): \(.message)"' "$TMP_DIR/oom_events.json" 2>/dev/null | sort | uniq -c | sort -rn | head -10)
+    local oom_killed_events=$(jq -r '.items[] | "\(.involvedObject.namespace)/\(.involvedObject.name): \(.message)"' "$TMP_DIR/oom_killed_events.json" 2>/dev/null | sort | uniq -c | sort -rn | head -10)
+
+    if [[ -n "$oom_events" || -n "$oom_killed_events" ]]; then
+        [[ -n "$oom_events" ]] && echo "$oom_events" | while read -r count msg; do
+            echo -e "  ${RED}[$count]${NC} $msg"
+        done
+        [[ -n "$oom_killed_events" ]] && echo "$oom_killed_events" | while read -r count msg; do
+            echo -e "  ${RED}[$count]${NC} $msg"
+        done
+    else
+        echo -e "  ${GREEN}No OOM events found${NC}"
+    fi
+
+    # Section 3: Prometheus OOM data (if available)
+    if [[ "$USE_PROMETHEUS" == true && -s "$TMP_DIR/prom_oom_total.txt" ]]; then
+        echo ""
+        echo -e "${CYAN}OOM Events from Prometheus (last ${PROMETHEUS_PERIOD}):${NC}"
+        printf "%-15s %-35s %-15s %-10s\n" "NAMESPACE" "POD" "CONTAINER" "OOM_COUNT"
+        printf "%s\n" "--------------------------------------------------------------------------------"
+
+        sort -t'|' -k4 -rn "$TMP_DIR/prom_oom_total.txt" | head -10 | while IFS='|' read -r ns pod container count; do
+            local count_int=$(printf "%.0f" "$count" 2>/dev/null || echo "0")
+            if (( count_int > 0 )); then
+                printf "%-15s %-35s %-15s ${RED}%-10s${NC}\n" \
+                    "${ns:0:15}" "${pod:0:35}" "${container:0:15}" "$count_int"
+            fi
+        done
+    fi
+
+    # Section 4: Memory Pressure (at risk)
+    echo ""
+    echo -e "${CYAN}Memory Pressure (>${OOM_MEMORY_RISK_THRESHOLD}% of limit = at risk):${NC}"
+    printf "%-15s %-35s %-15s %-10s %-10s %-8s\n" "NAMESPACE" "POD" "CONTAINER" "USAGE" "LIMIT" "%"
+    printf "%s\n" "--------------------------------------------------------------------------------"
+
+    local at_risk_found=false
+
+    if [[ "$USE_PROMETHEUS" == true && -s "$TMP_DIR/prom_mem_usage.txt" && -s "$TMP_DIR/prom_mem_limit.txt" ]]; then
+        # Use Prometheus data
+        while IFS='|' read -r ns pod container usage_bytes; do
+            [[ -z "$ns" ]] && continue
+            local limit_bytes=$(grep "^$ns|$pod|$container|" "$TMP_DIR/prom_mem_limit.txt" 2>/dev/null | cut -d'|' -f4 | head -1)
+            [[ -z "$limit_bytes" || "$limit_bytes" == "0" ]] && continue
+
+            local usage_mi=$(printf "%.0f" "$(echo "$usage_bytes / 1024 / 1024" | bc -l 2>/dev/null)" 2>/dev/null || echo "0")
+            local limit_mi=$(printf "%.0f" "$(echo "$limit_bytes / 1024 / 1024" | bc -l 2>/dev/null)" 2>/dev/null || echo "0")
+
+            if (( limit_mi > 0 )); then
+                local pct=$((usage_mi * 100 / limit_mi))
+                if (( pct >= OOM_MEMORY_RISK_THRESHOLD )); then
+                    local color="$YELLOW"
+                    (( pct >= 90 )) && color="$RED"
+                    printf "%-15s %-35s %-15s %-10s %-10s ${color}%-8s${NC}\n" \
+                        "${ns:0:15}" "${pod:0:35}" "${container:0:15}" "${usage_mi}Mi" "${limit_mi}Mi" "${pct}%"
+                    ((++total_at_risk)) || true
+                    at_risk_found=true
+                fi
+            fi
+        done < "$TMP_DIR/prom_mem_usage.txt"
+    else
+        # Use kubectl data (pods.json + pods_top.txt)
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            local ns=$(echo "$line" | awk '{print $1}')
+            local pod=$(echo "$line" | awk '{print $2}')
+            local mem_used=$(echo "$line" | awk '{print $4}')
+
+            # Get memory limit from pods.json
+            local mem_limit=$(jq -r --arg ns "$ns" --arg pod "$pod" \
+                '.items[] | select(.metadata.namespace==$ns and .metadata.name==$pod) | .spec.containers[0].resources.limits.memory // "0"' \
+                "$TMP_DIR/pods.json" 2>/dev/null)
+
+            [[ -z "$mem_limit" || "$mem_limit" == "0" || "$mem_limit" == "null" ]] && continue
+
+            local usage_mi=$(parse_memory "$mem_used")
+            local limit_mi=$(parse_memory "$mem_limit")
+
+            if (( limit_mi > 0 )); then
+                local pct=$((usage_mi * 100 / limit_mi))
+                if (( pct >= OOM_MEMORY_RISK_THRESHOLD )); then
+                    local color="$YELLOW"
+                    (( pct >= 90 )) && color="$RED"
+                    printf "%-15s %-35s %-15s %-10s %-10s ${color}%-8s${NC}\n" \
+                        "${ns:0:15}" "${pod:0:35}" "-" "${usage_mi}Mi" "${limit_mi}Mi" "${pct}%"
+                    ((++total_at_risk)) || true
+                    at_risk_found=true
+                fi
+            fi
+        done < "$TMP_DIR/pods_top.txt"
+    fi
+
+    if [[ "$at_risk_found" == false ]]; then
+        echo -e "  ${GREEN}No pods at memory risk${NC}"
+    fi
+
+    # Section 5: Loki OOM logs (if available)
+    if [[ "$USE_LOKI" == true ]]; then
+        echo ""
+        echo -e "${CYAN}OOM Logs from Loki (last ${OOM_EVENTS_HOURS}h):${NC}"
+
+        if [[ -s "$TMP_DIR/loki_kernel_oom.txt" ]]; then
+            echo -e "${YELLOW}Kernel OOM killer events:${NC}"
+            head -5 "$TMP_DIR/loki_kernel_oom.txt" | while read -r logline; do
+                echo "  $logline" | head -c 100
+                echo "..."
+            done
+            local kernel_total=$(wc -l < "$TMP_DIR/loki_kernel_oom.txt")
+            (( kernel_total > 5 )) && echo "  ... and $((kernel_total - 5)) more"
+        fi
+
+        if [[ -s "$TMP_DIR/loki_kubelet_oom.txt" ]]; then
+            echo -e "${YELLOW}Kubelet OOM events:${NC}"
+            head -5 "$TMP_DIR/loki_kubelet_oom.txt" | while IFS='|' read -r ns pod logline; do
+                echo "  [$ns/$pod] ${logline:0:80}..."
+            done
+            local kubelet_total=$(wc -l < "$TMP_DIR/loki_kubelet_oom.txt")
+            (( kubelet_total > 5 )) && echo "  ... and $((kubelet_total - 5)) more"
+        fi
+
+        if [[ ! -s "$TMP_DIR/loki_kernel_oom.txt" && ! -s "$TMP_DIR/loki_kubelet_oom.txt" ]]; then
+            echo -e "  ${GREEN}No OOM logs found in Loki${NC}"
+        fi
+    fi
+
+    # Summary
+    echo ""
+    echo -e "${BOLD}Summary:${NC}"
+    echo "  OOMKilled pods: $total_oom_pods"
+    echo "  Pods at risk (>${OOM_MEMORY_RISK_THRESHOLD}% memory): $total_at_risk"
+    echo "  Affected namespaces: ${affected_namespaces[*]:-none}"
+
+    if (( total_oom_pods > 0 || total_at_risk > 0 )); then
+        echo ""
+        echo -e "  ${YELLOW}Recommendations:${NC}"
+        (( total_oom_pods > 0 )) && echo -e "  ${RED}→ Review and increase memory limits for OOMKilled workloads${NC}"
+        (( total_at_risk > 0 )) && echo -e "  ${YELLOW}→ Monitor at-risk pods; consider increasing limits preemptively${NC}"
+        echo "  → Use --prometheus for historical memory usage analysis"
+        [[ "$USE_LOKI" != true ]] && echo "  → Use --loki for detailed OOM log analysis"
+    fi
+}
+
 analyze_karpenter() {
     echo ""
     echo -e "${BOLD}+==============================================================================+${NC}"
-    echo -e "${BOLD}|                        3. KARPENTER CONSOLIDATION                            |${NC}"
+    echo -e "${BOLD}|                        4. KARPENTER CONSOLIDATION                            |${NC}"
     echo -e "${BOLD}+==============================================================================+${NC}"
     echo ""
 
@@ -621,7 +966,7 @@ analyze_karpenter() {
 generate_recommendations() {
     echo ""
     echo -e "${BOLD}+==============================================================================+${NC}"
-    echo -e "${BOLD}|                           4. RECOMMENDATIONS                                 |${NC}"
+    echo -e "${BOLD}|                           5. RECOMMENDATIONS                                 |${NC}"
     echo -e "${BOLD}+==============================================================================+${NC}"
     echo ""
 
@@ -778,7 +1123,7 @@ generate_recommendations() {
 generate_yaml_recommendations() {
     echo ""
     echo -e "${BOLD}+==============================================================================+${NC}"
-    echo -e "${BOLD}|                      5. YAML RECOMMENDATIONS                                 |${NC}"
+    echo -e "${BOLD}|                      6. YAML RECOMMENDATIONS                                 |${NC}"
     echo -e "${BOLD}+==============================================================================+${NC}"
     echo ""
 
@@ -1000,7 +1345,7 @@ EOF
 compare_with_previous() {
     echo ""
     echo -e "${BOLD}+==============================================================================+${NC}"
-    echo -e "${BOLD}|                      6. COMPARISON WITH PREVIOUS                             |${NC}"
+    echo -e "${BOLD}|                      7. COMPARISON WITH PREVIOUS                             |${NC}"
     echo -e "${BOLD}+==============================================================================+${NC}"
     echo ""
 
@@ -1107,13 +1452,18 @@ main() {
     else
         echo "Data source: kubectl top (instant)"
     fi
+    if [[ "$USE_LOKI" == true ]]; then
+        echo -e "OOM logs: ${GREEN}Loki (last ${OOM_EVENTS_HOURS}h)${NC}"
+    fi
     echo ""
 
     [[ "$USE_PROMETHEUS" == true ]] && init_prometheus
+    [[ "$USE_LOKI" == true ]] && init_loki
 
     collect_nodes_data
     collect_pods_data
     collect_karpenter_data
+    collect_oom_data
 
     [[ "$SAVE_REPORT" == true ]] && prepare_report_files
 
@@ -1121,6 +1471,7 @@ main() {
         all)
             analyze_nodes 2>&1 | output_and_save
             analyze_workloads 2>&1 | output_and_save
+            analyze_oom 2>&1 | output_and_save
             analyze_karpenter 2>&1 | output_and_save
             generate_recommendations 2>&1 | output_and_save
             generate_yaml_recommendations 2>&1 | output_and_save
@@ -1130,7 +1481,11 @@ main() {
             ;;
         workloads)
             analyze_workloads 2>&1 | output_and_save
+            analyze_oom 2>&1 | output_and_save
             generate_yaml_recommendations 2>&1 | output_and_save
+            ;;
+        oom)
+            analyze_oom 2>&1 | output_and_save
             ;;
         karpenter)
             analyze_karpenter 2>&1 | output_and_save
