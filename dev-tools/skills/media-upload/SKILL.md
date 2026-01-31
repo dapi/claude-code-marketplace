@@ -155,11 +155,34 @@ fi
 ### Шаг 2: Чтение конфигурации
 
 ```bash
+# Проверить наличие jq
+if ! command -v jq &> /dev/null; then
+  echo "❌ jq не установлен (требуется для чтения конфигурации)"
+  echo "Установка: brew install jq / apt install jq"
+  exit 1
+fi
+
+# Проверить валидность JSON
+if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+  echo "❌ Невалидный JSON в $CONFIG_FILE"
+  exit 1
+fi
+
 # Приоритет: ENV > JSON > defaults
-MC_PATH="${MEDIA_UPLOAD_MC_PATH:-$(jq -r '.mc_path' "$CONFIG_FILE")}"
-PUBLIC_URL="${MEDIA_UPLOAD_PUBLIC_URL:-$(jq -r '.public_url' "$CONFIG_FILE")}"
+MC_PATH="${MEDIA_UPLOAD_MC_PATH:-$(jq -r '.mc_path // empty' "$CONFIG_FILE")}"
+PUBLIC_URL="${MEDIA_UPLOAD_PUBLIC_URL:-$(jq -r '.public_url // empty' "$CONFIG_FILE")}"
 ORGANIZE_BY="${MEDIA_UPLOAD_ORGANIZE_BY:-$(jq -r '.organize_by // "date"' "$CONFIG_FILE")}"
 MAX_SIZE="${MEDIA_UPLOAD_MAX_FILE_SIZE_MB:-$(jq -r '.max_file_size_mb // 100' "$CONFIG_FILE")}"
+
+# Проверить обязательные поля
+if [[ -z "$MC_PATH" ]]; then
+  echo "❌ mc_path не задан в конфигурации"
+  exit 1
+fi
+if [[ -z "$PUBLIC_URL" ]]; then
+  echo "❌ public_url не задан в конфигурации"
+  exit 1
+fi
 ```
 
 ### Шаг 3: Валидация файла
@@ -178,7 +201,14 @@ if [[ ! -s "$FILE" ]]; then
 fi
 
 # Получить размер файла (кроссплатформенно)
-SIZE_BYTES=$(stat -f%z "$FILE" 2>/dev/null || stat -c%s "$FILE")
+if ! SIZE_BYTES=$(stat -f%z "$FILE" 2>/dev/null || stat -c%s "$FILE" 2>/dev/null); then
+  echo "❌ Не удалось получить размер файла: $FILE"
+  exit 1
+fi
+if ! [[ "$SIZE_BYTES" =~ ^[0-9]+$ ]]; then
+  echo "❌ Ошибка определения размера файла: $FILE"
+  exit 1
+fi
 SIZE_MB=$(( SIZE_BYTES / 1048576 ))
 
 if [[ $SIZE_MB -gt $MAX_SIZE ]]; then
@@ -209,7 +239,16 @@ SANITIZED_NAME=$(sanitize_filename "$FILE")
 
 case "$ORGANIZE_BY" in
   date) REMOTE_PATH="${DATE_PATH}/${SANITIZED_NAME}" ;;
-  type) REMOTE_PATH="images/${SANITIZED_NAME}" ;;  # или documents/ для pdf
+  type)
+    # Определить тип по расширению
+    case "${EXT,,}" in
+      pdf) TYPE_DIR="documents" ;;
+      png|jpg|jpeg|gif|webp|svg) TYPE_DIR="images" ;;
+      mp4|webm) TYPE_DIR="videos" ;;
+      *) TYPE_DIR="other" ;;
+    esac
+    REMOTE_PATH="${TYPE_DIR}/${SANITIZED_NAME}"
+    ;;
   flat) REMOTE_PATH="${SANITIZED_NAME}" ;;
 esac
 ```
@@ -254,8 +293,10 @@ if ! jq --arg file "$FILE" \
        '.uploads += [{"file":$file,"url":$url,"size":($size|tonumber),"timestamp":$ts}]' \
        "$HISTORY_FILE" > "${HISTORY_FILE}.tmp"; then
   echo "⚠️ Загрузка успешна, но запись в историю не удалась"
-else
-  mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+  rm -f "${HISTORY_FILE}.tmp"
+elif ! mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"; then
+  echo "⚠️ Не удалось сохранить историю: ошибка перемещения файла"
+  rm -f "${HISTORY_FILE}.tmp"
 fi
 ```
 
