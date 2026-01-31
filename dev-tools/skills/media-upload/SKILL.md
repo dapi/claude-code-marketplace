@@ -80,6 +80,7 @@ MEDIA_UPLOAD_MC_PATH=screenshots/screenshots
 MEDIA_UPLOAD_PUBLIC_URL=https://cdn.example.com/screenshots
 MEDIA_UPLOAD_ORGANIZE_BY=date
 MEDIA_UPLOAD_MAX_FILE_SIZE_MB=100
+MEDIA_UPLOAD_HISTORY_FILE=~/.media-upload-history.json
 ```
 
 **Приоритет конфигурации**: Environment variables > JSON config > Default values
@@ -164,22 +165,24 @@ MAX_SIZE="${MEDIA_UPLOAD_MAX_FILE_SIZE_MB:-$(jq -r '.max_file_size_mb // 100' "$
 ### Шаг 3: Валидация файла
 
 ```bash
-# Проверить существование
-if [[ ! -f "$FILE" ]]; then
-  echo "❌ Файл не найден: $FILE"
-  exit 1
-fi
-
-# Проверить размер
-SIZE_MB=$(( $(stat -f%z "$FILE" 2>/dev/null || stat -c%s "$FILE") / 1048576 ))
-if [[ $SIZE_MB -gt $MAX_SIZE ]]; then
-  echo "❌ Файл слишком большой: ${SIZE_MB}MB > ${MAX_SIZE}MB"
+# Проверить существование и доступность
+if [[ ! -f "$FILE" ]] || [[ ! -r "$FILE" ]]; then
+  echo "❌ Файл не найден или недоступен для чтения: $FILE"
   exit 1
 fi
 
 # Проверить пустой файл
 if [[ ! -s "$FILE" ]]; then
   echo "❌ Файл пустой, загрузка отменена"
+  exit 1
+fi
+
+# Получить размер файла (кроссплатформенно)
+SIZE_BYTES=$(stat -f%z "$FILE" 2>/dev/null || stat -c%s "$FILE")
+SIZE_MB=$(( SIZE_BYTES / 1048576 ))
+
+if [[ $SIZE_MB -gt $MAX_SIZE ]]; then
+  echo "❌ Файл слишком большой: ${SIZE_MB}MB > ${MAX_SIZE}MB"
   exit 1
 fi
 ```
@@ -214,9 +217,15 @@ esac
 ### Шаг 6: Загрузка через mc
 
 ```bash
-mc cp "$FILE" "${MC_PATH}/${REMOTE_PATH}"
-if [[ $? -ne 0 ]]; then
-  echo "❌ Ошибка загрузки"
+# Захватить stderr для диагностики
+MC_OUTPUT=$(mc cp "$FILE" "${MC_PATH}/${REMOTE_PATH}" 2>&1)
+MC_EXIT=$?
+
+if [[ $MC_EXIT -ne 0 ]]; then
+  echo "❌ Ошибка загрузки файла: $FILE"
+  echo ""
+  echo "Детали ошибки:"
+  echo "$MC_OUTPUT"
   exit 1
 fi
 
@@ -226,7 +235,9 @@ PUBLIC_URL_FULL="${PUBLIC_URL}/${REMOTE_PATH}"
 ### Шаг 7: Запись в историю
 
 ```bash
-HISTORY_FILE="${MEDIA_UPLOAD_HISTORY_FILE:-$HOME/.media-upload-history.json}"
+# Получить путь к файлу истории (ENV > JSON config > default)
+HISTORY_FILE="${MEDIA_UPLOAD_HISTORY_FILE:-$(jq -r '.history_file // empty' "$CONFIG_FILE" 2>/dev/null | sed "s|~|$HOME|")}"
+HISTORY_FILE="${HISTORY_FILE:-$HOME/.media-upload-history.json}"
 
 # Создать файл если не существует
 if [[ ! -f "$HISTORY_FILE" ]]; then
@@ -235,12 +246,17 @@ if [[ ! -f "$HISTORY_FILE" ]]; then
 fi
 
 # Добавить запись (через jq)
-jq --arg file "$FILE" \
-   --arg url "$PUBLIC_URL_FULL" \
-   --arg size "$SIZE_BYTES" \
-   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-   '.uploads += [{"file":$file,"url":$url,"size":($size|tonumber),"timestamp":$ts}]' \
-   "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+# SIZE_BYTES определен в Шаге 3
+if ! jq --arg file "$FILE" \
+       --arg url "$PUBLIC_URL_FULL" \
+       --arg size "$SIZE_BYTES" \
+       --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       '.uploads += [{"file":$file,"url":$url,"size":($size|tonumber),"timestamp":$ts}]' \
+       "$HISTORY_FILE" > "${HISTORY_FILE}.tmp"; then
+  echo "⚠️ Загрузка успешна, но запись в историю не удалась"
+else
+  mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+fi
 ```
 
 ## Setup Wizard (первый запуск)
@@ -275,7 +291,7 @@ if [[ $? -ne 0 ]]; then
   echo "Проверьте настройку alias: mc alias set ..."
   exit 1
 fi
-echo "✅ mc cp works"
+echo "✅ Bucket accessible"
 ```
 
 4. Сохранить конфигурацию:
@@ -299,8 +315,25 @@ echo "✅ Configuration saved"
 
 ```bash
 # Пример: загрузи все png из ./screenshots/
-for file in ./screenshots/*.png; do
-  upload_file "$file"
+# Защита от пустого glob
+shopt -s nullglob
+files=(./screenshots/*.png)
+shopt -u nullglob
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  echo "❌ Файлы не найдены: ./screenshots/*.png"
+  exit 1
+fi
+
+success=()
+failed=()
+
+for file in "${files[@]}"; do
+  if upload_file "$file"; then
+    success+=("$file")
+  else
+    failed+=("$file")
+  fi
 done
 ```
 
