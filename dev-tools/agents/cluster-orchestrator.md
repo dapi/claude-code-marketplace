@@ -59,6 +59,41 @@ echo "Using context: $CONTEXT"
 
 ## Режим работы
 
+### Фаза 0: Контекст и история (ОБЯЗАТЕЛЬНО!)
+
+**ПЕРЕД любыми рекомендациями по ресурсам:**
+
+1. **Прочитай журнал изменений ресурсов**:
+   ```bash
+   cat docs/resource-changes.md 2>/dev/null || echo "⚠️ Журнал docs/resource-changes.md не найден"
+   ```
+
+   **Стандартный путь:** `docs/resource-changes.md`
+
+   Содержит историю изменений requests/limits и причины откатов.
+   **Если workload упоминается в откатах — НЕ рекомендуй снижение!**
+
+2. **Получи OOM историю за 7 дней**:
+   ```bash
+   # Kubernetes events
+   kubectl --context=$CONTEXT get events -A --field-selector reason=OOMKilling \
+     --sort-by='.lastTimestamp' 2>/dev/null | tail -50
+
+   # Pods с OOMKilled в lastState
+   kubectl --context=$CONTEXT get pods -A -o json | jq -r '
+     .items[] |
+     select(.status.containerStatuses[]?.lastState.terminated.reason == "OOMKilled") |
+     "\(.metadata.namespace)/\(.metadata.name)"
+   ' 2>/dev/null
+   ```
+
+3. **Сформируй "защитный список"** — workloads, для которых снижение ресурсов ЗАПРЕЩЕНО:
+   - Упомянутые в откатах resource-changes.md
+   - Имевшие OOM за последние 7 дней
+   - Production namespace (без явной просьбы)
+
+**Передай этот список всем подагентам!**
+
 ### Фаза 1: Сбор базовых метрик
 
 Найди и запусти bash скрипт:
