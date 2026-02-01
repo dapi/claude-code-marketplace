@@ -11,6 +11,7 @@ Development tools plugin for Claude Code.
 - **bugsnag** - Fetch data from Bugsnag: organizations, projects, errors, events, comments
 - **long-running-harness** - Manage multi-session development projects with progress tracking
 - **cluster-efficiency** - Kubernetes cluster resource efficiency analysis (nodes, workloads, Karpenter)
+- **doc-validate** - Automated documentation quality validation with interactive fixes
 
 ### Commands
 
@@ -18,6 +19,7 @@ Development tools plugin for Claude Code.
 - `/dev-tools:fix-pr` - Iterative PR review and fix cycle (requires `pr-review-toolkit` plugin)
 - `/dev-tools:requirements` - Manage project requirements via Google Spreadsheet
 - `/dev-tools:cluster-efficiency` - Kubernetes cluster resource efficiency analysis
+- `/dev-tools:doc-validate` - Documentation quality validation (lint, links, terms, review)
 
 ## Installation
 
@@ -120,6 +122,59 @@ Manage project requirements via Google Spreadsheet:
 /dev-tools:requirements sync    # Sync with GitHub issues
 /dev-tools:requirements add "Feature description"
 ```
+
+### Doc Validate Skill
+Activates when you ask to validate documentation:
+```
+"проверь документацию"
+"validate docs"
+"найди битые ссылки"
+"check formatting"
+"/doc:lint"
+"/doc:review"
+```
+
+**Commands:**
+| Command | Purpose | Model |
+|---------|---------|-------|
+| `/doc:lint` | Check formatting, broken links, naming | haiku |
+| `/doc:links` | Build link graph, find orphans/dead-ends | haiku |
+| `/doc:terms` | Terminology consistency, glossary coverage | sonnet |
+| `/doc:viewpoints` | BABOK viewpoints artifacts check | sonnet |
+| `/doc:contradictions` | Find conflicting values/requirements | sonnet |
+| `/doc:gaps` | Completeness analysis, missing coverage | sonnet |
+| `/doc:review` | Full audit (all checks + score) | cascade |
+
+**CLI modes:**
+```bash
+# Default - output issues
+./doc_validate.rb lint
+
+# Interactive - prompt for each issue
+./doc_validate.rb lint --interactive
+# Actions: [f]ix [s]kip [i]gnore [e]dit e[x]plain
+
+# Batch - for CI/CD with exit codes (0=ok, 1=warnings, 2=critical)
+./doc_validate.rb lint --batch
+```
+
+**Auto-fixes available:**
+- `broken_link` - fuzzy search similar files or remove link
+- `synonym` - replace forbidden synonym with canonical term
+- `empty_section` - remove empty section (with confirmation)
+
+**Configuration:** `.docvalidate.yml` in project root
+```yaml
+glossary:
+  file: "02_GLOSSARY.md"
+  forbidden_synonyms:
+    - ["wallet", "кошелёк", "бумажник"]
+scope:
+  strict: ["*.md", "architecture/**/*.md"]
+  ignore: ["claudedocs/**"]
+```
+
+**Requires:** Ruby (bundled script, no external deps)
 
 ### Cluster Efficiency
 Analyze Kubernetes cluster resource utilization:

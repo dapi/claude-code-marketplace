@@ -1,28 +1,18 @@
 ---
 name: doc-validate
 description: |
-  **UNIVERSAL TRIGGER**: Автоматическая и интерактивная проверка качества проектной документации.
+  **UNIVERSAL TRIGGER**: Validate/check/lint documentation quality.
 
-  Используй когда пользователь просит:
-  - "проверь документацию", "validate docs", "doc lint"
-  - "найди битые ссылки", "broken links", "orphan documents"
-  - "проверь форматирование", "check formatting"
-  - "найди противоречия", "find contradictions"
-  - "проверь терминологию", "check terms", "glossary check"
-  - "проверь viewpoints", "check artifacts", "modeling standards"
+  📝 **Formatting**: "validate docs", "doc lint", "проверь документацию"
+  🔗 **Links**: "broken links", "orphan docs", "битые ссылки"
+  📚 **Terms**: "check glossary", "терминология", "synonyms"
+  📐 **Viewpoints**: "check artifacts", "state diagrams", "threat model"
+  ⚡ **Contradictions**: "find conflicts", "противоречия"
+  🕳️ **Gaps**: "missing coverage", "пробелы", "completeness"
+  📋 **Review**: "full audit", "полный аудит", "/doc:review"
 
-  Команды:
-  - `/doc:lint` — проверка форматирования и структуры
-  - `/doc:links` — граф связей документации
-  - `/doc:terms` — консистентность терминологии (Session 2)
-  - `/doc:viewpoints` — проверка артефактов по viewpoints (Session 2)
-  - `/doc:contradictions` — поиск противоречий (Session 3)
-  - `/doc:gaps` — анализ полноты (Session 3)
-  - `/doc:review` — полный аудит (Session 4)
-
-  TRIGGERS: doc lint, doc validate, проверь документацию, check docs,
-  broken links, orphan documents, битые ссылки, форматирование,
-  naming conventions, validate documentation, doc review,
+  TRIGGERS: doc lint, validate docs, проверь документацию, broken links,
+  orphan, glossary, viewpoints, contradictions, gaps, coverage,
   /doc:lint, /doc:links, /doc:terms, /doc:viewpoints,
   /doc:contradictions, /doc:gaps, /doc:review
 allowed-tools: Bash, Read, Glob, Grep, Write, Edit
