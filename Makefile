@@ -86,7 +86,7 @@ list-claude-profiles:
 	@echo ""
 	@found=0; \
 	for dir in ~/.claude*/; do \
-		[ -f "$$dir/.credentials.json" ] || continue; \
+		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		found=$$((found + 1)); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$dir"; \
@@ -142,7 +142,7 @@ install-all:
 	@installed=0; \
 	skipped=0; \
 	for dir in ~/.claude*/; do \
-		[ -f "$$dir/.credentials.json" ] || continue; \
+		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		profile_name=$$(basename "$$dir"); \
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
@@ -178,7 +178,7 @@ update-all:
 	skipped=0; \
 	failed=0; \
 	for dir in ~/.claude*/; do \
-		[ -f "$$dir/.credentials.json" ] || continue; \
+		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		profile_name=$$(basename "$$dir"); \
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
