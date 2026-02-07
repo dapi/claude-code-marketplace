@@ -1,0 +1,418 @@
+#!/usr/bin/env bash
+#
+# do-issue - Start working on a GitHub issue with git worktree and Claude Code
+#
+# Usage: do-issue <issue-url-or-number> [options]
+#
+# Options:
+#   --repo, -r <owner/repo>    Repository (default: from git remote)
+#   --base, -b <branch>        Base branch (default: main or master)
+#   --worktree-dir, -w <dir>   Worktree directory (default: ~/worktrees)
+#   --no-init                  Skip init.sh execution
+#   --dry-run                  Show what would be done without executing
+#   --help, -h                 Show this help
+#
+
+set -euo pipefail
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Defaults
+WORKTREE_DIR="$HOME/.worktrees"
+BASE_BRANCH=""
+REPO=""
+NO_INIT=false
+DRY_RUN=false
+ISSUE_INPUT=""
+
+# ============================================================================
+# Helper functions
+# ============================================================================
+
+log_info() {
+    echo -e "${BLUE}$1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+log_warn() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+log_error() {
+    echo -e "${RED}❌ $1${NC}" >&2
+}
+
+die() {
+    log_error "$1"
+    exit 1
+}
+
+show_help() {
+    cat << 'EOF'
+do-issue - Start working on a GitHub issue with git worktree and Claude Code
+
+Usage: do-issue <issue-url-or-number> [options]
+
+Arguments:
+  <issue-url-or-number>    GitHub issue URL or issue number
+                           Examples: 123, https://github.com/owner/repo/issues/123
+
+Options:
+  --repo, -r <owner/repo>    Repository (default: detected from git remote)
+  --base, -b <branch>        Base branch (default: main or master)
+  --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
+  --no-init                  Skip init.sh execution
+  --dry-run                  Show what would be done without executing
+  --help, -h                 Show this help
+
+Examples:
+  do-issue 123
+  do-issue https://github.com/owner/repo/issues/123
+  do-issue 123 --repo owner/repo --base develop
+  do-issue 123 --dry-run
+EOF
+}
+
+# ============================================================================
+# Validation functions
+# ============================================================================
+
+check_dependencies() {
+    if ! command -v git &> /dev/null; then
+        die "git not found. Please install git."
+    fi
+
+    if ! command -v gh &> /dev/null; then
+        die "gh CLI not found. Install: https://cli.github.com"
+    fi
+
+    if ! gh auth status &> /dev/null; then
+        die "gh not authenticated. Run: gh auth login"
+    fi
+
+    if ! command -v claude &> /dev/null; then
+        die "claude CLI not found. Please install Claude Code."
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        die "jq not found. Please install jq."
+    fi
+}
+
+check_git_repo() {
+    if ! git rev-parse --git-dir &> /dev/null; then
+        die "Not in a git repository"
+    fi
+}
+
+# ============================================================================
+# Parsing functions
+# ============================================================================
+
+parse_issue_input() {
+    local input="$1"
+
+    # Check if it's a URL
+    if [[ "$input" =~ ^https://github\.com/([^/]+)/([^/]+)/issues/([0-9]+) ]]; then
+        REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+        ISSUE_NUMBER="${BASH_REMATCH[3]}"
+    elif [[ "$input" =~ ^[0-9]+$ ]]; then
+        ISSUE_NUMBER="$input"
+        # Repo will be detected from git remote if not specified
+    else
+        die "Invalid issue format: $input. Use issue number or full GitHub URL."
+    fi
+}
+
+detect_repo_from_remote() {
+    if [[ -n "$REPO" ]]; then
+        return
+    fi
+
+    local remote_url
+    remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+
+    if [[ -z "$remote_url" ]]; then
+        die "Cannot detect repository. No 'origin' remote found. Use --repo flag."
+    fi
+
+    # Parse SSH format: git@github.com:owner/repo.git
+    if [[ "$remote_url" =~ git@github\.com:([^/]+)/(.+?)(\.git)?$ ]]; then
+        REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]%.git}"
+    # Parse HTTPS format: https://github.com/owner/repo.git
+    elif [[ "$remote_url" =~ https://github\.com/([^/]+)/(.+?)(\.git)?$ ]]; then
+        REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]%.git}"
+    else
+        die "Cannot parse repository from remote URL: $remote_url. Use --repo flag."
+    fi
+}
+
+detect_base_branch() {
+    if [[ -n "$BASE_BRANCH" ]]; then
+        return
+    fi
+
+    # Try main first, then master
+    if git show-ref --verify --quiet refs/heads/main 2>/dev/null; then
+        BASE_BRANCH="main"
+    elif git show-ref --verify --quiet refs/heads/master 2>/dev/null; then
+        BASE_BRANCH="master"
+    else
+        die "Cannot detect base branch. Neither 'main' nor 'master' exists. Use --base flag."
+    fi
+}
+
+# ============================================================================
+# Issue functions
+# ============================================================================
+
+fetch_issue() {
+    log_info "🔍 Fetching issue #$ISSUE_NUMBER from $REPO..."
+
+    ISSUE_JSON=$(gh api "repos/$REPO/issues/$ISSUE_NUMBER" 2>/dev/null) || \
+        die "Issue #$ISSUE_NUMBER not found in $REPO"
+
+    ISSUE_TITLE=$(echo "$ISSUE_JSON" | jq -r '.title')
+    ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body // ""')
+    ISSUE_LABELS=$(echo "$ISSUE_JSON" | jq -r '[.labels[].name] | join(", ")')
+    ISSUE_URL="https://github.com/$REPO/issues/$ISSUE_NUMBER"
+
+    echo "   Title: $ISSUE_TITLE"
+    if [[ -n "$ISSUE_LABELS" ]]; then
+        echo "   Labels: $ISSUE_LABELS"
+    fi
+}
+
+generate_branch_name() {
+    log_info "🧠 Generating branch name..."
+
+    local prompt="You are a git branch name generator. Based on the GitHub issue below, generate a branch name following git flow conventions.
+
+Rules:
+1. Determine branch type from labels or content:
+   - bug, fix → fix/
+   - enhancement, feature → feature/
+   - hotfix, critical → hotfix/
+   - refactor, tech-debt → refactor/
+   - docs, documentation → docs/
+   - default → feature/
+2. Format: {type}/issue-{number}-{short-name}
+3. short-name: kebab-case, max 40 chars, no trailing dashes
+4. Extract key words from title, remove stop words (the, a, an, is, are, to, for, and, or, in, on, at, of)
+
+Issue #$ISSUE_NUMBER
+Title: $ISSUE_TITLE
+Labels: $ISSUE_LABELS
+
+Respond with ONLY the branch name, nothing else. Example: feature/issue-123-dark-mode-support"
+
+    BRANCH_NAME=$(echo "$prompt" | claude --print 2>/dev/null) || \
+        die "Failed to generate branch name with Claude"
+
+    # Clean up the response (remove any whitespace, quotes, backticks)
+    BRANCH_NAME=$(echo "$BRANCH_NAME" | tr -d '`"' | xargs)
+
+    # Validate branch name format
+    if [[ ! "$BRANCH_NAME" =~ ^(feature|fix|hotfix|refactor|docs)/issue-[0-9]+-[a-z0-9-]+$ ]]; then
+        log_warn "Generated branch name doesn't match expected format: $BRANCH_NAME"
+        # Fallback to simple format
+        local simple_name
+        simple_name=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+        BRANCH_NAME="feature/issue-$ISSUE_NUMBER-$simple_name"
+        log_info "   Using fallback: $BRANCH_NAME"
+    else
+        log_success "   Branch: $BRANCH_NAME"
+    fi
+}
+
+# ============================================================================
+# Worktree functions
+# ============================================================================
+
+create_worktree() {
+    WORKTREE_PATH="$WORKTREE_DIR/$BRANCH_NAME"
+
+    log_info "📁 Creating worktree..."
+    echo "   Path: $WORKTREE_PATH"
+    echo "   Base: $BASE_BRANCH"
+
+    # Check if branch already exists
+    if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" 2>/dev/null; then
+        die "Branch '$BRANCH_NAME' already exists. Use existing worktree or delete the branch."
+    fi
+
+    # Check if worktree path already exists
+    if [[ -d "$WORKTREE_PATH" ]]; then
+        echo ""
+        log_warn "Worktree path already exists: $WORKTREE_PATH"
+        echo ""
+        read -p "What to do? [u]se existing / [d]elete and recreate / [a]bort: " choice
+        case "$choice" in
+            u|U|use)
+                log_info "   Using existing worktree"
+                return
+                ;;
+            d|D|delete)
+                log_info "   Removing existing worktree..."
+                git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || rm -rf "$WORKTREE_PATH"
+                git branch -D "$BRANCH_NAME" 2>/dev/null || true
+                ;;
+            *)
+                die "Aborted by user"
+                ;;
+        esac
+    fi
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "   [DRY-RUN] Would run: git worktree add -b $BRANCH_NAME $WORKTREE_PATH $BASE_BRANCH"
+        return
+    fi
+
+    # Create parent directory if needed
+    mkdir -p "$(dirname "$WORKTREE_PATH")"
+
+    # Fetch latest from remote
+    git fetch origin "$BASE_BRANCH" --quiet 2>/dev/null || true
+
+    # Create worktree with new branch
+    git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" "origin/$BASE_BRANCH" || \
+        git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" "$BASE_BRANCH" || \
+        die "Failed to create worktree"
+
+    log_success "   ✅ Worktree created"
+}
+
+run_init_script() {
+    if [[ "$NO_INIT" == "true" ]]; then
+        log_info "⏭️  Skipping init.sh (--no-init)"
+        return
+    fi
+
+    local init_script="$WORKTREE_PATH/init.sh"
+
+    if [[ ! -f "$init_script" ]]; then
+        log_warn "init.sh not found, skipping initialization"
+        return
+    fi
+
+    log_info "⚙️  Running init.sh..."
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "   [DRY-RUN] Would run: $init_script"
+        return
+    fi
+
+    if ! (cd "$WORKTREE_PATH" && bash ./init.sh); then
+        log_warn "init.sh exited with non-zero code"
+    else
+        log_success "   ✅ Done"
+    fi
+}
+
+# ============================================================================
+# Claude session
+# ============================================================================
+
+start_claude_session() {
+    log_info "🚀 Starting Claude Code session..."
+
+    local initial_command="/feature-dev:feature-dev implement feature $ISSUE_URL"
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "   [DRY-RUN] Would run: cd $WORKTREE_PATH && claude --prompt \"$initial_command\""
+        return
+    fi
+
+    echo ""
+    echo "╭─────────────────────────────────────────────────────────╮"
+    echo "│ Claude Code                                             │"
+    echo "│ Working on: $BRANCH_NAME"
+    echo "│ Issue: #$ISSUE_NUMBER - $ISSUE_TITLE"
+    echo "╰─────────────────────────────────────────────────────────╯"
+    echo ""
+
+    # Change to worktree directory and start Claude
+    cd "$WORKTREE_PATH"
+    exec claude --prompt "$initial_command"
+}
+
+# ============================================================================
+# Argument parsing
+# ============================================================================
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --repo|-r)
+                REPO="$2"
+                shift 2
+                ;;
+            --base|-b)
+                BASE_BRANCH="$2"
+                shift 2
+                ;;
+            --worktree-dir|-w)
+                WORKTREE_DIR="$2"
+                shift 2
+                ;;
+            --no-init)
+                NO_INIT=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            -*)
+                die "Unknown option: $1. Use --help for usage."
+                ;;
+            *)
+                if [[ -z "$ISSUE_INPUT" ]]; then
+                    ISSUE_INPUT="$1"
+                else
+                    die "Unexpected argument: $1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$ISSUE_INPUT" ]]; then
+        show_help
+        exit 1
+    fi
+}
+
+# ============================================================================
+# Main
+# ============================================================================
+
+main() {
+    parse_args "$@"
+
+    check_dependencies
+    check_git_repo
+    parse_issue_input "$ISSUE_INPUT"
+    detect_repo_from_remote
+    detect_base_branch
+
+    fetch_issue
+    generate_branch_name
+    create_worktree
+    run_init_script
+    start_claude_session
+}
+
+main "$@"

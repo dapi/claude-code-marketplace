@@ -1,4 +1,4 @@
-.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all
+.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts
 
 PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
@@ -169,6 +169,21 @@ install-all:
 	done; \
 	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 	echo "✅ Installed: $$installed, Already installed: $$skipped"
+
+# Install standalone scripts to ~/.local/bin
+install-scripts:
+	@echo "📦 Installing scripts to ~/.local/bin/"
+	@mkdir -p ~/.local/bin
+	@cp scripts/do-issue ~/.local/bin/
+	@chmod +x ~/.local/bin/do-issue
+	@echo "✅ Installed: do-issue"
+	@echo ""
+	@if echo "$$PATH" | grep -q "$$HOME/.local/bin"; then \
+		echo "✓ ~/.local/bin is in your PATH"; \
+	else \
+		echo "⚠️  Add to your shell profile:"; \
+		echo "   export PATH=\"\$$HOME/.local/bin:\$$PATH\""; \
+	fi
 
 # Update plugin in all Claude profiles
 update-all:
