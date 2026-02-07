@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 
 # Colors
 RED='\033[0;31m'
@@ -336,7 +336,7 @@ start_claude_session() {
     local initial_command="/feature-dev:feature-dev implement feature $ISSUE_URL"
 
     if [[ "$DRY_RUN" == "true" ]]; then
-        echo "   [DRY-RUN] Would run: cd $WORKTREE_PATH && claude \"$initial_command\""
+        echo "   [DRY-RUN] Would run: cd $WORKTREE_PATH && claude --dangerously-skip-permissions \"$initial_command\""
         return
     fi
 
@@ -350,7 +350,7 @@ start_claude_session() {
 
     # Change to worktree directory and start Claude
     cd "$WORKTREE_PATH"
-    exec claude "$initial_command"
+    exec claude --dangerously-skip-permissions "$initial_command"
 }
 
 # ============================================================================
