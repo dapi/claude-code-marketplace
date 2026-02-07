@@ -214,7 +214,7 @@ Labels: $ISSUE_LABELS
 
 Respond with ONLY the branch name, nothing else. Example: feature/issue-123-dark-mode-support"
 
-    BRANCH_NAME=$(echo "$prompt" | claude --print 2>/dev/null) || \
+    BRANCH_NAME=$(echo "$prompt" | claude --print --model haiku 2>/dev/null) || \
         die "Failed to generate branch name with Claude"
 
     # Clean up the response (remove any whitespace, quotes, backticks)
