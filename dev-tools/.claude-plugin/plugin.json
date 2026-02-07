@@ -1,7 +1,7 @@
 {
   "name": "dev-tools",
   "description": "Development tools: agents for coding, refactoring, and architecture",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
