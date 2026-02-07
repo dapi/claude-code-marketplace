@@ -79,7 +79,7 @@ Options:
   --base, -b <branch>        Base branch (default: main or master)
   --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
   --no-init                  Skip init.sh execution
-  --slow                      Use Claude AI for branch name (default: fast bash heuristics)
+  --ai                       Use Claude AI for branch name (default: fast bash heuristics)
   --dry-run                  Show what would be done without executing
   --version, -v              Show version
   --help, -h                 Show this help
@@ -394,7 +394,7 @@ parse_args() {
                 NO_INIT=true
                 shift
                 ;;
-            --slow)
+            --ai)
                 FAST_MODE=false
                 shift
                 ;;
