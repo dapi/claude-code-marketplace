@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.2.0"
+VERSION="1.3.0"
 
 # Colors
 RED='\033[0;31m'
@@ -30,6 +30,7 @@ BASE_BRANCH=""
 REPO=""
 NO_INIT=false
 DRY_RUN=false
+FAST_MODE=false
 ISSUE_INPUT=""
 
 # ============================================================================
@@ -78,6 +79,7 @@ Options:
   --base, -b <branch>        Base branch (default: main or master)
   --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
   --no-init                  Skip init.sh execution
+  --fast, -f                 Fast mode: use bash heuristics instead of Claude for branch name
   --dry-run                  Show what would be done without executing
   --version, -v              Show version
   --help, -h                 Show this help
@@ -203,44 +205,58 @@ fetch_issue() {
 generate_branch_name() {
     log_info "🧠 Generating branch name..."
 
-    local prompt="You are a git branch name generator. Based on the GitHub issue below, generate a branch name following git flow conventions.
-
-Rules:
-1. Determine branch type from labels or content:
-   - bug, fix → fix/
-   - enhancement, feature → feature/
-   - hotfix, critical → hotfix/
-   - refactor, tech-debt → refactor/
-   - docs, documentation → docs/
-   - default → feature/
-2. Format: {type}/issue-{number}-{short-name}
-3. short-name: kebab-case, max 40 chars, no trailing dashes
-4. Extract key words from title, remove stop words (the, a, an, is, are, to, for, and, or, in, on, at, of)
-
-Issue #$ISSUE_NUMBER
-Title: $ISSUE_TITLE
-Labels: $ISSUE_LABELS
-
-Respond with ONLY the branch name, nothing else. Example: feature/issue-123-dark-mode-support"
-
     local start_time=$SECONDS
-    BRANCH_NAME=$(echo "$prompt" | claude --print --model haiku 2>/dev/null) || \
-        die "Failed to generate branch name with Claude"
-    local elapsed=$((SECONDS - start_time))
 
-    # Clean up the response (remove any whitespace, quotes, backticks)
-    BRANCH_NAME=$(echo "$BRANCH_NAME" | tr -d '`"' | xargs)
+    if [[ "$FAST_MODE" == "true" ]]; then
+        # Fast mode: bash heuristics
+        local branch_type="feature"
 
-    # Validate branch name format
-    if [[ ! "$BRANCH_NAME" =~ ^(feature|fix|hotfix|refactor|docs)/issue-[0-9]+-[a-z0-9-]+$ ]]; then
-        log_warn "Generated branch name doesn't match expected format: $BRANCH_NAME"
-        # Fallback to simple format
-        local simple_name
-        simple_name=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
-        BRANCH_NAME="feature/issue-$ISSUE_NUMBER-$simple_name"
-        log_info "   Using fallback: $BRANCH_NAME (${elapsed}s)"
+        # Determine type from labels
+        if [[ "$ISSUE_LABELS" =~ (bug|fix) ]]; then
+            branch_type="fix"
+        elif [[ "$ISSUE_LABELS" =~ (hotfix|critical) ]]; then
+            branch_type="hotfix"
+        elif [[ "$ISSUE_LABELS" =~ (docs|documentation) ]]; then
+            branch_type="docs"
+        elif [[ "$ISSUE_LABELS" =~ (refactor|tech-debt) ]]; then
+            branch_type="refactor"
+        fi
+
+        # Generate short name from title
+        local short_name
+        short_name=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | \
+            sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+
+        BRANCH_NAME="$branch_type/issue-$ISSUE_NUMBER-$short_name"
+        local elapsed=$((SECONDS - start_time))
+        log_success "   Branch: $BRANCH_NAME (${elapsed}s, fast)"
     else
-        log_success "   Branch: $BRANCH_NAME (${elapsed}s)"
+        # Claude mode: AI-generated name
+        local prompt="Git branch name for issue #$ISSUE_NUMBER: \"$ISSUE_TITLE\" (labels: $ISSUE_LABELS).
+Format: {type}/issue-$ISSUE_NUMBER-{kebab-case-name}
+Types: bug/fix→fix, enhancement→feature, hotfix→hotfix, docs→docs, default→feature.
+Reply with ONLY the branch name."
+
+        # Disable skills for faster startup
+        BRANCH_NAME=$(claude --print --model haiku --no-session-persistence \
+            --disable-slash-commands "$prompt" 2>/dev/null) || \
+            die "Failed to generate branch name with Claude"
+        local elapsed=$((SECONDS - start_time))
+
+        # Clean up the response (remove any whitespace, quotes, backticks)
+        BRANCH_NAME=$(echo "$BRANCH_NAME" | tr -d '`"' | xargs)
+
+        # Validate branch name format
+        if [[ ! "$BRANCH_NAME" =~ ^(feature|fix|hotfix|refactor|docs)/issue-[0-9]+-[a-z0-9-]+$ ]]; then
+            log_warn "Generated branch name doesn't match expected format: $BRANCH_NAME"
+            # Fallback to simple format
+            local short_name
+            short_name=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+            BRANCH_NAME="feature/issue-$ISSUE_NUMBER-$short_name"
+            log_info "   Using fallback: $BRANCH_NAME (${elapsed}s)"
+        else
+            log_success "   Branch: $BRANCH_NAME (${elapsed}s)"
+        fi
     fi
 }
 
@@ -376,6 +392,10 @@ parse_args() {
                 ;;
             --no-init)
                 NO_INIT=true
+                shift
+                ;;
+            --fast|-f)
+                FAST_MODE=true
                 shift
                 ;;
             --dry-run)
