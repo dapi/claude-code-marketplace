@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.1.0"
+VERSION="1.2.0"
 
 # Colors
 RED='\033[0;31m'
@@ -223,8 +223,10 @@ Labels: $ISSUE_LABELS
 
 Respond with ONLY the branch name, nothing else. Example: feature/issue-123-dark-mode-support"
 
+    local start_time=$SECONDS
     BRANCH_NAME=$(echo "$prompt" | claude --print --model haiku 2>/dev/null) || \
         die "Failed to generate branch name with Claude"
+    local elapsed=$((SECONDS - start_time))
 
     # Clean up the response (remove any whitespace, quotes, backticks)
     BRANCH_NAME=$(echo "$BRANCH_NAME" | tr -d '`"' | xargs)
@@ -236,9 +238,9 @@ Respond with ONLY the branch name, nothing else. Example: feature/issue-123-dark
         local simple_name
         simple_name=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
         BRANCH_NAME="feature/issue-$ISSUE_NUMBER-$simple_name"
-        log_info "   Using fallback: $BRANCH_NAME"
+        log_info "   Using fallback: $BRANCH_NAME (${elapsed}s)"
     else
-        log_success "   Branch: $BRANCH_NAME"
+        log_success "   Branch: $BRANCH_NAME (${elapsed}s)"
     fi
 }
 
