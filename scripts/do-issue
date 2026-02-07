@@ -15,6 +15,8 @@
 
 set -euo pipefail
 
+VERSION="1.0.0"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -55,9 +57,15 @@ die() {
     exit 1
 }
 
+show_version() {
+    echo "do-issue v$VERSION"
+}
+
 show_help() {
+    show_version
     cat << 'EOF'
-do-issue - Start working on a GitHub issue with git worktree and Claude Code
+
+Start working on a GitHub issue with git worktree and Claude Code
 
 Usage: do-issue <issue-url-or-number> [options]
 
@@ -71,6 +79,7 @@ Options:
   --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
   --no-init                  Skip init.sh execution
   --dry-run                  Show what would be done without executing
+  --version, -v              Show version
   --help, -h                 Show this help
 
 Examples:
@@ -371,6 +380,10 @@ parse_args() {
                 DRY_RUN=true
                 shift
                 ;;
+            --version|-v)
+                show_version
+                exit 0
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -401,6 +414,9 @@ parse_args() {
 
 main() {
     parse_args "$@"
+
+    echo -e "${BLUE}do-issue${NC} v$VERSION"
+    echo ""
 
     check_dependencies
     check_git_repo
