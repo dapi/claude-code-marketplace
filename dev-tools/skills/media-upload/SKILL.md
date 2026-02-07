@@ -40,6 +40,25 @@ allowed-tools: Bash, Read, Write, Glob, AskUserQuestion, ToolSearch
 
 Загрузка изображений и медиафайлов в S3-совместимое хранилище через `mc` (MinIO Client) с получением публичной ссылки.
 
+## ⚠️ CRITICAL: Приоритет URL
+
+**ОБЯЗАТЕЛЬНО** после загрузки файла:
+
+1. Если в конфиге есть `public_url` и `url_mode` НЕ равен `"presigned"`:
+   - **СРАЗУ** возвращай короткий CDN URL: `${public_url}/${remote_path}`
+   - **НЕ генерируй** presigned URL
+
+2. Только если `url_mode: "presigned"` или `public_url` отсутствует:
+   - Генерируй presigned URL через `mc share download`
+
+**Пример правильного поведения:**
+```
+Конфиг: { "public_url": "https://cdn.example.com", "url_mode": "public" }
+Путь: 2026/02/03/screenshot.png
+→ Возвращай: https://cdn.example.com/2026/02/03/screenshot.png
+→ НЕ возвращай: https://s3...?X-Amz-Algorithm=...
+```
+
 ## Поддерживаемые форматы
 
 | Тип | Расширения | MIME-type |
@@ -103,18 +122,30 @@ User: "открой kiiiosk.store и сделай скриншот"
 ### Файл конфигурации
 
 **Путь**: `~/.config/claude-code/media-upload.json`
+
+**С CDN (рекомендуется):**
 ```json
 {
   "mc_path": "screenshots/claude-screenshots",
+  "public_url": "https://cdn.example.com",
+  "url_mode": "public",
   "organize_by": "date",
-  "history_file": "~/.media-upload-history.json",
-  "max_file_size_mb": 100,
-  "url_mode": "presigned",
-  "presigned_expire": "168h"
+  "max_file_size_mb": 100
 }
 ```
 
-**Примечание**: `public_url` необязателен для режима `presigned`. Добавьте его только если используете публичный хостинг (CDN или selstorage.ru).
+**Без CDN (только presigned):**
+```json
+{
+  "mc_path": "screenshots/claude-screenshots",
+  "url_mode": "presigned",
+  "presigned_expire": "168h",
+  "organize_by": "date",
+  "max_file_size_mb": 100
+}
+```
+
+**Примечание**: Если есть `public_url`, используй `url_mode: "public"` для коротких постоянных ссылок.
 
 ### Режимы URL (`url_mode`)
 

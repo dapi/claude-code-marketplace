@@ -52,3 +52,4 @@ htmlcov/
 # Editor backups
 *.bak
 *.orig
+.playwright-mcp/
