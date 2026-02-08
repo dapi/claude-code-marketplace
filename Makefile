@@ -1,7 +1,8 @@
-.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts
+.PHONY: update update-marketplace update-plugin deploy reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts
 
 PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
+PLUGIN ?= dev-tools
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
@@ -18,16 +19,22 @@ update-marketplace:
 update-plugin:
 	claude plugin update dev-tools@dapi
 
-# Full reinstall (uninstall + install)
+# Deploy any plugin: make deploy or make deploy PLUGIN=zellij-claude-status
+deploy: ensure-marketplace
+	claude plugin uninstall $(PLUGIN)@dapi || true
+	claude plugin install $(PLUGIN)@dapi
+	@echo "🚀 $(PLUGIN) deployed. Restart Claude to apply changes."
+
+# Full reinstall of dev-tools (legacy alias)
 reinstall: uninstall install
 
 uninstall:
 	claude plugin uninstall dev-tools@dapi || true
 
-# Ensure marketplace is registered
+# Ensure marketplace points to current directory (works from worktrees too)
 ensure-marketplace:
-	@claude plugin marketplace list 2>/dev/null | grep -q "dapi" || \
-		(echo "📦 Adding marketplace 'dapi'..." && claude plugin marketplace add $(MARKETPLACE_PATH))
+	@claude plugin marketplace remove dapi 2>/dev/null || true
+	@claude plugin marketplace add $(MARKETPLACE_PATH)
 
 install: ensure-marketplace
 	claude plugin install dev-tools@dapi
