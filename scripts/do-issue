@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.4.0"
+VERSION="1.5.0"
 
 # Colors
 RED='\033[0;31m'
@@ -345,6 +345,23 @@ run_init_script() {
 }
 
 # ============================================================================
+# Zellij integration
+# ============================================================================
+
+rename_zellij_tab() {
+    # Check if zellij is installed and we're inside a zellij session
+    if command -v zellij &> /dev/null && [[ -n "${ZELLIJ:-}" ]]; then
+        log_info "📑 Renaming zellij tab..."
+        if [[ "$DRY_RUN" == "true" ]]; then
+            echo "   [DRY-RUN] Would run: zellij action rename-tab \"#$ISSUE_NUMBER\""
+            return
+        fi
+        zellij action rename-tab "#$ISSUE_NUMBER"
+        log_success "   ✅ Tab renamed to #$ISSUE_NUMBER"
+    fi
+}
+
+# ============================================================================
 # Claude session
 # ============================================================================
 
@@ -450,6 +467,7 @@ main() {
     generate_branch_name
     create_worktree
     run_init_script
+    rename_zellij_tab
     start_claude_session
 }
 
