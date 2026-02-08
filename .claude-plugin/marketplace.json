@@ -9,6 +9,11 @@
       "name": "dev-tools",
       "source": "./dev-tools",
       "description": "Development tools: agents for coding, refactoring, and architecture"
+    },
+    {
+      "name": "zellij-claude-status",
+      "source": "./zellij-claude-status",
+      "description": "Zellij tab status indicator — shows Claude session state via icon prefix"
     }
   ]
 }

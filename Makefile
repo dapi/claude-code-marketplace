@@ -1,4 +1,4 @@
-.PHONY: update update-marketplace update-plugin reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts
+.PHONY: update update-marketplace update-plugin deploy reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts deploy-zellij
 
 PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
@@ -17,6 +17,16 @@ update-marketplace:
 # Update dev-tools plugin
 update-plugin:
 	claude plugin update dev-tools@dapi
+
+# Deploy dev-tools plugin (reinstall to pick up all changes)
+deploy: reinstall
+	@echo "🚀 Plugin deployed. Restart Claude to apply changes."
+
+# Deploy zellij-claude-status plugin
+deploy-zellij: ensure-marketplace
+	claude plugin uninstall zellij-claude-status@dapi || true
+	claude plugin install zellij-claude-status@dapi
+	@echo "🚀 zellij-claude-status deployed. Restart Claude to apply changes."
 
 # Full reinstall (uninstall + install)
 reinstall: uninstall install
