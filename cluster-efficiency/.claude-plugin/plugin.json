@@ -1,0 +1,13 @@
+{
+  "name": "cluster-efficiency",
+  "description": "Kubernetes cluster efficiency analysis: resource utilization, Karpenter, OOM, workloads",
+  "version": "1.0.0",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "license": "MIT",
+  "keywords": ["kubernetes", "k8s", "cluster", "efficiency", "karpenter", "resources", "oom"]
+}

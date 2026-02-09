@@ -8,12 +8,52 @@
     {
       "name": "dev-tools",
       "source": "./dev-tools",
-      "description": "Development tools: agents for coding, refactoring, and architecture"
+      "description": "GitHub workflow tools: issues, PRs, worktrees"
     },
     {
       "name": "zellij-claude-status",
       "source": "./zellij-claude-status",
       "description": "Zellij tab status indicator — shows Claude session state via icon prefix"
+    },
+    {
+      "name": "bugsnag-skill",
+      "source": "./bugsnag-skill",
+      "description": "Bugsnag API integration: view and manage errors, organizations, projects"
+    },
+    {
+      "name": "spec-reviewer",
+      "source": "./spec-reviewer",
+      "description": "Specification review: analyze specs for gaps, inconsistencies, and scope estimation"
+    },
+    {
+      "name": "cluster-efficiency",
+      "source": "./cluster-efficiency",
+      "description": "Kubernetes cluster efficiency analysis: resource utilization, Karpenter, OOM, workloads"
+    },
+    {
+      "name": "doc-validate",
+      "source": "./doc-validate",
+      "description": "Documentation quality validation: broken links, orphan docs, glossary, structure"
+    },
+    {
+      "name": "media-upload",
+      "source": "./media-upload",
+      "description": "Upload images and media files to S3, auto-trigger after Playwright screenshots"
+    },
+    {
+      "name": "long-running-harness",
+      "source": "./long-running-harness",
+      "description": "Manage long-running development projects across multiple sessions"
+    },
+    {
+      "name": "email",
+      "source": "./email",
+      "description": "Read and send emails via Himalaya CLI (IMAP/SMTP)"
+    },
+    {
+      "name": "requirements",
+      "source": "./requirements",
+      "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync"
     }
   ]
 }
