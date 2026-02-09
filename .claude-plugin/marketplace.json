@@ -6,9 +6,9 @@
   },
   "plugins": [
     {
-      "name": "dev-tools",
-      "source": "./dev-tools",
-      "description": "GitHub workflow tools: issues, PRs, worktrees"
+      "name": "github-workflow",
+      "source": "./github-workflow",
+      "description": "GitHub workflow: issues, PRs, worktrees, sub-issues"
     },
     {
       "name": "zellij-claude-status",

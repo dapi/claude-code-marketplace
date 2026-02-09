@@ -1,8 +1,8 @@
 .PHONY: update update-marketplace update-plugin deploy reinstall release release-patch release-minor release-major ensure-marketplace list-claude-profiles install-all update-all install-scripts
 
-PLUGIN_JSON = dev-tools/.claude-plugin/plugin.json
+PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
-PLUGIN ?= dev-tools
+PLUGIN ?= github-workflow
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
@@ -15,9 +15,9 @@ update: update-marketplace update-plugin
 update-marketplace:
 	claude plugin marketplace update dapi
 
-# Update dev-tools plugin
+# Update github-workflow plugin
 update-plugin:
-	claude plugin update dev-tools@dapi
+	claude plugin update github-workflow@dapi
 
 # Deploy any plugin: make deploy or make deploy PLUGIN=zellij-claude-status
 deploy: ensure-marketplace
@@ -25,11 +25,11 @@ deploy: ensure-marketplace
 	claude plugin install $(PLUGIN)@dapi
 	@echo "🚀 $(PLUGIN) deployed. Restart Claude to apply changes."
 
-# Full reinstall of dev-tools (legacy alias)
+# Full reinstall of github-workflow (legacy alias)
 reinstall: uninstall install
 
 uninstall:
-	claude plugin uninstall dev-tools@dapi || true
+	claude plugin uninstall github-workflow@dapi || true
 
 # Ensure marketplace points to current directory (works from worktrees too)
 ensure-marketplace:
@@ -37,7 +37,7 @@ ensure-marketplace:
 	@claude plugin marketplace add $(MARKETPLACE_PATH)
 
 install: ensure-marketplace
-	claude plugin install dev-tools@dapi
+	claude plugin install github-workflow@dapi
 
 # Release targets
 # Usage: make release (auto minor) or make release VERSION=1.3.0
@@ -144,7 +144,7 @@ list-claude-profiles:
 
 # Install plugin to all Claude profiles
 install-all:
-	@echo "📦 Installing dev-tools@dapi to all Claude profiles..."
+	@echo "📦 Installing github-workflow@dapi to all Claude profiles..."
 	@echo ""
 	@installed=0; \
 	skipped=0; \
@@ -160,12 +160,12 @@ install-all:
 			echo "   → Adding marketplace 'dapi'..."; \
 			CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace add $(MARKETPLACE_PATH) || { echo "   ⚠️  Failed to add marketplace"; continue; }; \
 		fi; \
-		if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "dev-tools@dapi"; then \
+		if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "github-workflow@dapi"; then \
 			echo "   ✓ Plugin already installed"; \
 			skipped=$$((skipped + 1)); \
 		else \
-			echo "   → Installing dev-tools@dapi..."; \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin install dev-tools@dapi; then \
+			echo "   → Installing github-workflow@dapi..."; \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin install github-workflow@dapi; then \
 				echo "   ✅ Installed successfully"; \
 				installed=$$((installed + 1)); \
 			else \
@@ -194,7 +194,7 @@ install-scripts:
 
 # Update plugin in all Claude profiles
 update-all:
-	@echo "🔄 Updating dev-tools@dapi in all Claude profiles..."
+	@echo "🔄 Updating github-workflow@dapi in all Claude profiles..."
 	@echo ""
 	@updated=0; \
 	skipped=0; \
@@ -205,14 +205,14 @@ update-all:
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$profile_name"; \
-		if ! CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "dev-tools@dapi"; then \
+		if ! CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "github-workflow@dapi"; then \
 			echo "   ⚠️  Plugin not installed, skipping"; \
 			skipped=$$((skipped + 1)); \
 		else \
 			echo "   → Updating marketplace 'dapi'..."; \
 			CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace update dapi 2>/dev/null || true; \
-			echo "   → Updating dev-tools@dapi..."; \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin update dev-tools@dapi; then \
+			echo "   → Updating github-workflow@dapi..."; \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin update github-workflow@dapi; then \
 				echo "   ✅ Updated successfully"; \
 				updated=$$((updated + 1)); \
 			else \

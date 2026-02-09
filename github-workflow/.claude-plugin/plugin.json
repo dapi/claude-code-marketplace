@@ -1,7 +1,7 @@
 {
-  "name": "dev-tools",
-  "description": "GitHub workflow tools: issues, PRs, worktrees",
-  "version": "1.15.0",
+  "name": "github-workflow",
+  "description": "GitHub workflow: issues, PRs, worktrees, sub-issues",
+  "version": "1.0.0",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees"]
+  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues"]
 }

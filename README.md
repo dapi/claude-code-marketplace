@@ -9,7 +9,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 /plugin marketplace add dapi/claude-code-marketplace
 
 # Install plugins
-/plugin install dev-tools@dapi
+/plugin install github-workflow@dapi
 /plugin install bugsnag-skill@dapi
 # etc.
 ```
@@ -18,7 +18,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 
 | Plugin | Description |
 |--------|-------------|
-| **dev-tools** | GitHub: issues, PRs, worktrees |
+| **github-workflow** | GitHub: issues, PRs, worktrees |
 | **zellij-claude-status** | Zellij tab status indicator |
 | **bugsnag-skill** | Bugsnag API |
 | **spec-reviewer** | Specification review (10 agents) |
@@ -31,7 +31,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 
 ## Plugin Details
 
-### dev-tools
+### github-workflow
 
 GitHub workflow: issues, PRs, worktrees.
 
@@ -110,7 +110,7 @@ Some plugins require external tools:
 
 | Tool | Plugins | Install |
 |------|---------|---------|
-| [gh CLI](https://cli.github.com) | dev-tools, requirements | `brew install gh` |
+| [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 

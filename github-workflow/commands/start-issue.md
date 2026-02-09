@@ -91,7 +91,7 @@ argument-hint: <issue-url>
    ```bash
    cp <plugin-path>/templates/init.sh ./init.sh
    ```
-   Где `<plugin-path>` — путь к плагину dev-tools.
+   Где `<plugin-path>` — путь к плагину github-workflow.
 
 7. **Выполни init.sh:**
    ```bash
