@@ -349,14 +349,15 @@ run_init_script() {
 # ============================================================================
 
 rename_zellij_tab() {
-    # Check if zellij is installed and we're inside a zellij session
-    if command -v zellij &> /dev/null && [[ -n "${ZELLIJ:-}" ]]; then
-        log_info "📑 Renaming zellij tab..."
-        if [[ "$DRY_RUN" == "true" ]]; then
-            echo "   [DRY-RUN] Would run: zellij action rename-tab \"#$ISSUE_NUMBER\""
-            return
-        fi
-        zellij action rename-tab "#$ISSUE_NUMBER"
+    local script_dir
+    script_dir="$(dirname "$(readlink -f "$0")")"
+
+    log_info "📑 Renaming zellij tab..."
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "   [DRY-RUN] Would run: zellij-rename-tab \"$ISSUE_NUMBER\""
+        return
+    fi
+    if "$script_dir/zellij-rename-tab" "$ISSUE_NUMBER"; then
         log_success "   ✅ Tab renamed to #$ISSUE_NUMBER"
     fi
 }

@@ -181,9 +181,9 @@ install-all:
 install-scripts:
 	@echo "📦 Installing scripts to ~/.local/bin/"
 	@mkdir -p ~/.local/bin
-	@cp scripts/do-issue ~/.local/bin/
-	@chmod +x ~/.local/bin/do-issue
-	@echo "✅ Installed: do-issue"
+	@cp scripts/do-issue scripts/zellij-rename-tab ~/.local/bin/
+	@chmod +x ~/.local/bin/do-issue ~/.local/bin/zellij-rename-tab
+	@echo "✅ Installed: do-issue, zellij-rename-tab"
 	@echo ""
 	@if echo "$$PATH" | grep -q "$$HOME/.local/bin"; then \
 		echo "✓ ~/.local/bin is in your PATH"; \
