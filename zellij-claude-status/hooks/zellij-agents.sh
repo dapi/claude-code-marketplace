@@ -19,9 +19,9 @@ fi
 
 ORIGINAL_SESSION=$(cat "$SESSION_CACHE")
 
-# Atomic counter update with flock
+# Atomic counter update with flock (1s timeout to avoid hanging)
 (
-  flock 9
+  flock -w 1 9 || exit 0
   COUNT=0
   [ -f "$COUNTER_FILE" ] && COUNT=$(cat "$COUNTER_FILE")
 
