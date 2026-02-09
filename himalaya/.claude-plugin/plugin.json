@@ -1,6 +1,6 @@
 {
-  "name": "email",
-  "description": "Read and send emails via Himalaya CLI (IMAP/SMTP)",
+  "name": "himalaya",
+  "description": "Email via Himalaya CLI (IMAP/SMTP)",
   "version": "1.0.0",
   "author": {
     "name": "Danil Pismenny",

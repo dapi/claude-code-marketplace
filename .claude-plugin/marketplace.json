@@ -46,9 +46,9 @@
       "description": "Manage long-running development projects across multiple sessions"
     },
     {
-      "name": "email",
-      "source": "./email",
-      "description": "Read and send emails via Himalaya CLI (IMAP/SMTP)"
+      "name": "himalaya",
+      "source": "./himalaya",
+      "description": "Email via Himalaya CLI (IMAP/SMTP)"
     },
     {
       "name": "requirements",

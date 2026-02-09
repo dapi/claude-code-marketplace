@@ -26,7 +26,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 | **doc-validate** | Documentation validation |
 | **media-upload** | S3 media upload |
 | **long-running-harness** | Long-running projects |
-| **email** | Himalaya CLI (IMAP/SMTP) |
+| **himalaya** | Himalaya CLI (IMAP/SMTP) |
 | **requirements** | Requirements in Google Sheets |
 
 ## Plugin Details
@@ -92,7 +92,7 @@ Multi-session project management.
 
 **Triggers:** `init project`, `continue project`, `project status`
 
-### email
+### himalaya
 
 Email via [Himalaya CLI](https://github.com/pimalaya/himalaya).
 
@@ -111,7 +111,7 @@ Some plugins require external tools:
 | Tool | Plugins | Install |
 |------|---------|---------|
 | [gh CLI](https://cli.github.com) | dev-tools, requirements | `brew install gh` |
-| [Himalaya](https://github.com/pimalaya/himalaya) | email | `brew install himalaya` |
+| [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Scripts

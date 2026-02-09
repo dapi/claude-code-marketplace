@@ -1,5 +1,5 @@
 ---
-name: email
+name: himalaya
 description: |
   **UNIVERSAL TRIGGER**: Use when user wants to READ/SEND email.
 

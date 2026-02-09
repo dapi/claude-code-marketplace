@@ -1,11 +1,11 @@
-# Email Plugin
+# Himalaya Plugin
 
 Чтение и отправка email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
 
 ## Установка
 
 ```bash
-/plugin install email@dapi
+/plugin install himalaya@dapi
 ```
 
 ## Требования
@@ -24,4 +24,4 @@
 
 ## Подробная документация
 
-См. [skills/email/SKILL.md](./skills/email/SKILL.md)
+См. [skills/himalaya/SKILL.md](./skills/himalaya/SKILL.md)
