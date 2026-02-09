@@ -2,6 +2,8 @@
 # Manages icon prefix in zellij tab name to reflect Claude session state.
 # Usage: zellij-status.sh <state>
 # States: working, needs-input, ready, init
+#
+# Uses flock to serialize concurrent hook invocations per pane.
 
 set -euo pipefail
 
@@ -10,34 +12,40 @@ set -euo pipefail
 
 STATE="${1:-}"
 CACHE_FILE="/tmp/zellij-claude-tab-${ZELLIJ_SESSION_NAME}-${ZELLIJ_PANE_ID}"
+LOCK_FILE="${CACHE_FILE}.lock"
 
-# "init" is called from SessionStart — the only moment we can trust focus=true
-if [ "$STATE" = "init" ]; then
-  ORIGINAL_NAME=$(zellij action dump-layout 2>/dev/null \
-    | grep -P 'tab name=.*focus=true' \
-    | head -1 \
-    | sed 's/.*name="\([^"]*\)".*/\1/')
+(
+  flock 9
 
-  # Strip any existing icon prefixes
-  while echo "$ORIGINAL_NAME" | grep -qE '^(🤖|✋|❓|🟢|🔄|⏳) '; do
-    ORIGINAL_NAME=$(echo "$ORIGINAL_NAME" | sed -E 's/^(🤖|✋|❓|🟢|🔄|⏳) //')
-  done
+  # "init" is called from SessionStart — the only moment we can trust focus=true
+  if [ "$STATE" = "init" ]; then
+    ORIGINAL_NAME=$(zellij action dump-layout 2>/dev/null \
+      | grep -P 'tab name=.*focus=true' \
+      | head -1 \
+      | sed 's/.*name="\([^"]*\)".*/\1/')
 
-  [ -n "$ORIGINAL_NAME" ] || exit 0
-  echo "$ORIGINAL_NAME" > "$CACHE_FILE"
-  zellij action rename-tab "🟢 ${ORIGINAL_NAME}"
-  exit 0
-fi
+    # Strip any existing icon prefixes
+    while echo "$ORIGINAL_NAME" | grep -qE '^(🤖|✋|❓|🟢|🔄|⏳) '; do
+      ORIGINAL_NAME=$(echo "$ORIGINAL_NAME" | sed -E 's/^(🤖|✋|❓|🟢|🔄|⏳) //')
+    done
 
-case "$STATE" in
-  working)      ICON="🤖" ;;
-  needs-input)  ICON="✋" ;;
-  ready)        ICON="🟢" ;;
-  *)            exit 0 ;;
-esac
+    [ -n "$ORIGINAL_NAME" ] || exit 0
+    echo "$ORIGINAL_NAME" > "$CACHE_FILE"
+    zellij action rename-tab "🟢 ${ORIGINAL_NAME}"
+    exit 0
+  fi
 
-# No cache = SessionStart hasn't run yet, skip silently
-[ -f "$CACHE_FILE" ] || exit 0
+  case "$STATE" in
+    working)      ICON="🤖" ;;
+    needs-input)  ICON="✋" ;;
+    ready)        ICON="🟢" ;;
+    *)            exit 0 ;;
+  esac
 
-ORIGINAL_NAME=$(cat "$CACHE_FILE")
-zellij action rename-tab "${ICON} ${ORIGINAL_NAME}"
+  # No cache = SessionStart hasn't run yet, skip silently
+  [ -f "$CACHE_FILE" ] || exit 0
+
+  ORIGINAL_NAME=$(cat "$CACHE_FILE")
+  zellij action rename-tab "${ICON} ${ORIGINAL_NAME}"
+
+) 9>"$LOCK_FILE"
