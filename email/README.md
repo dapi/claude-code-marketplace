@@ -1,6 +1,6 @@
 # Email Plugin
 
-Чтение и отправка email через Gmail API.
+Чтение и отправка email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
 
 ## Установка
 
@@ -8,12 +8,16 @@
 /plugin install email@dapi
 ```
 
+## Требования
+
+- [Himalaya](https://github.com/pimalaya/himalaya) установлен и настроен
+
 ## Использование
 
 ```
 "check my email"
 "show unread emails"
-"send email to [recipient]"
+"send email to recipient@example.com"
 "проверить почту"
 "отправить письмо"
 ```

@@ -1,6 +1,6 @@
 {
   "name": "email",
-  "description": "Read and send emails via Gmail API integration",
+  "description": "Read and send emails via Himalaya CLI (IMAP/SMTP)",
   "version": "1.0.0",
   "author": {
     "name": "Danil Pismenny",
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["email", "gmail", "inbox", "send", "read"]
+  "keywords": ["email", "himalaya", "imap", "smtp", "inbox", "send", "read"]
 }
