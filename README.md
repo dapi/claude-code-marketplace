@@ -18,16 +18,16 @@ Personal marketplace of Claude Code plugins for development workflows.
 
 | Plugin | Description |
 |--------|-------------|
-| **github-workflow** | GitHub: issues, PRs, worktrees |
-| **zellij-claude-status** | Zellij tab status indicator |
-| **bugsnag-skill** | Bugsnag API |
-| **spec-reviewer** | Specification review (10 agents) |
-| **cluster-efficiency** | Kubernetes cluster analysis (5 agents) |
-| **doc-validate** | Documentation validation |
-| **media-upload** | S3 media upload |
-| **long-running-harness** | Long-running projects |
-| **himalaya** | Himalaya CLI (IMAP/SMTP) |
-| **requirements** | Requirements in Google Sheets |
+| **github-workflow** | GitHub workflow: issues, PRs, worktrees, sub-issues |
+| **zellij-claude-status** | Zellij tab status indicator — shows Claude session state via icon prefix |
+| **bugsnag-skill** | Bugsnag API integration: view and manage errors, organizations, projects |
+| **spec-reviewer** | Specification review: analyze specs for gaps, inconsistencies (10 agents) |
+| **cluster-efficiency** | Kubernetes cluster efficiency analysis (5 agents) |
+| **doc-validate** | Documentation quality validation: broken links, orphan docs, glossary |
+| **media-upload** | Upload images and media files to S3, auto-trigger after Playwright |
+| **long-running-harness** | Manage long-running development projects across multiple sessions |
+| **himalaya** | Email via Himalaya CLI (IMAP/SMTP) |
+| **requirements** | Project requirements registry via Google Spreadsheet with GitHub sync |
 
 ## Plugin Details
 

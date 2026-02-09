@@ -14,15 +14,27 @@ This is a **Claude Code plugin marketplace** for personal development workflows.
 claude-code-marketplace/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace metadata and plugin registry
-├── dev-tools/                     # Plugin: Development tools
-│   ├── .claude-plugin/
-│   │   └── plugin.json           # Plugin metadata
-│   ├── agents/                    # Specialized AI agents (currently empty)
-│   ├── skills/                    # Auto-activating skills (currently empty)
-│   └── commands/                  # Slash commands (currently empty)
-├── testing-tools/                 # Plugin: Testing tools
-│   └── [same structure as dev-tools]
+├── bugsnag-skill/                 # Bugsnag API integration
+├── cluster-efficiency/            # Kubernetes cluster analysis (5 agents)
+├── doc-validate/                  # Documentation validation
+├── github-workflow/               # GitHub issues, PRs, worktrees
+├── himalaya/                      # Email via Himalaya CLI
+├── long-running-harness/          # Multi-session project management
+├── media-upload/                  # S3 media upload
+├── requirements/                  # Requirements in Google Sheets
+├── spec-reviewer/                 # Specification review (10 agents)
+├── zellij-claude-status/          # Zellij tab status indicator (hooks)
 └── [standard repo files]
+
+# Each plugin has structure:
+plugin-name/
+├── .claude-plugin/
+│   └── plugin.json               # Plugin metadata
+├── agents/                        # Specialized AI agents (optional)
+├── skills/                        # Auto-activating skills (optional)
+├── commands/                      # Slash commands (optional)
+├── hooks/                         # Event hooks (optional)
+└── README.md                      # Plugin documentation
 ```
 
 ### Plugin System
@@ -59,7 +71,7 @@ commands/command-name.md
 
 ❌ **FORBIDDEN Paths**:
 ```markdown
-/home/danil/code/claude-code-marketplace/dev-tools/agents/...
+/home/danil/code/claude-code-marketplace/plugin-name/agents/...
 /absolute/path/to/anything
 ../../.claude-plugin/marketplace.json  # Outside plugin!
 ```
@@ -84,20 +96,20 @@ Every plugin MUST be completely self-contained:
 ```
 Development Repository:
 claude-code-marketplace/
-└── dev-tools/
+└── github-workflow/
     ├── .claude-plugin/plugin.json
-    ├── agents/
     ├── skills/
-    └── commands/
+    ├── commands/
+    └── templates/
 
-                ↓  /plugin install dev-tools@dapi
+                ↓  /plugin install github-workflow@dapi
 
 Installed Plugin (isolated location):
-~/.config/claude-code/plugins/dev-tools@dapi/
+~/.config/claude-code/plugins/github-workflow@dapi/
 ├── .claude-plugin/plugin.json
-├── agents/
 ├── skills/
-└── commands/
+├── commands/
+└── templates/
 ```
 
 After installation, the plugin has NO access to:
@@ -223,7 +235,7 @@ Commands are markdown files in `plugin-name/commands/` that expand to full promp
 **Usage**:
 ```bash
 # Review single skill
-./scripts/review_skill_triggers.sh dev-tools/bugsnag
+./scripts/review_skill_triggers.sh bugsnag-skill/bugsnag
 
 # Review all skills in marketplace
 ./scripts/review_skill_triggers.sh --all
@@ -253,8 +265,8 @@ Commands are markdown files in `plugin-name/commands/` that expand to full promp
 ║  Skill Trigger Quality Review Tool        ║
 ╔════════════════════════════════════════════╗
 
-Reviewing skill: dev-tools/bugsnag
-File: dev-tools/skills/bugsnag/SKILL.md
+Reviewing skill: bugsnag-skill/bugsnag
+File: bugsnag-skill/skills/bugsnag/SKILL.md
 
 [1/10] File Structure          ✅ 10/10
 [2/10] Universal Trigger        ✅ 15/15
@@ -287,7 +299,7 @@ RATING: Excellent ⭐⭐⭐⭐⭐
   - Common mistakes
 
 **For examples**:
-- `dev-tools/skills/bugsnag/TRIGGER_EXAMPLES.md` - Reference implementation
+- `bugsnag-skill/skills/bugsnag/TRIGGER_EXAMPLES.md` - Reference implementation
   - 76 test examples (60+ positive, 5+ negative)
   - Bilingual (EN + RU)
   - Comprehensive coverage
@@ -474,8 +486,8 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 /plugin marketplace add /home/danil/code/claude-code-marketplace
 
 # Install specific plugin
-/plugin install dev-tools@dapi
-/plugin install testing-tools@dapi
+/plugin install github-workflow@dapi
+/plugin install spec-reviewer@dapi
 
 # Verify installation
 /plugin list
@@ -528,7 +540,7 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 # Обновить marketplace + plugin (после git pull или изменений)
 make update
 
-# Только обновить плагин dev-tools
+# Только обновить установленный плагин
 make update-plugin
 
 # Только обновить marketplace metadata
@@ -592,6 +604,19 @@ git commit -m "Add plugin-name: brief description"
 
 ## Current State
 
-**Plugins**: 2 plugins defined (dev-tools, testing-tools)
-**Status**: Infrastructure complete, agents/skills/commands directories empty
-**Next**: Populate agents, skills, and commands based on planned features in README.md
+**Plugins**: 10 active plugins in marketplace
+
+| Plugin | Components |
+|--------|------------|
+| bugsnag-skill | 1 skill |
+| cluster-efficiency | 5 agents, 1 skill, 1 command |
+| doc-validate | 1 skill, 1 command |
+| github-workflow | 1 skill, 2 commands |
+| himalaya | 1 skill |
+| long-running-harness | 1 skill |
+| media-upload | 1 skill |
+| requirements | 1 command |
+| spec-reviewer | 10 agents, 1 skill, 1 command |
+| zellij-claude-status | hooks only |
+
+**Totals**: 15 agents, 8 skills, 6 commands
