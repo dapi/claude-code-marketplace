@@ -1,7 +1,7 @@
 {
   "name": "dev-tools",
   "description": "GitHub workflow tools: issues, PRs, worktrees",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
