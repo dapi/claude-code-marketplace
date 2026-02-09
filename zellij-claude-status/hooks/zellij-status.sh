@@ -16,8 +16,9 @@ CACHE_FILE="/tmp/zellij-claude-tab-${ZELLIJ_SESSION_NAME}-${ZELLIJ_PANE_ID}"
 
 # "init" is called from SessionStart — the only moment we can trust focus=true
 if [ "$STATE" = "init" ]; then
+  # Use grep -E (POSIX extended regex) for macOS compatibility (grep -P requires GNU grep)
   ORIGINAL_NAME=$(zellij action dump-layout 2>/dev/null \
-    | grep -P 'tab name=.*focus=true' \
+    | grep -E 'tab name=.*focus=true' \
     | head -1 \
     | sed 's/.*name="\([^"]*\)".*/\1/')
 

@@ -11,17 +11,22 @@ COUNTER_FILE="/tmp/zellij-claude-agents-${ZELLIJ_SESSION_NAME}"
 LOCK_FILE="${COUNTER_FILE}.lock"
 SESSION_CACHE="/tmp/zellij-claude-session-${ZELLIJ_SESSION_NAME}"
 
-# Cache original session name on first use
-if [ ! -f "$SESSION_CACHE" ]; then
-  ORIG=$(echo "$ZELLIJ_SESSION_NAME" | sed -E 's/ \([0-9]+\)$//')
-  echo "$ORIG" > "$SESSION_CACHE"
-fi
-
-ORIGINAL_SESSION=$(cat "$SESSION_CACHE")
-
-# Atomic counter update with flock (1s timeout to avoid hanging)
+# All operations inside flock to prevent race conditions
 (
-  flock -w 1 9 || exit 0
+  # Wait up to 5s for lock, retry on failure instead of silent exit
+  if ! flock -w 5 9; then
+    echo "zellij-agents: failed to acquire lock" >&2
+    exit 1
+  fi
+
+  # Cache original session name (inside lock to prevent race)
+  if [ ! -f "$SESSION_CACHE" ]; then
+    ORIG=$(echo "$ZELLIJ_SESSION_NAME" | sed -E 's/ \([0-9]+\)$//')
+    echo "$ORIG" > "$SESSION_CACHE"
+  fi
+
+  ORIGINAL_SESSION=$(cat "$SESSION_CACHE")
+
   COUNT=0
   [ -f "$COUNTER_FILE" ] && COUNT=$(cat "$COUNTER_FILE")
 
@@ -33,12 +38,11 @@ ORIGINAL_SESSION=$(cat "$SESSION_CACHE")
   esac
 
   echo "$COUNT" > "$COUNTER_FILE"
-) 9>"$LOCK_FILE"
 
-# Rename session outside flock (zellij needs pipe on stdin)
-COUNT=$(cat "$COUNTER_FILE")
-if [ "$COUNT" -gt 0 ]; then
-  echo | zellij action rename-session "${ORIGINAL_SESSION} (${COUNT})"
-else
-  echo | zellij action rename-session "${ORIGINAL_SESSION}"
-fi
+  # Rename session INSIDE flock to prevent race condition
+  if [ "$COUNT" -gt 0 ]; then
+    echo | zellij action rename-session "${ORIGINAL_SESSION} (${COUNT})"
+  else
+    echo | zellij action rename-session "${ORIGINAL_SESSION}"
+  fi
+) 9>"$LOCK_FILE"
