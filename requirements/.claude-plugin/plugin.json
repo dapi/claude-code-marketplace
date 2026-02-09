@@ -1,0 +1,13 @@
+{
+  "name": "requirements",
+  "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync",
+  "version": "1.0.0",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "license": "MIT",
+  "keywords": ["requirements", "google-sheets", "github", "issues", "tracking"]
+}
