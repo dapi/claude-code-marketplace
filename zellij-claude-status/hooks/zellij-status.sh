@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Manages icon prefix in zellij tab name to reflect Claude session state.
 #
-# Requires: zellij-tab-name plugin for cross-tab renaming
-# Install: make install-zellij-tab-name
+# Requires: zellij-tab-rename plugin
+# Install: cd zellij-tab-rename && make install
 
 set -euo pipefail
 
@@ -24,8 +24,8 @@ Commands:
 Environment: ZELLIJ_SESSION_NAME, ZELLIJ_PANE_ID (required)
 Cache: /tmp/zellij-claude-tab-{session}-{pane}
 
-Requires zellij-tab-name plugin:
-  make install-zellij-tab-name
+Requires zellij-tab-rename plugin:
+  cd zellij-tab-rename && make install
 EOF
   exit 0
 fi
@@ -63,12 +63,12 @@ get_current_tab_name() {
 }
 
 rename_tab_by_pane() {
-  # Rename tab containing this pane using zellij-tab-name plugin
+  # Rename tab containing this pane using zellij-tab-rename plugin
   local new_name="$1"
   local pane_id="${ZELLIJ_PANE_ID}"
 
   # Use zellij pipe to send rename command to plugin
-  zellij pipe --name change-tab-name -- "{\"pane_id\": \"$pane_id\", \"name\": \"$new_name\"}" 2>/dev/null || true
+  zellij pipe --name claude-tab-rename -- "{\"pane_id\": \"$pane_id\", \"name\": \"$new_name\"}" 2>/dev/null || true
 }
 
 (
