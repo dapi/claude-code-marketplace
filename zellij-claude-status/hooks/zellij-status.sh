@@ -36,7 +36,7 @@ if [[ "$STATE" == "status" ]]; then
     CF="/tmp/zellij-claude-tab-${ZELLIJ_SESSION_NAME}-${ZELLIJ_PANE_ID}"
     echo "Cache: $(cat "$CF" 2>/dev/null || echo '<none>')"
   fi
-  echo "Focused: $(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' || echo '<unknown>')"
+  echo "Keyboard focus: $(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' || echo '<unknown>')"
   echo "Tabs:"
   zellij action query-tab-names 2>/dev/null | sed 's/^/  /'
   exit 0
@@ -53,23 +53,45 @@ strip_icon() {
   echo "$1" | sed -E 's/^(🤖|✋|🟢) //'
 }
 
-get_focused() {
+get_keyboard_focused() {
+  # Returns tab with keyboard focus (not necessarily visually active)
   zellij action dump-layout 2>/dev/null \
     | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' \
     | head -1
 }
 
+find_tab_with_name() {
+  # Find tab that matches pattern (with or without icon prefix)
+  local pattern="$1"
+  zellij action query-tab-names 2>/dev/null | grep -E "^(🤖|✋|🟢)? ?${pattern}$" | head -1
+}
+
+rename_our_tab() {
+  # Rename our tab even if not visually focused
+  local new_name="$1"
+  local cached_name="$2"
+
+  # Find current tab name (with possible icon)
+  local current=$(find_tab_with_name "$cached_name")
+  [ -n "$current" ] || return 1
+
+  # Switch to our tab, rename, switch back
+  zellij action go-to-tab-name "$current" 2>/dev/null
+  zellij action rename-tab "$new_name" 2>/dev/null
+  zellij action go-to-previous-tab 2>/dev/null
+}
+
 (
   flock -n 9 || exit 0
 
-  FOCUSED=$(get_focused)
-  BARE=$(strip_icon "$FOCUSED")
-
   # --- INIT ---
   if [ "$STATE" = "init" ]; then
+    FOCUSED=$(get_keyboard_focused)
+    BARE=$(strip_icon "$FOCUSED")
     [ -n "$BARE" ] || exit 0
     echo "$BARE" > "$CACHE"
-    zellij action rename-tab "🟢 $BARE"
+    # At init, Claude tab should be visually focused
+    zellij action rename-tab "🤖 $BARE"
     exit 0
   fi
 
@@ -77,7 +99,7 @@ get_focused() {
   if [ "$STATE" = "exit" ]; then
     [ -f "$CACHE" ] || exit 0
     NAME=$(cat "$CACHE")
-    [ "$BARE" = "$NAME" ] && zellij action rename-tab "$NAME"
+    rename_our_tab "$NAME" "$NAME"
     rm -f "$CACHE"
     exit 0
   fi
@@ -93,8 +115,5 @@ get_focused() {
   [ -f "$CACHE" ] || exit 0
   NAME=$(cat "$CACHE")
 
-  # Only rename if our tab is focused
-  [ "$BARE" = "$NAME" ] || exit 0
-
-  zellij action rename-tab "$ICON $NAME"
+  rename_our_tab "$ICON $NAME" "$NAME"
 ) 9>"$LOCK"
