@@ -366,6 +366,53 @@ rename_zellij_tab() {
 # Claude session
 # ============================================================================
 
+print_session_header() {
+    local term_width
+    term_width=$(tput cols 2>/dev/null || echo 80)
+
+    # Minimum width for content
+    local min_width=60
+    [[ $term_width -lt $min_width ]] && term_width=$min_width
+
+    # Convert home to ~
+    local display_path="${WORKTREE_PATH/#$HOME/\~}"
+
+    # Content lines
+    local line1="Claude Code"
+    local line2="Branch: $BRANCH_NAME"
+    local line3="Issue: #$ISSUE_NUMBER - $ISSUE_TITLE"
+    local line4="Path: $display_path"
+
+    # Truncate long lines if needed
+    local max_content_width=$((term_width - 4))  # 4 = "│ " + " │"
+    [[ ${#line2} -gt $max_content_width ]] && line2="${line2:0:$((max_content_width - 3))}..."
+    [[ ${#line3} -gt $max_content_width ]] && line3="${line3:0:$((max_content_width - 3))}..."
+    [[ ${#line4} -gt $max_content_width ]] && line4="${line4:0:$((max_content_width - 3))}..."
+
+    # Generate horizontal lines
+    local h_line=""
+    for ((i = 0; i < term_width - 2; i++)); do
+        h_line+="─"
+    done
+
+    # Pad function
+    pad_line() {
+        local text="$1"
+        local padding=$((term_width - 4 - ${#text}))
+        printf "│ %s%*s │\n" "$text" "$padding" ""
+    }
+
+    echo ""
+    printf "╭%s╮\n" "$h_line"
+    pad_line "$line1"
+    printf "├%s┤\n" "$h_line"
+    pad_line "$line2"
+    pad_line "$line3"
+    pad_line "$line4"
+    printf "╰%s╯\n" "$h_line"
+    echo ""
+}
+
 start_claude_session() {
     log_info "🚀 Starting Claude Code session..."
 
@@ -376,13 +423,7 @@ start_claude_session() {
         return
     fi
 
-    echo ""
-    echo "╭─────────────────────────────────────────────────────────╮"
-    echo "│ Claude Code                                             │"
-    echo "│ Working on: $BRANCH_NAME"
-    echo "│ Issue: #$ISSUE_NUMBER - $ISSUE_TITLE"
-    echo "╰─────────────────────────────────────────────────────────╯"
-    echo ""
+    print_session_header
 
     # Change to worktree directory and start Claude
     cd "$WORKTREE_PATH"
