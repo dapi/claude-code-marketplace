@@ -350,7 +350,7 @@ _release:
 ifdef VERSION
 	@NEW_VERSION=$(VERSION); \
 	echo "📦 Releasing v$$NEW_VERSION..."; \
-	sed -i 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
+	sed -i '' 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
 	git add $(PLUGIN_JSON); \
 	git commit -m "Bump version to $$NEW_VERSION"; \
 	git tag v$$NEW_VERSION; \
@@ -368,7 +368,7 @@ else
 		NEW_VERSION=$$MAJOR.$$MINOR.$$((PATCH + 1)); \
 	fi; \
 	echo "📦 Releasing v$$NEW_VERSION (was $(CURRENT_VERSION))..."; \
-	sed -i 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
+	sed -i '' 's/"version": "[^"]*"/"version": "'$$NEW_VERSION'"/' $(PLUGIN_JSON); \
 	git add $(PLUGIN_JSON); \
 	git commit -m "Bump version to $$NEW_VERSION"; \
 	git tag v$$NEW_VERSION; \
