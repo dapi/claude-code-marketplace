@@ -438,34 +438,34 @@ list-claude-profiles:
 # Update all plugins in all Claude profiles
 update-all:
 	@echo "🔄 Updating all dapi plugins in all Claude profiles..."
-	@echo "   Plugins: $(ALL_PLUGINS)"
 	@echo ""
-	@updated=0; \
-	skipped=0; \
-	failed=0; \
+	@total_updated=0; \
+	total_failed=0; \
+	profiles=0; \
 	for dir in ~/.claude*/; do \
 		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		profile_name=$$(basename "$$dir"); \
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$profile_name"; \
-		echo "   → Updating marketplace 'dapi'..."; \
+		plugins=$$(CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //'); \
+		if [ -z "$$plugins" ]; then \
+			echo "   ⚠️  No dapi plugins installed"; \
+			continue; \
+		fi; \
+		profiles=$$((profiles + 1)); \
+		echo "   → Updating marketplace..."; \
 		CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace update dapi 2>/dev/null || true; \
-		for plugin in $(ALL_PLUGINS); do \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
-				if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin update $$plugin@dapi 2>/dev/null; then \
-					echo "   ✅ $$plugin"; \
-					updated=$$((updated + 1)); \
-				else \
-					echo "   ⚠️  $$plugin (failed)"; \
-					failed=$$((failed + 1)); \
-				fi; \
+		for plugin in $$plugins; do \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin update "$$plugin" 2>/dev/null; then \
+				echo "   ✅ $$plugin"; \
+				total_updated=$$((total_updated + 1)); \
 			else \
-				echo "   - $$plugin (not installed)"; \
-				skipped=$$((skipped + 1)); \
+				echo "   ⚠️  $$plugin (failed)"; \
+				total_failed=$$((total_failed + 1)); \
 			fi; \
 		done; \
 		echo ""; \
 	done; \
 	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
-	echo "✅ Updated: $$updated, Skipped: $$skipped, Failed: $$failed"
+	echo "✅ Profiles: $$profiles, Updated: $$total_updated, Failed: $$total_failed"
