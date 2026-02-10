@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-session-start.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-session-start.sh"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-prompt-submit.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-prompt-submit.sh"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-subagent-start.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-subagent-start.sh"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-subagent-stop.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-subagent-stop.sh"
           }
         ]
       }
@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-permission-prompt.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-permission-prompt.sh"
           }
         ]
       }
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/on-stop.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-stop.sh"
           }
         ]
       }
