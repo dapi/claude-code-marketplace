@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-# DEBUG: Log environment to file
-echo "=== SessionStart Hook $(date) ===" >> /tmp/claude-hook-debug.log
-echo "ZELLIJ_SESSION_NAME=$ZELLIJ_SESSION_NAME" >> /tmp/claude-hook-debug.log
-echo "ZELLIJ_PANE_ID=$ZELLIJ_PANE_ID" >> /tmp/claude-hook-debug.log
-echo "PWD=$PWD" >> /tmp/claude-hook-debug.log
+# Small delay to ensure tab has focus
+sleep 0.3
 
-# Cleanup stale temp files older than 1 day (from crashed/orphaned sessions)
-find /tmp -maxdepth 1 -name 'zellij-claude-*' -mtime +1 -delete 2>/dev/null || true
+TAB=$(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' | head -1)
+# Strip existing icon
+TAB=$(echo "$TAB" | sed -E 's/^(🤖|✋|🟢) //')
 
-"$(dirname "$0")/zellij-agents.sh" reset
-exec "$(dirname "$0")/zellij-status.sh" init
+[ -n "$TAB" ] && [ -n "$ZELLIJ_PANE_ID" ] && \
+  zellij pipe --name claude-tab-rename -- "{\"pane_id\": \"$ZELLIJ_PANE_ID\", \"name\": \"🤖 $TAB\"}"

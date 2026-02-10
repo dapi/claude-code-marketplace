@@ -23,7 +23,7 @@ claude-code-marketplace/
 ├── media-upload/                  # S3 media upload
 ├── requirements/                  # Requirements in Google Sheets
 ├── spec-reviewer/                 # Specification review (10 agents)
-├── zellij-claude-status/          # Zellij tab status indicator (hooks)
+├── zellij-tab-claude-status/      # Zellij tab status indicator (hooks)
 └── [standard repo files]
 
 # Each plugin has structure:
@@ -617,6 +617,15 @@ git commit -m "Add plugin-name: brief description"
 | media-upload | 1 skill |
 | requirements | 1 command |
 | spec-reviewer | 10 agents, 1 skill, 1 command |
-| zellij-claude-status | hooks only |
+| zellij-tab-claude-status | hooks only |
 
 **Totals**: 15 agents, 8 skills, 6 commands
+
+## zellij-tab-claude-status Plugin
+
+Special rules for this plugin:
+
+1. **NO `async: true`** in hooks — hooks must run synchronously so the tab has focus when getting its name
+2. **Use `hooks-handlers/`** directory for scripts (matches official plugin structure)
+3. **Suppress zellij-agents.sh errors** with `|| true` — session rename may fail but shouldn't break the hook
+4. **Requires zellij-tab-rename plugin** — install from `zellij-tab-rename/` directory

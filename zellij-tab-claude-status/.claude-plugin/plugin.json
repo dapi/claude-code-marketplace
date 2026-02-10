@@ -1,7 +1,7 @@
 {
   "name": "zellij-tab-claude-status",
   "description": "Zellij tab status indicator — shows Claude session state via icon prefix in tab name",
-  "version": "1.0.18",
+  "version": "1.0.20",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
