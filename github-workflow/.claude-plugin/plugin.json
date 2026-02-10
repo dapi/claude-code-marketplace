@@ -1,7 +1,7 @@
 {
   "name": "github-workflow",
   "description": "GitHub workflow: issues, PRs, worktrees, sub-issues",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
