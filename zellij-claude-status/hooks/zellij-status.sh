@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Manages icon prefix in zellij tab name to reflect Claude session state.
 # Usage: zellij-status.sh <state>
-# States: working, needs-input, ready, init
+# States: working, needs-input, ready, init, exit
 #
 # Non-blocking flock prevents races between parallel hooks without ever
 # blocking Claude sessions (if lock is busy, we skip and retry on next event).
@@ -79,6 +79,24 @@ tab_owned_by_other() {
 
     echo "$FOCUSED_BARE" > "$CACHE_FILE"
     zellij action rename-tab "🟢 ${FOCUSED_BARE}"
+    exit 0
+  fi
+
+  # --- EXIT: restore original tab name and cleanup ---
+  if [ "$STATE" = "exit" ]; then
+    [ -f "$CACHE_FILE" ] || exit 0
+    ORIGINAL_NAME=$(cat "$CACHE_FILE")
+
+    # Skip if still pending (never claimed a tab)
+    [ "$ORIGINAL_NAME" = "__PENDING__" ] && { rm -f "$CACHE_FILE"; exit 0; }
+
+    # Only rename if the focused tab is actually ours
+    if [ "$FOCUSED_BARE" = "$ORIGINAL_NAME" ]; then
+      zellij action rename-tab "$ORIGINAL_NAME"
+    fi
+
+    # Cleanup cache file
+    rm -f "$CACHE_FILE"
     exit 0
   fi
 

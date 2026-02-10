@@ -36,7 +36,7 @@ The plugin uses Claude Code hooks to track session state:
 | SubagentStart | Increment counter |
 | SubagentStop | Decrement counter |
 | Notification (permission) | Show ✋ (needs input) |
-| Stop | Show 🟢 (ready) |
+| Stop | Remove icon, restore original tab name |
 
 ## Temporary files
 
