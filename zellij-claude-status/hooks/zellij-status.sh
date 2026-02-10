@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Manages icon prefix in zellij tab name to reflect Claude session state.
 #
-# LIMITATION: zellij rename-tab only works on focused tab.
-# Status updates only happen when our tab has focus.
+# Requires: zellij-tab-name plugin for cross-tab renaming
+# Install: make install-zellij-tab-name
 
 set -euo pipefail
 
@@ -23,6 +23,9 @@ Commands:
 
 Environment: ZELLIJ_SESSION_NAME, ZELLIJ_PANE_ID (required)
 Cache: /tmp/zellij-claude-tab-{session}-{pane}
+
+Requires zellij-tab-name plugin:
+  make install-zellij-tab-name
 EOF
   exit 0
 fi
@@ -36,7 +39,6 @@ if [[ "$STATE" == "status" ]]; then
     CF="/tmp/zellij-claude-tab-${ZELLIJ_SESSION_NAME}-${ZELLIJ_PANE_ID}"
     echo "Cache: $(cat "$CF" 2>/dev/null || echo '<none>')"
   fi
-  echo "Keyboard focus: $(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' || echo '<unknown>')"
   echo "Tabs:"
   zellij action query-tab-names 2>/dev/null | sed 's/^/  /'
   exit 0
@@ -53,32 +55,20 @@ strip_icon() {
   echo "$1" | sed -E 's/^(🤖|✋|🟢) //'
 }
 
-get_keyboard_focused() {
-  # Returns tab with keyboard focus (not necessarily visually active)
+get_current_tab_name() {
+  # Get tab name for current pane via dump-layout
   zellij action dump-layout 2>/dev/null \
     | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' \
     | head -1
 }
 
-find_tab_with_name() {
-  # Find tab that matches pattern (with or without icon prefix)
-  local pattern="$1"
-  zellij action query-tab-names 2>/dev/null | grep -E "^(🤖|✋|🟢)? ?${pattern}$" | head -1
-}
-
-rename_our_tab() {
-  # Rename our tab even if not visually focused
+rename_tab_by_pane() {
+  # Rename tab containing this pane using zellij-tab-name plugin
   local new_name="$1"
-  local cached_name="$2"
+  local pane_id="${ZELLIJ_PANE_ID}"
 
-  # Find current tab name (with possible icon)
-  local current=$(find_tab_with_name "$cached_name")
-  [ -n "$current" ] || return 1
-
-  # Switch to our tab, rename, switch back
-  zellij action go-to-tab-name "$current" 2>/dev/null
-  zellij action rename-tab "$new_name" 2>/dev/null
-  zellij action go-to-previous-tab 2>/dev/null
+  # Use zellij pipe to send rename command to plugin
+  zellij pipe --name change-tab-name -- "{\"pane_id\": \"$pane_id\", \"name\": \"$new_name\"}" 2>/dev/null || true
 }
 
 (
@@ -86,12 +76,11 @@ rename_our_tab() {
 
   # --- INIT ---
   if [ "$STATE" = "init" ]; then
-    FOCUSED=$(get_keyboard_focused)
-    BARE=$(strip_icon "$FOCUSED")
+    CURRENT=$(get_current_tab_name)
+    BARE=$(strip_icon "$CURRENT")
     [ -n "$BARE" ] || exit 0
     echo "$BARE" > "$CACHE"
-    # At init, Claude tab should be visually focused
-    zellij action rename-tab "🤖 $BARE"
+    rename_tab_by_pane "🤖 $BARE"
     exit 0
   fi
 
@@ -99,7 +88,7 @@ rename_our_tab() {
   if [ "$STATE" = "exit" ]; then
     [ -f "$CACHE" ] || exit 0
     NAME=$(cat "$CACHE")
-    rename_our_tab "$NAME" "$NAME"
+    rename_tab_by_pane "$NAME"
     rm -f "$CACHE"
     exit 0
   fi
@@ -115,5 +104,5 @@ rename_our_tab() {
   [ -f "$CACHE" ] || exit 0
   NAME=$(cat "$CACHE")
 
-  rename_our_tab "$ICON $NAME" "$NAME"
+  rename_tab_by_pane "$ICON $NAME"
 ) 9>"$LOCK"

@@ -2,7 +2,8 @@
         install install-scripts install-plugins-all install-marketplace-all install-all install-dry-run \
         uninstall uninstall-scripts uninstall-plugins-all uninstall-marketplace-all uninstall-all uninstall-dry-run \
         reinstall reinstall-all reinstall-dry-run \
-        release release-patch release-minor release-major ensure-marketplace list-claude-profiles update-all
+        release release-patch release-minor release-major ensure-marketplace list-claude-profiles update-all \
+        install-zellij-tab-name
 
 PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
@@ -469,3 +470,31 @@ update-all:
 	done; \
 	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 	echo "✅ Profiles: $$profiles, Updated: $$total_updated, Failed: $$total_failed"
+
+# ============================================================================
+# ZELLIJ PLUGIN TARGETS
+# ============================================================================
+
+ZELLIJ_TAB_NAME_VERSION = v0.4.1
+ZELLIJ_TAB_NAME_URL = https://github.com/Cynary/zellij-tab-name/releases/download/$(ZELLIJ_TAB_NAME_VERSION)/zellij-tab-name.wasm
+ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
+
+# Install zellij-tab-name plugin for cross-tab renaming
+install-zellij-tab-name:
+	@echo "📦 Installing zellij-tab-name plugin..."
+	@mkdir -p $(ZELLIJ_PLUGINS_DIR)
+	@if [ -f "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm" ]; then \
+		echo "   ✓ Already installed at $(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
+	else \
+		echo "   → Downloading $(ZELLIJ_TAB_NAME_VERSION)..."; \
+		curl -sL "$(ZELLIJ_TAB_NAME_URL)" -o "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
+		echo "   ✅ Downloaded to $(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
+	fi
+	@echo ""
+	@echo "📝 Add to your zellij config (~/.config/zellij/config.kdl):"
+	@echo ""
+	@echo '   load_plugins {'
+	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"'
+	@echo '   }'
+	@echo ""
+	@echo "   Then restart zellij."
