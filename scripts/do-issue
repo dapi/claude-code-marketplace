@@ -284,24 +284,24 @@ create_worktree() {
             echo "   Existing worktree: $existing_worktree"
         fi
         echo ""
-        echo "Options:"
-        echo "  [u] Use existing worktree and continue"
-        echo "  [n] Create new branch with different name"
-        echo "  [d] Delete branch/worktree and recreate"
-        echo "  [a] Abort"
+        echo "  1) Use existing worktree and continue"
+        echo "  2) Create new branch with different name"
+        echo "  3) Delete branch/worktree and recreate"
+        echo "  0) Exit"
         echo ""
-        read -p "Choice: " choice
+        read -n 1 -p "Choice: " choice
+        echo ""
         case "$choice" in
-            u|U)
+            1)
                 if [[ -n "$existing_worktree" ]]; then
                     WORKTREE_PATH="$existing_worktree"
                     log_info "   Using existing worktree: $WORKTREE_PATH"
                     return
                 else
-                    die "No existing worktree found for branch '$BRANCH_NAME'. Use [d] to delete and recreate."
+                    die "No existing worktree found for branch '$BRANCH_NAME'. Use 3 to delete and recreate."
                 fi
                 ;;
-            n|N)
+            2)
                 # Generate new branch name with timestamp suffix
                 local timestamp
                 timestamp=$(date +%s | tail -c 5)
@@ -309,7 +309,7 @@ create_worktree() {
                 WORKTREE_PATH="$WORKTREE_DIR/$BRANCH_NAME"
                 log_info "   New branch name: $BRANCH_NAME"
                 ;;
-            d|D)
+            3)
                 log_info "   Removing existing branch/worktree..."
                 if [[ -n "$existing_worktree" ]]; then
                     git worktree remove --force "$existing_worktree" 2>/dev/null || rm -rf "$existing_worktree"
@@ -318,7 +318,7 @@ create_worktree() {
                 log_success "   ✅ Cleaned up"
                 ;;
             *)
-                die "Aborted by user"
+                die "Aborted"
                 ;;
         esac
     fi
@@ -328,19 +328,24 @@ create_worktree() {
         echo ""
         log_warn "Worktree path already exists: $WORKTREE_PATH"
         echo ""
-        read -p "What to do? [u]se existing / [d]elete and recreate / [a]bort: " choice
+        echo "  1) Use existing worktree"
+        echo "  2) Delete and recreate"
+        echo "  0) Exit"
+        echo ""
+        read -n 1 -p "Choice: " choice
+        echo ""
         case "$choice" in
-            u|U|use)
+            1)
                 log_info "   Using existing worktree"
                 return
                 ;;
-            d|D|delete)
+            2)
                 log_info "   Removing existing worktree..."
                 git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || rm -rf "$WORKTREE_PATH"
                 git branch -D "$BRANCH_NAME" 2>/dev/null || true
                 ;;
             *)
-                die "Aborted by user"
+                die "Aborted"
                 ;;
         esac
     fi
