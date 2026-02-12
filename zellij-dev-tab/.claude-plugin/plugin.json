@@ -1,0 +1,10 @@
+{
+  "name": "zellij-dev-tab",
+  "description": "Launch GitHub issue development in a separate zellij tab with do-issue",
+  "version": "1.0.0",
+  "author": "dapi",
+  "license": "MIT",
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "keywords": ["zellij", "github", "issues", "development", "tabs", "workflow"]
+}

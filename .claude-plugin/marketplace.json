@@ -54,6 +54,11 @@
       "name": "requirements",
       "source": "./requirements",
       "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync"
+    },
+    {
+      "name": "zellij-dev-tab",
+      "source": "./zellij-dev-tab",
+      "description": "Launch GitHub issue development in a separate zellij tab with do-issue"
     }
   ]
 }
