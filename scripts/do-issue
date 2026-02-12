@@ -499,10 +499,10 @@ main() {
     echo -e "${BLUE}do-issue${NC} v$VERSION"
     echo ""
 
-    rename_zellij_tab
     check_dependencies
     check_git_repo
     parse_issue_input "$ISSUE_INPUT"
+    rename_zellij_tab
     detect_repo_from_remote
     detect_base_branch
 
