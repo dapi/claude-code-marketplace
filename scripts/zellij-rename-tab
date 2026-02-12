@@ -10,15 +10,40 @@
 
 set -euo pipefail
 
+show_help() {
+    cat <<'EOF'
+zellij-rename-tab - Rename current zellij tab
+
+Usage:
+  zellij-rename-tab <title>
+
+Examples:
+  zellij-rename-tab "🤖 Working"
+  zellij-rename-tab "#123"
+  zellij-rename-tab "Feature: auth"
+
+Requirements:
+  - Must be run inside a zellij session
+  - Requires zellij-tab-rename plugin installed and loaded
+  - Uses $ZELLIJ_PANE_ID from environment automatically
+
+Install plugin:
+  cd zellij-tab-rename && make install
+  # Add to ~/.config/zellij/config.kdl:
+  # load_plugins { "file:~/.config/zellij/plugins/zellij-tab-rename.wasm" }
+EOF
+}
+
 if [[ $# -lt 1 ]]; then
-    echo "Usage: zellij-rename-tab <title>" >&2
-    exit 1
+    show_help
+    exit 0
 fi
 
 TITLE="$1"
 
 # Exit early if not in zellij
 if [[ -z "${ZELLIJ:-}" ]]; then
+    echo "Warning: Not in zellij session, doing nothing" >&2
     exit 0
 fi
 
