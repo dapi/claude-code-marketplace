@@ -8,6 +8,7 @@
 #   zellij-tab-status              # Get current status emoji
 #   zellij-tab-status --name       # Get base name (without status)
 #
+# All operations are performed atomically via the zellij-tab-rename plugin.
 # The status is the first character followed by a space.
 # "🤖 Working" -> status: 🤖, name: Working
 
@@ -18,8 +19,8 @@ show_help() {
 zellij-tab-status - Manage status emoji in zellij tab name
 
 Usage:
-  zellij-tab-status <emoji>        Set status emoji (atomically via plugin)
-  zellij-tab-status --clear, -c    Remove status emoji (atomically via plugin)
+  zellij-tab-status <emoji>        Set status emoji
+  zellij-tab-status --clear, -c    Remove status emoji
   zellij-tab-status --get, -g      Get current status emoji (default if no args)
   zellij-tab-status --name, -n     Get base name (without status)
   zellij-tab-status --help, -h     Show this help
@@ -30,41 +31,13 @@ Examples:
   zellij-tab-status --clear        # "🤖 Working" -> "Working"
   zellij-tab-status                # Output: 🤖
 
+All operations are atomic (via plugin) - no race conditions.
+
 Requirements:
   - Must be run inside a zellij session
   - Requires zellij-tab-rename plugin installed and loaded
   - Uses $ZELLIJ_PANE_ID from environment automatically
 EOF
-}
-
-# Get current tab name from zellij
-get_current_tab_name() {
-    zellij action dump-layout 2>/dev/null \
-        | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' \
-        | head -1
-}
-
-# Extract status emoji from tab name
-# Status is first char if followed by space
-get_status() {
-    local name="$1"
-    # Get first character
-    local first_char="${name:0:1}"
-    # Check if second char is space
-    if [[ "${name:1:1}" == " " ]]; then
-        echo "$first_char"
-    fi
-}
-
-# Extract base name (without status)
-get_base_name() {
-    local name="$1"
-    # Check if second char is space (meaning first char is status)
-    if [[ "${name:1:1}" == " " ]]; then
-        echo "${name:2}"
-    else
-        echo "$name"
-    fi
 }
 
 # Send command to plugin via pipe
@@ -87,7 +60,7 @@ send_to_plugin() {
     zellij pipe --name tab-status -- "$payload"
 }
 
-# Exit early if not in zellij (for read operations, we still try)
+# Exit early if not in zellij
 check_zellij() {
     if [[ -z "${ZELLIJ:-}" ]]; then
         echo "Warning: Not in zellij session" >&2
@@ -107,17 +80,11 @@ case "${1:-}" in
         ;;
     -g|--get|"")
         check_zellij
-        name=$(get_current_tab_name)
-        if [[ -n "$name" ]]; then
-            get_status "$name"
-        fi
+        send_to_plugin "get_status"
         ;;
     -n|--name)
         check_zellij
-        name=$(get_current_tab_name)
-        if [[ -n "$name" ]]; then
-            get_base_name "$name"
-        fi
+        send_to_plugin "get_name"
         ;;
     -*)
         echo "Unknown option: $1" >&2

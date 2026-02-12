@@ -49,6 +49,12 @@ zellij pipe --name tab-status -- '{"pane_id": "'$ZELLIJ_PANE_ID'", "action": "se
 
 # Clear status: "🤖 Working" -> "Working"
 zellij pipe --name tab-status -- '{"pane_id": "'$ZELLIJ_PANE_ID'", "action": "clear_status"}'
+
+# Get current status emoji (outputs to stdout): "🤖 Working" -> "🤖"
+zellij pipe --name tab-status -- '{"pane_id": "'$ZELLIJ_PANE_ID'", "action": "get_status"}'
+
+# Get base name without status (outputs to stdout): "🤖 Working" -> "Working"
+zellij pipe --name tab-status -- '{"pane_id": "'$ZELLIJ_PANE_ID'", "action": "get_name"}'
 ```
 
 **Status format:** First character + space = status. `"🤖 Working"` → status: `🤖`, base name: `Working`

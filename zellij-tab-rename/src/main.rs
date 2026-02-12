@@ -146,25 +146,39 @@ impl State {
         let base_name = Self::extract_base_name(current_name);
         let tab_id = (tab_position + 1) as u32;
 
-        let new_name = match status.action.as_str() {
+        match status.action.as_str() {
             "set_status" => {
                 if status.emoji.is_empty() {
                     eprintln!("[tab-status] ERROR: emoji is required for 'set_status' action");
                     return false;
                 }
-                format!("{} {}", status.emoji, base_name)
+                let new_name = format!("{} {}", status.emoji, base_name);
+                eprintln!("[tab-status] set_status on tab {} (position {}): '{}' -> '{}'",
+                    tab_id, tab_position, current_name, new_name);
+                rename_tab(tab_id, new_name);
             }
-            "clear_status" => base_name.to_string(),
+            "clear_status" => {
+                let new_name = base_name.to_string();
+                eprintln!("[tab-status] clear_status on tab {} (position {}): '{}' -> '{}'",
+                    tab_id, tab_position, current_name, new_name);
+                rename_tab(tab_id, new_name);
+            }
+            "get_status" => {
+                let emoji = Self::extract_status(current_name);
+                eprintln!("[tab-status] get_status: '{}'", emoji);
+                cli_pipe_output("tab-status", emoji);
+                unblock_cli_pipe_input("tab-status");
+            }
+            "get_name" => {
+                eprintln!("[tab-status] get_name: '{}'", base_name);
+                cli_pipe_output("tab-status", base_name);
+                unblock_cli_pipe_input("tab-status");
+            }
             _ => {
-                eprintln!("[tab-status] ERROR: unknown action '{}'. Use 'set_status' or 'clear_status'", status.action);
+                eprintln!("[tab-status] ERROR: unknown action '{}'. Use 'set_status', 'clear_status', 'get_status', or 'get_name'", status.action);
                 return false;
             }
         };
-
-        eprintln!("[tab-status] {} status on tab {} (position {}): '{}' -> '{}'",
-            status.action, tab_id, tab_position, current_name, new_name);
-
-        rename_tab(tab_id, new_name);
 
         false
     }
@@ -184,6 +198,24 @@ impl State {
         }
         // No status prefix, return as is
         name
+    }
+
+    /// Extract status emoji from tab name.
+    /// Status is the first character if followed by a space.
+    /// "🤖 Working" -> "🤖"
+    /// "Working" -> ""
+    fn extract_status(name: &str) -> &str {
+        let mut chars = name.chars();
+        if let Some(first_char) = chars.next() {
+            let rest = chars.as_str();
+            if rest.starts_with(' ') {
+                // First char + space = status prefix
+                let char_len = first_char.len_utf8();
+                return &name[..char_len];
+            }
+        }
+        // No status prefix
+        ""
     }
 
     fn rebuild_mapping(&mut self) {
