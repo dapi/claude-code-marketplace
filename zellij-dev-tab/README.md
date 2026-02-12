@@ -35,10 +35,33 @@ Start development of issue 123 in new zellij tab
 | С решёткой | `#45` |
 | URL | `https://github.com/owner/repo/issues/45` |
 
-## Зависимости
+## Prerequisites
 
-- **zellij** — терминальный мультиплексор
-- **do-issue** — команда для работы с issue (должна быть в PATH)
+### zellij
+
+Терминальный мультиплексор. Установка:
+
+```bash
+cargo install zellij
+# или через пакетный менеджер
+```
+
+### do-issue
+
+Скрипт для работы с GitHub issues через git worktree и Claude Code. Создаёт изолированный worktree для issue и запускает Claude Code сессию.
+
+**Установка**: скопируйте скрипт в `~/.local/bin/` и сделайте исполняемым:
+
+```bash
+# do-issue должен быть в PATH
+chmod +x ~/.local/bin/do-issue
+```
+
+**Что делает do-issue**:
+1. Парсит номер issue из URL или числа
+2. Создаёт git worktree для работы над issue
+3. Запускает Claude Code в worktree директории
+4. Опционально выполняет `init.sh` для настройки окружения
 
 ## Структура
 
