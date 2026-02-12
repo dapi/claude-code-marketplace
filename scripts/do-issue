@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.5.0"
+VERSION="1.6.0"
 
 # Colors
 RED='\033[0;31m'
@@ -273,10 +273,57 @@ create_worktree() {
 
     # Check if branch already exists
     if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" 2>/dev/null; then
-        die "Branch '$BRANCH_NAME' already exists. Use existing worktree or delete the branch."
+        # Find existing worktree for this branch
+        local existing_worktree
+        existing_worktree=$(git worktree list --porcelain | grep -A2 "^worktree " | \
+            awk -v branch="$BRANCH_NAME" '/^worktree /{path=$2} /^branch refs\/heads\// && $2 ~ branch {print path}' | head -1)
+
+        echo ""
+        log_warn "Branch '$BRANCH_NAME' already exists."
+        if [[ -n "$existing_worktree" ]]; then
+            echo "   Existing worktree: $existing_worktree"
+        fi
+        echo ""
+        echo "Options:"
+        echo "  [u] Use existing worktree and continue"
+        echo "  [n] Create new branch with different name"
+        echo "  [d] Delete branch/worktree and recreate"
+        echo "  [a] Abort"
+        echo ""
+        read -p "Choice: " choice
+        case "$choice" in
+            u|U)
+                if [[ -n "$existing_worktree" ]]; then
+                    WORKTREE_PATH="$existing_worktree"
+                    log_info "   Using existing worktree: $WORKTREE_PATH"
+                    return
+                else
+                    die "No existing worktree found for branch '$BRANCH_NAME'. Use [d] to delete and recreate."
+                fi
+                ;;
+            n|N)
+                # Generate new branch name with timestamp suffix
+                local timestamp
+                timestamp=$(date +%s | tail -c 5)
+                BRANCH_NAME="${BRANCH_NAME}-${timestamp}"
+                WORKTREE_PATH="$WORKTREE_DIR/$BRANCH_NAME"
+                log_info "   New branch name: $BRANCH_NAME"
+                ;;
+            d|D)
+                log_info "   Removing existing branch/worktree..."
+                if [[ -n "$existing_worktree" ]]; then
+                    git worktree remove --force "$existing_worktree" 2>/dev/null || rm -rf "$existing_worktree"
+                fi
+                git branch -D "$BRANCH_NAME" 2>/dev/null || true
+                log_success "   ✅ Cleaned up"
+                ;;
+            *)
+                die "Aborted by user"
+                ;;
+        esac
     fi
 
-    # Check if worktree path already exists
+    # Check if worktree path already exists (without branch)
     if [[ -d "$WORKTREE_PATH" ]]; then
         echo ""
         log_warn "Worktree path already exists: $WORKTREE_PATH"
