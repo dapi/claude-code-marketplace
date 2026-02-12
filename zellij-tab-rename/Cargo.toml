@@ -1,0 +1,16 @@
+[package]
+name = "zellij-tab-rename"
+version = "0.1.0"
+edition = "2021"
+authors = ["Danil Pismenny <danilpismenny@gmail.com>"]
+description = "Minimal Zellij plugin to rename tabs by pane_id for Claude Code"
+license = "MIT"
+
+[dependencies]
+zellij-tile = "0.43.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = "s"
+lto = true

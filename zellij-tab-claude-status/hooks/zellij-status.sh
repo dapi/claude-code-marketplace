@@ -68,7 +68,7 @@ rename_tab_by_pane() {
   local pane_id="${ZELLIJ_PANE_ID}"
 
   # Use zellij pipe to send rename command to plugin
-  zellij pipe --name claude-tab-rename -- "{\"pane_id\": \"$pane_id\", \"name\": \"$new_name\"}" 2>/dev/null || true
+  zellij pipe --name tab-rename -- "{\"pane_id\": \"$pane_id\", \"name\": \"$new_name\"}" 2>/dev/null || true
 }
 
 (
