@@ -499,6 +499,7 @@ main() {
     echo -e "${BLUE}do-issue${NC} v$VERSION"
     echo ""
 
+    rename_zellij_tab
     check_dependencies
     check_git_repo
     parse_issue_input "$ISSUE_INPUT"
@@ -509,7 +510,6 @@ main() {
     generate_branch_name
     create_worktree
     run_init_script
-    rename_zellij_tab
     start_claude_session
 }
 

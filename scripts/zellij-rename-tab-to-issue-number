@@ -54,5 +54,5 @@ fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
     script_dir="$(dirname "$(readlink -f "$0")")"
-    "$script_dir/zellij-rename-tab" "#${ISSUE_NUMBER}"
+    "$script_dir/zellij-rename-tab" "▷ #${ISSUE_NUMBER}"
 fi
