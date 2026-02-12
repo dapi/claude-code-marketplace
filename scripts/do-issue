@@ -354,10 +354,10 @@ rename_zellij_tab() {
 
     log_info "📑 Renaming zellij tab..."
     if [[ "$DRY_RUN" == "true" ]]; then
-        echo "   [DRY-RUN] Would run: zellij-rename-tab \"$ISSUE_NUMBER\""
+        echo "   [DRY-RUN] Would run: zellij-rename-tab-to-issue-number \"$ISSUE_NUMBER\""
         return
     fi
-    if "$script_dir/zellij-rename-tab" "$ISSUE_NUMBER"; then
+    if "$script_dir/zellij-rename-tab-to-issue-number" "$ISSUE_NUMBER"; then
         log_success "   ✅ Tab renamed to #$ISSUE_NUMBER"
     fi
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# zellij-rename-tab - Rename current zellij tab to issue number
+# zellij-rename-tab-to-issue-number - Rename current zellij tab to issue number
 #
-# Usage: zellij-rename-tab [issue-number]
+# Usage: zellij-rename-tab-to-issue-number [issue-number]
 #
 # If issue number is not provided, tries to detect it from:
 #   1. Current git branch name (e.g. feature/issue-123-description)
