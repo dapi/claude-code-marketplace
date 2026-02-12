@@ -8,4 +8,4 @@ TAB=$(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*f
 TAB=$(echo "$TAB" | sed -E 's/^(🤖|✋|🟢) //')
 
 [ -n "$TAB" ] && [ -n "$ZELLIJ_PANE_ID" ] && \
-  zellij pipe --name tab-rename -- "{\"pane_id\": \"$ZELLIJ_PANE_ID\", \"name\": \"🤖 $TAB\"}"
+  zellij-rename-tab "$ZELLIJ_PANE_ID" "🤖 $TAB"

@@ -53,7 +53,6 @@ else
 fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
-    # Use tab-rename plugin to rename tab by pane_id
-    # This works across tabs (not just active tab)
-    zellij pipe --name tab-rename -- '{"pane_id": "'"${ZELLIJ_PANE_ID}"'", "name": "#'"${ISSUE_NUMBER}"'"}'
+    script_dir="$(dirname "$(readlink -f "$0")")"
+    "$script_dir/zellij-rename-tab" "${ZELLIJ_PANE_ID}" "#${ISSUE_NUMBER}"
 fi

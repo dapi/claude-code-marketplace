@@ -14,7 +14,7 @@ PLUGIN ?= github-workflow
 ALL_PLUGINS = $(shell jq -r '.plugins[].name' $(MARKETPLACE_JSON) 2>/dev/null)
 
 # Scripts installed to ~/.local/bin
-SCRIPTS = do-issue zellij-rename-tab-to-issue-number
+SCRIPTS = do-issue zellij-rename-tab zellij-rename-tab-to-issue-number
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
