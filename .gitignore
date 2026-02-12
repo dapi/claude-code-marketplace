@@ -54,3 +54,4 @@ htmlcov/
 *.bak
 *.orig
 .playwright-mcp/
+.worktrees/
