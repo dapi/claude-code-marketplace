@@ -492,23 +492,8 @@ install-zellij-tab-status:
 		echo "   → Cloning repository..."; \
 		git clone $(ZELLIJ_TAB_STATUS_REPO) $(ZELLIJ_TAB_STATUS_DIR); \
 	fi
-	@echo "   → Building (requires Rust with wasm32-wasip1 target)..."
+	@echo "   → Building and installing..."
 	@cd $(ZELLIJ_TAB_STATUS_DIR) && make install
-	@echo "   → Installing CLI scripts to ~/.local/bin..."
-	@mkdir -p $(HOME)/.local/bin
-	@cp $(ZELLIJ_TAB_STATUS_DIR)/scripts/zellij-tab-status $(HOME)/.local/bin/
-	@cp $(ZELLIJ_TAB_STATUS_DIR)/scripts/zellij-rename-tab $(HOME)/.local/bin/
-	@chmod +x $(HOME)/.local/bin/zellij-tab-status $(HOME)/.local/bin/zellij-rename-tab
-	@echo ""
-	@echo "✅ zellij-tab-status installed:"
-	@echo "   • Plugin: $(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
-	@echo "   • Scripts: ~/.local/bin/zellij-tab-status, ~/.local/bin/zellij-rename-tab"
-	@echo ""
-	@echo "📝 Add to ~/.config/zellij/config.kdl:"
-	@echo ""
-	@echo '   load_plugins {'
-	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"'
-	@echo '   }'
 	@echo ""
 	@echo "   Then restart Zellij."
 
