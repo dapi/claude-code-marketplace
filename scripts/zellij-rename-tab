@@ -1,25 +1,30 @@
 #!/usr/bin/env bash
 #
-# zellij-rename-tab - Rename zellij tab by pane_id
+# zellij-rename-tab - Rename current zellij tab
 #
-# Usage: zellij-rename-tab <pane_id> <title>
+# Usage: zellij-rename-tab <title>
 #
+# Uses $ZELLIJ_PANE_ID from environment automatically.
 # Requires zellij-tab-rename plugin to be installed and loaded.
 # See: zellij-tab-rename/README.md
 
 set -euo pipefail
 
-if [[ $# -lt 2 ]]; then
-    echo "Usage: zellij-rename-tab <pane_id> <title>" >&2
+if [[ $# -lt 1 ]]; then
+    echo "Usage: zellij-rename-tab <title>" >&2
     exit 1
 fi
 
-PANE_ID="$1"
-TITLE="$2"
+TITLE="$1"
 
 # Exit early if not in zellij
 if [[ -z "${ZELLIJ:-}" ]]; then
     exit 0
 fi
 
-zellij pipe --name tab-rename -- "{\"pane_id\": \"$PANE_ID\", \"name\": \"$TITLE\"}"
+if [[ -z "${ZELLIJ_PANE_ID:-}" ]]; then
+    echo "Error: ZELLIJ_PANE_ID not set" >&2
+    exit 1
+fi
+
+zellij pipe --name tab-rename -- "{\"pane_id\": \"$ZELLIJ_PANE_ID\", \"name\": \"$TITLE\"}"

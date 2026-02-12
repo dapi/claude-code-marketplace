@@ -63,12 +63,9 @@ get_current_tab_name() {
 }
 
 rename_tab_by_pane() {
-  # Rename tab containing this pane using zellij-tab-rename plugin
   local new_name="$1"
-  local pane_id="${ZELLIJ_PANE_ID}"
-
-  # Use zellij-rename-tab script
-  zellij-rename-tab "$pane_id" "$new_name" 2>/dev/null || true
+  # Uses $ZELLIJ_PANE_ID from environment
+  zellij-rename-tab "$new_name" 2>/dev/null || true
 }
 
 (
