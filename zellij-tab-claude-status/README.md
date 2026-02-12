@@ -31,6 +31,10 @@ cd claude-code-marketplace
 make install-zellij-tab-status
 ```
 
+This installs:
+- Zellij WASM plugin (`~/.config/zellij/plugins/zellij-tab-status.wasm`)
+- CLI scripts (`~/.local/bin/zellij-tab-status`, `~/.local/bin/zellij-rename-tab`)
+
 Or manually from [zellij-tab-status](https://github.com/dapi/zellij-tab-status) repository.
 
 Add to `~/.config/zellij/config.kdl`:

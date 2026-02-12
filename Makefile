@@ -14,7 +14,7 @@ PLUGIN ?= github-workflow
 ALL_PLUGINS = $(shell jq -r '.plugins[].name' $(MARKETPLACE_JSON) 2>/dev/null)
 
 # Scripts installed to ~/.local/bin
-SCRIPTS = do-issue zellij-rename-tab zellij-rename-tab-to-issue-number
+SCRIPTS = do-issue zellij-rename-tab-to-issue-number
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')
@@ -494,8 +494,15 @@ install-zellij-tab-status:
 	fi
 	@echo "   → Building (requires Rust with wasm32-wasip1 target)..."
 	@cd $(ZELLIJ_TAB_STATUS_DIR) && make install
+	@echo "   → Installing CLI scripts to ~/.local/bin..."
+	@mkdir -p $(HOME)/.local/bin
+	@cp $(ZELLIJ_TAB_STATUS_DIR)/scripts/zellij-tab-status $(HOME)/.local/bin/
+	@cp $(ZELLIJ_TAB_STATUS_DIR)/scripts/zellij-rename-tab $(HOME)/.local/bin/
+	@chmod +x $(HOME)/.local/bin/zellij-tab-status $(HOME)/.local/bin/zellij-rename-tab
 	@echo ""
-	@echo "✅ zellij-tab-status installed to $(ZELLIJ_PLUGINS_DIR)"
+	@echo "✅ zellij-tab-status installed:"
+	@echo "   • Plugin: $(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
+	@echo "   • Scripts: ~/.local/bin/zellij-tab-status, ~/.local/bin/zellij-rename-tab"
 	@echo ""
 	@echo "📝 Add to ~/.config/zellij/config.kdl:"
 	@echo ""
