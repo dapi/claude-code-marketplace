@@ -14,17 +14,55 @@ Shows Claude session state directly in Zellij UI:
 - **Session name suffix**: Active subagent counter
   - `my-session (3)` — 3 subagents running
 
-## Installation
-
-```bash
-/plugin install zellij-claude-status@dapi
-```
-
 ## Requirements
 
 - Zellij terminal multiplexer
 - Claude Code with plugin support
-- **[zellij-tab-status](https://github.com/dapi/zellij-tab-status)** — Zellij plugin for tab status management (install separately)
+- Rust with `wasm32-wasip1` target (for building dependency)
+
+## Installation
+
+### Quick Install (recommended)
+
+```bash
+# Clone and install everything
+git clone https://github.com/dapi/claude-code-marketplace
+cd claude-code-marketplace/zellij-tab-claude-status
+make all
+```
+
+This will:
+1. Clone and build [zellij-tab-status](https://github.com/dapi/zellij-tab-status) Zellij plugin
+2. Install Claude Code plugin
+
+### Manual Install
+
+**Step 1: Install Zellij plugin dependency**
+
+```bash
+# Requires Rust with wasm32-wasip1 target
+rustup target add wasm32-wasip1
+
+git clone https://github.com/dapi/zellij-tab-status /tmp/zellij-tab-status
+cd /tmp/zellij-tab-status
+make install
+```
+
+Add to `~/.config/zellij/config.kdl`:
+
+```kdl
+load_plugins {
+    "file:~/.config/zellij/plugins/zellij-tab-status.wasm"
+}
+```
+
+Restart Zellij.
+
+**Step 2: Install Claude Code plugin**
+
+```bash
+/plugin install zellij-tab-claude-status@dapi
+```
 
 ## How it works
 
