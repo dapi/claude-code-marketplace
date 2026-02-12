@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+#
+# zellij-tab-status - Manage status emoji in zellij tab name
+#
+# Usage:
+#   zellij-tab-status 🤖           # Set status emoji
+#   zellij-tab-status --clear      # Remove status emoji
+#   zellij-tab-status              # Get current status emoji
+#   zellij-tab-status --name       # Get base name (without status)
+#
+# All operations are performed atomically via the zellij-tab-rename plugin.
+# The status is the first character followed by a space.
+# "🤖 Working" -> status: 🤖, name: Working
+
+set -euo pipefail
+
+show_help() {
+    cat <<'EOF'
+zellij-tab-status - Manage status emoji in zellij tab name
+
+Usage:
+  zellij-tab-status <emoji>        Set status emoji
+  zellij-tab-status --clear, -c    Remove status emoji
+  zellij-tab-status --get, -g      Get current status emoji (default if no args)
+  zellij-tab-status --name, -n     Get base name (without status)
+  zellij-tab-status --help, -h     Show this help
+
+Examples:
+  zellij-tab-status 🤖             # "Working" -> "🤖 Working"
+  zellij-tab-status ⏳             # "🤖 Working" -> "⏳ Working"
+  zellij-tab-status --clear        # "🤖 Working" -> "Working"
+  zellij-tab-status                # Output: 🤖
+
+All operations are atomic (via plugin) - no race conditions.
+
+Requirements:
+  - Must be run inside a zellij session
+  - Requires zellij-tab-rename plugin installed and loaded
+  - Uses $ZELLIJ_PANE_ID from environment automatically
+EOF
+}
+
+# Send command to plugin via pipe
+send_to_plugin() {
+    local action="$1"
+    local emoji="${2:-}"
+
+    if [[ -z "${ZELLIJ_PANE_ID:-}" ]]; then
+        echo "Error: ZELLIJ_PANE_ID not set" >&2
+        exit 1
+    fi
+
+    local payload
+    if [[ -n "$emoji" ]]; then
+        payload="{\"pane_id\": \"$ZELLIJ_PANE_ID\", \"action\": \"$action\", \"emoji\": \"$emoji\"}"
+    else
+        payload="{\"pane_id\": \"$ZELLIJ_PANE_ID\", \"action\": \"$action\"}"
+    fi
+
+    zellij pipe --name tab-status -- "$payload"
+}
+
+# Exit early if not in zellij
+check_zellij() {
+    if [[ -z "${ZELLIJ:-}" ]]; then
+        echo "Warning: Not in zellij session" >&2
+        exit 0
+    fi
+}
+
+# Main
+case "${1:-}" in
+    -h|--help)
+        show_help
+        exit 0
+        ;;
+    -c|--clear)
+        check_zellij
+        send_to_plugin "clear_status"
+        ;;
+    -g|--get|"")
+        check_zellij
+        send_to_plugin "get_status"
+        ;;
+    -n|--name)
+        check_zellij
+        send_to_plugin "get_name"
+        ;;
+    -*)
+        echo "Unknown option: $1" >&2
+        show_help
+        exit 1
+        ;;
+    *)
+        # Assume it's an emoji to set
+        check_zellij
+        send_to_plugin "set_status" "$1"
+        ;;
+esac

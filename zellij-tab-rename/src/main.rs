@@ -1,11 +1,20 @@
 use serde::Deserialize;
 use std::collections::BTreeMap;
+use unicode_segmentation::UnicodeSegmentation;
 use zellij_tile::prelude::*;
 
 #[derive(Debug, Deserialize)]
 struct RenamePayload {
     pane_id: String,
     name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct StatusPayload {
+    pane_id: String,
+    action: String,
+    #[serde(default)]
+    emoji: String,
 }
 
 #[derive(Default)]
@@ -54,16 +63,54 @@ impl ZellijPlugin for State {
         eprintln!("[tab-rename] Pipe: name={}, payload={:?}",
             pipe_message.name, pipe_message.payload);
 
-        if pipe_message.name != "tab-rename" {
-            return false;
+        match pipe_message.name.as_str() {
+            "tab-rename" => self.handle_rename(&pipe_message.payload),
+            "tab-status" => self.handle_status(&pipe_message.payload),
+            _ => false,
         }
+    }
 
-        let Some(payload) = pipe_message.payload else {
+    fn render(&mut self, _rows: usize, _cols: usize) {}
+}
+
+impl State {
+    /// Parse pane_id from string, returning None on error
+    fn parse_pane_id(pane_id_str: &str, context: &str) -> Option<u32> {
+        match pane_id_str.parse() {
+            Ok(id) => Some(id),
+            Err(_) => {
+                eprintln!("[{}] ERROR: pane_id must be a number", context);
+                None
+            }
+        }
+    }
+
+    /// Get tab info for pane, returning None if not found
+    fn get_tab_info(&self, pane_id: u32, context: &str) -> Option<(usize, &String)> {
+        match self.pane_to_tab.get(&pane_id) {
+            Some(&(tab_position, ref name)) => Some((tab_position, name)),
+            None => {
+                eprintln!("[{}] ERROR: pane {} not found. Known panes: {:?}",
+                    context, pane_id, self.pane_to_tab.keys().collect::<Vec<_>>());
+                None
+            }
+        }
+    }
+
+    /// Update cached tab name after rename
+    fn update_cached_name(&mut self, pane_id: u32, new_name: String) {
+        if let Some((_, ref mut cached_name)) = self.pane_to_tab.get_mut(&pane_id) {
+            *cached_name = new_name;
+        }
+    }
+
+    fn handle_rename(&mut self, payload: &Option<String>) -> bool {
+        let Some(payload) = payload else {
             eprintln!("[tab-rename] ERROR: missing payload");
             return false;
         };
 
-        let rename: RenamePayload = match serde_json::from_str(&payload) {
+        let rename: RenamePayload = match serde_json::from_str(payload) {
             Ok(p) => p,
             Err(e) => {
                 eprintln!("[tab-rename] ERROR: invalid JSON: {}", e);
@@ -71,20 +118,14 @@ impl ZellijPlugin for State {
             }
         };
 
-        let pane_id: u32 = match rename.pane_id.parse() {
-            Ok(id) => id,
-            Err(_) => {
-                eprintln!("[tab-rename] ERROR: pane_id must be a number");
-                return false;
-            }
+        let Some(pane_id) = Self::parse_pane_id(&rename.pane_id, "tab-rename") else {
+            return false;
         };
 
         eprintln!("[tab-rename] Looking for pane_id={} in {} mappings",
             pane_id, self.pane_to_tab.len());
 
-        let Some(&(tab_position, _)) = self.pane_to_tab.get(&pane_id) else {
-            eprintln!("[tab-rename] ERROR: pane {} not found. Known panes: {:?}",
-                pane_id, self.pane_to_tab.keys().collect::<Vec<_>>());
+        let Some((tab_position, _)) = self.get_tab_info(pane_id, "tab-rename") else {
             return false;
         };
 
@@ -94,15 +135,115 @@ impl ZellijPlugin for State {
         eprintln!("[tab-rename] Renaming tab {} (position {}) to '{}'",
             tab_id, tab_position, rename.name);
 
-        rename_tab(tab_id, rename.name);
+        rename_tab(tab_id, rename.name.clone());
+        self.update_cached_name(pane_id, rename.name);
 
         false
     }
 
-    fn render(&mut self, _rows: usize, _cols: usize) {}
-}
+    fn handle_status(&mut self, payload: &Option<String>) -> bool {
+        let Some(payload) = payload else {
+            eprintln!("[tab-status] ERROR: missing payload");
+            return false;
+        };
 
-impl State {
+        let status: StatusPayload = match serde_json::from_str(payload) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("[tab-status] ERROR: invalid JSON: {}", e);
+                return false;
+            }
+        };
+
+        let Some(pane_id) = Self::parse_pane_id(&status.pane_id, "tab-status") else {
+            return false;
+        };
+
+        let Some((tab_position, current_name)) = self.get_tab_info(pane_id, "tab-status") else {
+            return false;
+        };
+        let current_name = current_name.clone(); // Clone to release borrow
+
+        let base_name = Self::extract_base_name(&current_name);
+        let tab_id = (tab_position + 1) as u32;
+
+        match status.action.as_str() {
+            "set_status" => {
+                if status.emoji.is_empty() {
+                    eprintln!("[tab-status] ERROR: emoji is required for 'set_status' action");
+                    return false;
+                }
+                let new_name = format!("{} {}", status.emoji, base_name);
+                eprintln!("[tab-status] set_status on tab {} (position {}): '{}' -> '{}'",
+                    tab_id, tab_position, current_name, new_name);
+                rename_tab(tab_id, new_name.clone());
+                self.update_cached_name(pane_id, new_name);
+            }
+            "clear_status" => {
+                let new_name = base_name.to_string();
+                eprintln!("[tab-status] clear_status on tab {} (position {}): '{}' -> '{}'",
+                    tab_id, tab_position, current_name, new_name);
+                rename_tab(tab_id, new_name.clone());
+                self.update_cached_name(pane_id, new_name);
+            }
+            "get_status" => {
+                let emoji = Self::extract_status(&current_name);
+                eprintln!("[tab-status] get_status: '{}'", emoji);
+                cli_pipe_output("tab-status", emoji);
+                unblock_cli_pipe_input("tab-status");
+            }
+            "get_name" => {
+                eprintln!("[tab-status] get_name: '{}'", base_name);
+                cli_pipe_output("tab-status", base_name);
+                unblock_cli_pipe_input("tab-status");
+            }
+            _ => {
+                eprintln!("[tab-status] ERROR: unknown action '{}'. Use 'set_status', 'clear_status', 'get_status', or 'get_name'", status.action);
+                return false;
+            }
+        };
+
+        false
+    }
+
+    /// Extract base name from tab name.
+    /// Status is the first grapheme cluster followed by a space.
+    /// Handles complex emoji like flags (🇺🇸) and skin tones (👋🏻).
+    /// "🤖 Working" -> "Working"
+    /// "🇺🇸 USA" -> "USA"
+    /// "Working" -> "Working"
+    fn extract_base_name(name: &str) -> &str {
+        let mut graphemes = name.graphemes(true);
+        if let Some(_first_grapheme) = graphemes.next() {
+            let rest = graphemes.as_str();
+            if rest.starts_with(' ') {
+                // First grapheme + space = status prefix, return the rest without leading space
+                return &rest[1..];
+            }
+        }
+        // No status prefix, return as is
+        name
+    }
+
+    /// Extract status emoji from tab name.
+    /// Status is the first grapheme cluster if followed by a space.
+    /// Handles complex emoji like flags (🇺🇸) and skin tones (👋🏻).
+    /// "🤖 Working" -> "🤖"
+    /// "🇺🇸 USA" -> "🇺🇸"
+    /// "Working" -> ""
+    fn extract_status(name: &str) -> &str {
+        let mut graphemes = name.graphemes(true);
+        if let Some(first_grapheme) = graphemes.next() {
+            let rest = graphemes.as_str();
+            if rest.starts_with(' ') {
+                // First grapheme + space = status prefix
+                return first_grapheme;
+            }
+        }
+        // No status prefix
+        ""
+    }
+
     fn rebuild_mapping(&mut self) {
         self.pane_to_tab.clear();
 
