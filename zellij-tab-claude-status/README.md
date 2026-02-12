@@ -68,12 +68,11 @@ The plugin uses Claude Code hooks to track session state:
 
 ## Temporary files
 
-The plugin stores state in `/tmp/zellij-claude-*` files:
-- `zellij-claude-tab-{session}-{pane}` — original tab name
+The plugin stores agent counter state in `/tmp/zellij-claude-*` files:
 - `zellij-claude-agents-{session}` — agent counter
 - `zellij-claude-session-{session}` — original session name
 
-Files older than 1 day are automatically cleaned up on session start.
+Tab status (emoji prefix) is managed atomically by the zellij-tab-status WASM plugin.
 
 ## Troubleshooting
 
