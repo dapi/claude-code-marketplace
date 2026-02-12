@@ -22,31 +22,16 @@ Shows Claude session state directly in Zellij UI:
 
 ## Installation
 
-### Quick Install (recommended)
+### Step 1: Install Zellij plugin dependency
 
 ```bash
-# Clone and install everything
+# From marketplace root
 git clone https://github.com/dapi/claude-code-marketplace
-cd claude-code-marketplace/zellij-tab-claude-status
-make all
+cd claude-code-marketplace
+make install-zellij-tab-status
 ```
 
-This will:
-1. Clone and build [zellij-tab-status](https://github.com/dapi/zellij-tab-status) Zellij plugin
-2. Install Claude Code plugin
-
-### Manual Install
-
-**Step 1: Install Zellij plugin dependency**
-
-```bash
-# Requires Rust with wasm32-wasip1 target
-rustup target add wasm32-wasip1
-
-git clone https://github.com/dapi/zellij-tab-status /tmp/zellij-tab-status
-cd /tmp/zellij-tab-status
-make install
-```
+Or manually from [zellij-tab-status](https://github.com/dapi/zellij-tab-status) repository.
 
 Add to `~/.config/zellij/config.kdl`:
 
@@ -58,7 +43,7 @@ load_plugins {
 
 Restart Zellij.
 
-**Step 2: Install Claude Code plugin**
+### Step 2: Install Claude Code plugin
 
 ```bash
 /plugin install zellij-tab-claude-status@dapi

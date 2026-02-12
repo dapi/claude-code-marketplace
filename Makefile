@@ -3,7 +3,7 @@
         uninstall uninstall-scripts uninstall-plugins-all uninstall-marketplace-all uninstall-all uninstall-dry-run \
         reinstall reinstall-all reinstall-dry-run \
         release release-patch release-minor release-major ensure-marketplace list-claude-profiles update-all \
-        install-zellij-tab-name
+        install-zellij-tab-status install-zellij-tab-name
 
 PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
@@ -475,9 +475,35 @@ update-all:
 # ZELLIJ PLUGIN TARGETS
 # ============================================================================
 
+ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
+ZELLIJ_TAB_STATUS_REPO = https://github.com/dapi/zellij-tab-status.git
+ZELLIJ_TAB_STATUS_DIR = /tmp/zellij-tab-status
+
 ZELLIJ_TAB_NAME_VERSION = v0.4.1
 ZELLIJ_TAB_NAME_URL = https://github.com/Cynary/zellij-tab-name/releases/download/$(ZELLIJ_TAB_NAME_VERSION)/zellij-tab-name.wasm
-ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
+
+# Install zellij-tab-status plugin (required for zellij-tab-claude-status)
+install-zellij-tab-status:
+	@echo "📦 Installing zellij-tab-status plugin..."
+	@if [ -d "$(ZELLIJ_TAB_STATUS_DIR)" ]; then \
+		echo "   → Updating existing repo..."; \
+		cd $(ZELLIJ_TAB_STATUS_DIR) && git pull; \
+	else \
+		echo "   → Cloning repository..."; \
+		git clone $(ZELLIJ_TAB_STATUS_REPO) $(ZELLIJ_TAB_STATUS_DIR); \
+	fi
+	@echo "   → Building (requires Rust with wasm32-wasip1 target)..."
+	@cd $(ZELLIJ_TAB_STATUS_DIR) && make install
+	@echo ""
+	@echo "✅ zellij-tab-status installed to $(ZELLIJ_PLUGINS_DIR)"
+	@echo ""
+	@echo "📝 Add to ~/.config/zellij/config.kdl:"
+	@echo ""
+	@echo '   load_plugins {'
+	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"'
+	@echo '   }'
+	@echo ""
+	@echo "   Then restart Zellij."
 
 # Install zellij-tab-name plugin for cross-tab renaming
 install-zellij-tab-name:
