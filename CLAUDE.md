@@ -628,4 +628,4 @@ Special rules for this plugin:
 1. **NO `async: true`** in hooks — hooks must run synchronously so the tab has focus when getting its name
 2. **Use `hooks-handlers/`** directory for scripts (matches official plugin structure)
 3. **Suppress zellij-agents.sh errors** with `|| true` — session rename may fail but shouldn't break the hook
-4. **Requires zellij-tab-rename plugin** — install from `zellij-tab-rename/` directory
+4. **Requires zellij-tab-status plugin** — install from https://github.com/dapi/zellij-tab-status

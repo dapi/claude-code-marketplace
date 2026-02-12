@@ -24,6 +24,7 @@ Shows Claude session state directly in Zellij UI:
 
 - Zellij terminal multiplexer
 - Claude Code with plugin support
+- **[zellij-tab-status](https://github.com/dapi/zellij-tab-status)** — Zellij plugin for tab status management (install separately)
 
 ## How it works
 
