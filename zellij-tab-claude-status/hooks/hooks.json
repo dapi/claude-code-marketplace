@@ -4,35 +4,35 @@
     "SessionStart": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-session-start.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-prompt-submit.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '🤖'"}]
       }
     ],
     "Notification": [
       {
         "matcher": "permission_prompt|elicitation_dialog",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-needs-input.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '✋'"}]
       },
       {
         "matcher": "idle_prompt",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-stop.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-stop.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
       }
     ],
     "SessionEnd": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-session-end.sh"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status --clear"}]
       }
     ]
   }
