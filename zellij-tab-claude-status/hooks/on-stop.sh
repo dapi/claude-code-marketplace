@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-zellij-tab-status --clear
+zellij-tab-status 🟢
