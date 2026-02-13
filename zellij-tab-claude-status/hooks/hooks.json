@@ -1,6 +1,12 @@
 {
   "description": "Zellij tab status indicator hooks",
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '🤖'"}]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",

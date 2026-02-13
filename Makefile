@@ -46,6 +46,7 @@ update-plugin:
 # Deploy any plugin: make deploy or make deploy PLUGIN=zellij-claude-status
 deploy: ensure-marketplace
 	claude plugin uninstall $(PLUGIN)@dapi || true
+	claude plugin marketplace update dapi
 	claude plugin install $(PLUGIN)@dapi
 	@echo "🚀 $(PLUGIN) deployed. Restart Claude to apply changes."
 
