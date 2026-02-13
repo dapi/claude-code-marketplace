@@ -121,6 +121,14 @@ Task:
 
 ### Вариант: hybrid
 
-Вызови Skill tool:
+Шаг 1 — вызови Skill tool:
 - skill: `"feature-dev:feature-dev"`
-- Передай в prompt: "Спека задачи в {spec_file}. Выполни фазы 1-4 (Discovery, Exploration, Questions, Architecture). После одобрения архитектуры ОСТАНОВИ feature-dev и запусти writing-plans + subagent-driven-development для реализации."
+- Передай в prompt: "Спека задачи в {spec_file}. Выполни ТОЛЬКО фазы 1-4 (Discovery, Codebase Exploration, Clarifying Questions, Architecture Design). После одобрения архитектуры пользователем — ОСТАНОВИСЬ и верни результат."
+
+Шаг 2 — после завершения feature-dev, вызови Skill tool:
+- skill: `"superpowers:writing-plans"`
+- Передай в prompt: "Архитектура одобрена. Спека в {spec_file}. Создай план реализации на основе выбранной архитектуры."
+
+Шаг 3 — после создания плана, вызови Skill tool:
+- skill: `"superpowers:subagent-driven-development"`
+- Передай в prompt: "Выполни план реализации."
