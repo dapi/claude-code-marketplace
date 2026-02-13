@@ -15,8 +15,12 @@
     ],
     "Notification": [
       {
-        "matcher": "permission_prompt",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-permission-prompt.sh"}]
+        "matcher": "permission_prompt|elicitation_dialog",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-needs-input.sh"}]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-stop.sh"}]
       }
     ],
     "Stop": [
