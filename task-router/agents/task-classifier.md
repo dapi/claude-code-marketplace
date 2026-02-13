@@ -141,7 +141,7 @@ Count the number of distinct entities, endpoints, components, and integrations m
 Apply the decision matrix in order:
 
 1. If complexity is S or M: route = `"feature-dev"`
-2. If complexity is L or XL AND `has_clear_tasks` is true AND `needs_exploration` is false: route = `"subagent-driven-dev"`
+2. If complexity is L or XL AND `has_clear_tasks` is true AND `needs_exploration` is false AND `architecture_unclear` is false: route = `"subagent-driven-dev"`
 3. If complexity is L or XL AND (`needs_exploration` is true OR `architecture_unclear` is true): route = `"hybrid"`
 4. If complexity is L or XL AND `has_clear_tasks` is false: route = `"subagent-driven-dev"`
 
