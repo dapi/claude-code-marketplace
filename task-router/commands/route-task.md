@@ -14,7 +14,8 @@ argument-hint: <GitHub Issue URL | Google Doc URL | любой URL>
 Проверь `$ARGUMENTS`:
 
 - Если пусто — спроси пользователя: "Укажи ссылку на задачу (GitHub Issue URL, Google Doc URL, или любой URL)"
-- Если указано — переходи к Фазе 2.
+- Если указано, но не похоже на URL (`http://`, `https://`) и не является ссылкой на issue (`#NNN`) — покажи: "Неверный формат. Укажи URL (http:// или https://) или ссылку на issue (#123)." и **останови выполнение**.
+- Если указано и формат корректный — переходи к Фазе 2.
 
 ---
 
@@ -108,27 +109,28 @@ Task:
 
 Вызови Skill tool:
 - skill: `"feature-dev:feature-dev"`
-- Передай в prompt: "Спека задачи сохранена в {spec_file}. Используй её как входные данные. Начни с фазы 2 (Codebase Exploration), спека уже получена."
+- args: "Спека задачи сохранена в {spec_file}. Используй её как входные данные. Начни с фазы 2 (Codebase Exploration), спека уже получена."
 
 ### Вариант: subagent-driven-dev
 
 Шаг 1 — вызови Skill tool:
 - skill: `"superpowers:writing-plans"`
-- Передай в prompt: "Спека задачи сохранена в {spec_file}. Используй её как входные данные для написания плана."
+- args: "Спека задачи сохранена в {spec_file}. Используй её как входные данные для написания плана."
 
 Шаг 2 — после завершения writing-plans, вызови Skill tool:
 - skill: `"superpowers:subagent-driven-development"`
+- args: "Выполни план реализации, созданный на предыдущем шаге."
 
 ### Вариант: hybrid
 
 Шаг 1 — вызови Skill tool:
 - skill: `"feature-dev:feature-dev"`
-- Передай в prompt: "Спека задачи в {spec_file}. Выполни ТОЛЬКО фазы 1-4 (Discovery, Codebase Exploration, Clarifying Questions, Architecture Design). После одобрения архитектуры пользователем — ОСТАНОВИСЬ и верни результат."
+- args: "Спека задачи в {spec_file}. Выполни ТОЛЬКО фазы 1-4 (Discovery, Codebase Exploration, Clarifying Questions, Architecture Design). После одобрения архитектуры пользователем — ОСТАНОВИСЬ и верни результат."
 
 Шаг 2 — после завершения feature-dev, вызови Skill tool:
 - skill: `"superpowers:writing-plans"`
-- Передай в prompt: "Архитектура одобрена. Спека в {spec_file}. Создай план реализации на основе выбранной архитектуры."
+- args: "Архитектура одобрена. Спека в {spec_file}. Создай план реализации на основе выбранной архитектуры."
 
 Шаг 3 — после создания плана, вызови Skill tool:
 - skill: `"superpowers:subagent-driven-development"`
-- Передай в prompt: "Выполни план реализации."
+- args: "Выполни план реализации."
