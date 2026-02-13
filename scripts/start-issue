@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# do-issue - Start working on a GitHub issue with git worktree and Claude Code
+# start-issue - Start working on a GitHub issue with git worktree and Claude Code
 #
-# Usage: do-issue <issue-url-or-number> [options]
+# Usage: start-issue <issue-url-or-number> [options]
 #
 # Options:
 #   --repo, -r <owner/repo>    Repository (default: from git remote)
@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.6.0"
+VERSION="1.7.0"
 
 # Colors
 RED='\033[0;31m'
@@ -29,8 +29,11 @@ WORKTREE_DIR="$HOME/.worktrees"
 BASE_BRANCH=""
 REPO=""
 NO_INIT=false
+NO_CLAUDE=false
 DRY_RUN=false
 FAST_MODE=true
+FLAT_WORKTREE=false
+INITIAL_COMMAND=""
 ISSUE_INPUT=""
 
 # ============================================================================
@@ -59,7 +62,7 @@ die() {
 }
 
 show_version() {
-    echo "do-issue v$VERSION"
+    echo "start-issue v$VERSION"
 }
 
 show_help() {
@@ -68,7 +71,7 @@ show_help() {
 
 Start working on a GitHub issue with git worktree and Claude Code
 
-Usage: do-issue <issue-url-or-number> [options]
+Usage: start-issue <issue-url-or-number> [options]
 
 Arguments:
   <issue-url-or-number>    GitHub issue URL or issue number
@@ -78,17 +81,23 @@ Options:
   --repo, -r <owner/repo>    Repository (default: detected from git remote)
   --base, -b <branch>        Base branch (default: main or master)
   --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
+  --flat                     Use flat worktree structure (replace / with - in path)
   --no-init                  Skip init.sh execution
+  --no-claude                Only create worktree, don't start Claude session
+  --command, -c <cmd>        Custom initial command for Claude (default: /feature-dev)
   --ai                       Use Claude AI for branch name (default: fast bash heuristics)
   --dry-run                  Show what would be done without executing
   --version, -v              Show version
   --help, -h                 Show this help
 
 Examples:
-  do-issue 123
-  do-issue https://github.com/owner/repo/issues/123
-  do-issue 123 --repo owner/repo --base develop
-  do-issue 123 --dry-run
+  start-issue 123
+  start-issue https://github.com/owner/repo/issues/123
+  start-issue 123 --repo owner/repo --base develop
+  start-issue 123 --no-claude              # Only create worktree
+  start-issue 123 --command "/debug"       # Custom Claude command
+  start-issue 123 --flat                   # Flat worktree path
+  start-issue 123 --dry-run
 EOF
 }
 
@@ -211,16 +220,21 @@ generate_branch_name() {
         # Fast mode: bash heuristics
         local branch_type="feature"
 
-        # Determine type from labels
-        if [[ "$ISSUE_LABELS" =~ (bug|fix) ]]; then
-            branch_type="fix"
-        elif [[ "$ISSUE_LABELS" =~ (hotfix|critical) ]]; then
+        # Determine type from labels (order matters - more specific first)
+        if [[ "$ISSUE_LABELS" =~ (hotfix|critical|urgent) ]]; then
             branch_type="hotfix"
+        elif [[ "$ISSUE_LABELS" =~ (bug|fix|bugfix|error) ]]; then
+            branch_type="fix"
         elif [[ "$ISSUE_LABELS" =~ (docs|documentation) ]]; then
             branch_type="docs"
-        elif [[ "$ISSUE_LABELS" =~ (refactor|tech-debt) ]]; then
+        elif [[ "$ISSUE_LABELS" =~ (refactor|tech-debt|cleanup|technical) ]]; then
             branch_type="refactor"
+        elif [[ "$ISSUE_LABELS" =~ (test|testing|tests) ]]; then
+            branch_type="test"
+        elif [[ "$ISSUE_LABELS" =~ (chore|ci|build|infra) ]]; then
+            branch_type="chore"
         fi
+        # enhancement, feature, improvement → default "feature"
 
         # Generate short name from title
         local short_name
@@ -265,7 +279,11 @@ Reply with ONLY the branch name."
 # ============================================================================
 
 create_worktree() {
-    WORKTREE_PATH="$WORKTREE_DIR/$BRANCH_NAME"
+    local worktree_name="$BRANCH_NAME"
+    if [[ "$FLAT_WORKTREE" == "true" ]]; then
+        worktree_name="${BRANCH_NAME//\//-}"
+    fi
+    WORKTREE_PATH="$WORKTREE_DIR/$worktree_name"
 
     log_info "📁 Creating worktree..."
     echo "   Path: $WORKTREE_PATH"
@@ -302,11 +320,19 @@ create_worktree() {
                 fi
                 ;;
             2)
-                # Generate new branch name with timestamp suffix
-                local timestamp
-                timestamp=$(date +%s | tail -c 5)
-                BRANCH_NAME="${BRANCH_NAME}-${timestamp}"
-                WORKTREE_PATH="$WORKTREE_DIR/$BRANCH_NAME"
+                # Generate new branch name with version suffix (-v2, -v3, etc.)
+                local version=2
+                local new_branch="${BRANCH_NAME}-v${version}"
+                while git show-ref --verify --quiet "refs/heads/$new_branch" 2>/dev/null; do
+                    ((version++))
+                    new_branch="${BRANCH_NAME}-v${version}"
+                done
+                BRANCH_NAME="$new_branch"
+                local worktree_name="$BRANCH_NAME"
+                if [[ "$FLAT_WORKTREE" == "true" ]]; then
+                    worktree_name="${BRANCH_NAME//\//-}"
+                fi
+                WORKTREE_PATH="$WORKTREE_DIR/$worktree_name"
                 log_info "   New branch name: $BRANCH_NAME"
                 ;;
             3)
@@ -466,12 +492,27 @@ print_session_header() {
 }
 
 start_claude_session() {
+    if [[ "$NO_CLAUDE" == "true" ]]; then
+        log_success "✅ Worktree ready at: $WORKTREE_PATH"
+        echo ""
+        echo "To start working:"
+        echo "  cd $WORKTREE_PATH"
+        echo "  claude"
+        return
+    fi
+
     log_info "🚀 Starting Claude Code session..."
 
-    local initial_command="/feature-dev:feature-dev implement feature $ISSUE_URL"
+    # Use custom command if provided, otherwise default to feature-dev
+    local cmd
+    if [[ -n "$INITIAL_COMMAND" ]]; then
+        cmd="$INITIAL_COMMAND $ISSUE_URL"
+    else
+        cmd="/feature-dev:feature-dev implement feature $ISSUE_URL"
+    fi
 
     if [[ "$DRY_RUN" == "true" ]]; then
-        echo "   [DRY-RUN] Would run: cd $WORKTREE_PATH && claude --dangerously-skip-permissions \"$initial_command\""
+        echo "   [DRY-RUN] Would run: cd $WORKTREE_PATH && claude --dangerously-skip-permissions \"$cmd\""
         return
     fi
 
@@ -479,7 +520,7 @@ start_claude_session() {
 
     # Change to worktree directory and start Claude
     cd "$WORKTREE_PATH"
-    exec claude --dangerously-skip-permissions "$initial_command"
+    exec claude --dangerously-skip-permissions "$cmd"
 }
 
 # ============================================================================
@@ -504,6 +545,18 @@ parse_args() {
             --no-init)
                 NO_INIT=true
                 shift
+                ;;
+            --no-claude)
+                NO_CLAUDE=true
+                shift
+                ;;
+            --flat)
+                FLAT_WORKTREE=true
+                shift
+                ;;
+            --command|-c)
+                INITIAL_COMMAND="$2"
+                shift 2
                 ;;
             --ai)
                 FAST_MODE=false
@@ -548,17 +601,17 @@ parse_args() {
 main() {
     parse_args "$@"
 
-    echo -e "${BLUE}do-issue${NC} v$VERSION"
+    echo -e "${BLUE}start-issue${NC} v$VERSION"
     echo ""
 
     check_dependencies
     check_git_repo
     parse_issue_input "$ISSUE_INPUT"
-    rename_zellij_tab
     detect_repo_from_remote
     detect_base_branch
 
     fetch_issue
+    rename_zellij_tab  # After fetch_issue succeeds, rename tab
     generate_branch_name
     create_worktree
     run_init_script

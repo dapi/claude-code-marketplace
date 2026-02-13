@@ -116,16 +116,16 @@ Some plugins require external tools:
 
 ## Scripts
 
-### do-issue
+### start-issue
 
 Start work on GitHub issue: creates worktree, renames zellij tab, launches Claude.
 
 ```bash
-do-issue 123
-do-issue https://github.com/owner/repo/issues/123
+start-issue 123
+start-issue https://github.com/owner/repo/issues/123
 ```
 
-See `scripts/do-issue` for details.
+See `scripts/start-issue` for details.
 
 ## Development
 

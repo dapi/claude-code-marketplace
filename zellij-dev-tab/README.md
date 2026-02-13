@@ -7,7 +7,7 @@
 Автоматизирует создание изолированной вкладки терминала для работы над конкретным issue:
 
 1. Создаёт новую вкладку zellij с именем `#ISSUE_NUMBER`
-2. Запускает `do-issue` с переданным номером/URL
+2. Запускает `start-issue` с переданным номером/URL
 
 ## Установка
 
@@ -46,18 +46,18 @@ cargo install zellij
 # или через пакетный менеджер
 ```
 
-### do-issue
+### start-issue
 
 Скрипт для работы с GitHub issues через git worktree и Claude Code. Создаёт изолированный worktree для issue и запускает Claude Code сессию.
 
 **Установка**: скопируйте скрипт в `~/.local/bin/` и сделайте исполняемым:
 
 ```bash
-# do-issue должен быть в PATH
-chmod +x ~/.local/bin/do-issue
+# start-issue должен быть в PATH
+chmod +x ~/.local/bin/start-issue
 ```
 
-**Что делает do-issue**:
+**Что делает start-issue**:
 1. Парсит номер issue из URL или числа
 2. Создаёт git worktree для работы над issue
 3. Запускает Claude Code в worktree директории
@@ -81,12 +81,12 @@ zellij-dev-tab/
 **Русский:**
 - "запусти разработку в отдельной вкладке"
 - "создай вкладку для issue #123"
-- "do-issue в новой вкладке"
+- "start-issue в новой вкладке"
 
 **English:**
 - "start development in separate tab"
 - "new zellij tab for issue"
-- "run do-issue in new tab"
+- "run start-issue in new tab"
 
 ## Лицензия
 

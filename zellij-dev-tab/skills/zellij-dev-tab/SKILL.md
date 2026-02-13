@@ -17,12 +17,12 @@ description: |
   - "open new tab for issue"
   - "создай вкладку для задачи"
 
-  🔧 **Run do-issue**:
-  - "run do-issue in new tab"
-  - "do-issue в отдельной вкладке"
+  🔧 **Run start-issue**:
+  - "run start-issue in new tab"
+  - "start-issue в отдельной вкладке"
 
   TRIGGERS: start issue tab, open issue tab, launch issue tab, create tab issue,
-  run do-issue tab, zellij new tab issue, separate tab development, new tab issue,
+  run start-issue tab, zellij new tab issue, separate tab development, new tab issue,
   development in tab, issue development tab, work on issue in tab, begin issue tab,
   запусти в вкладке, открой в вкладке, создай вкладку issue, новая вкладка задача,
   разработка в вкладке, вкладка для issue, отдельная вкладка issue, zellij вкладка
@@ -31,7 +31,7 @@ allowed-tools: Bash
 
 # Zellij Dev Tab Skill
 
-Запуск разработки GitHub issue в отдельной вкладке zellij с автоматическим вызовом `do-issue`.
+Запуск разработки GitHub issue в отдельной вкладке zellij с автоматическим вызовом `start-issue`.
 
 ## ⚠️ ОБЯЗАТЕЛЬНЫЕ ПРОВЕРКИ
 
@@ -44,9 +44,9 @@ if [ -z "$ZELLIJ" ]; then
   # НЕ выполнять команду, предупредить пользователя
 fi
 
-# 2. Проверить что do-issue доступен
-if ! command -v do-issue &> /dev/null; then
-  echo "Ошибка: do-issue не найден в PATH"
+# 2. Проверить что start-issue доступен
+if ! command -v start-issue &> /dev/null; then
+  echo "Ошибка: start-issue не найден в PATH"
   # НЕ выполнять команду, предупредить пользователя
 fi
 ```
@@ -59,7 +59,7 @@ fi
 
 1. Парсит номер issue из аргумента
 2. Создаёт новую вкладку zellij с именем `#ISSUE_NUMBER`
-3. Запускает `do-issue` с переданным аргументом
+3. Запускает `start-issue` с переданным аргументом
 
 ## Формат аргумента
 
@@ -95,7 +95,7 @@ parse_issue_number() {
 ```bash
 # Полная команда
 ISSUE_NUMBER=$(parse_issue_number "$ARG")
-zellij action new-tab --name "#${ISSUE_NUMBER}" && zellij action write-chars "do-issue ${ARG}\n"
+zellij action new-tab --name "#${ISSUE_NUMBER}" && zellij action write-chars "start-issue ${ARG}\n"
 ```
 
 ## Примеры использования
@@ -106,7 +106,7 @@ zellij action new-tab --name "#${ISSUE_NUMBER}" && zellij action write-chars "do
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#45" && zellij action write-chars "do-issue 45\n"
+zellij action new-tab --name "#45" && zellij action write-chars "start-issue 45\n"
 ```
 
 ### Пример 2: URL
@@ -115,7 +115,7 @@ zellij action new-tab --name "#45" && zellij action write-chars "do-issue 45\n"
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#123" && zellij action write-chars "do-issue https://github.com/dapi/project/issues/123\n"
+zellij action new-tab --name "#123" && zellij action write-chars "start-issue https://github.com/dapi/project/issues/123\n"
 ```
 
 ### Пример 3: С решёткой
@@ -124,13 +124,13 @@ zellij action new-tab --name "#123" && zellij action write-chars "do-issue https
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#78" && zellij action write-chars "do-issue 78\n"
+zellij action new-tab --name "#78" && zellij action write-chars "start-issue 78\n"
 ```
 
 ## Зависимости
 
 - **zellij** — терминальный мультиплексор (должен быть запущен)
-- **do-issue** — скрипт/команда для работы с issue (должен быть в PATH)
+- **start-issue** — скрипт/команда для работы с issue (должен быть в PATH)
 
 ## Проверка зависимостей
 
@@ -143,9 +143,9 @@ if [ -z "$ZELLIJ" ]; then
   exit 1
 fi
 
-# Проверка do-issue в PATH
-if ! command -v do-issue &> /dev/null; then
-  echo "Ошибка: do-issue не найден в PATH"
+# Проверка start-issue в PATH
+if ! command -v start-issue &> /dev/null; then
+  echo "Ошибка: start-issue не найден в PATH"
   exit 1
 fi
 ```
@@ -156,11 +156,11 @@ fi
 |--------|---------|---------|
 | `zellij: command not found` | zellij не установлен | `cargo install zellij` |
 | `Zellij not running` | Команда запущена вне zellij | Запустить zellij |
-| `do-issue: command not found` | do-issue не в PATH | Добавить в PATH или установить |
+| `start-issue: command not found` | start-issue не в PATH | Добавить в PATH или установить |
 | `Invalid issue format` | Неверный формат аргумента | Использовать число, #число или URL |
 
 ## Важно
 
 - Skill работает **только внутри zellij сессии**
-- `do-issue` должен быть доступен в новой вкладке (наследует PATH)
+- `start-issue` должен быть доступен в новой вкладке (наследует PATH)
 - Имя вкладки всегда в формате `#NUMBER` для единообразия

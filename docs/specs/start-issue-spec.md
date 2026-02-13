@@ -1,8 +1,8 @@
-# Спецификация: do-issue
+# Спецификация: start-issue
 
 ## Обзор
 
-**Название**: `do-issue`
+**Название**: `start-issue`
 **Тип**: Bash-скрипт
 **Назначение**: Автоматизация начала работы над GitHub issue с созданием git worktree и запуском Claude Code сессии.
 
@@ -134,35 +134,35 @@
 
 ```bash
 # По номеру issue (репо определяется автоматически)
-do-issue 123
+start-issue 123
 
 # По полному URL
-do-issue https://github.com/owner/repo/issues/123
+start-issue https://github.com/owner/repo/issues/123
 ```
 
 ### С параметрами
 
 ```bash
 # Указать репозиторий явно
-do-issue 123 --repo owner/repo
+start-issue 123 --repo owner/repo
 
 # Указать базовую ветку
-do-issue 123 --base develop
+start-issue 123 --base develop
 
 # Указать директорию для worktrees
-do-issue 123 --worktree-dir ~/projects/worktrees
+start-issue 123 --worktree-dir ~/projects/worktrees
 
 # Пропустить init.sh
-do-issue 123 --no-init
+start-issue 123 --no-init
 
 # Dry run
-do-issue 123 --dry-run
+start-issue 123 --dry-run
 ```
 
 ## Пример сессии
 
 ```
-$ do-issue 42
+$ start-issue 42
 
 🔍 Fetching issue #42 from owner/repo...
    Title: Add dark mode support
@@ -207,7 +207,7 @@ $ do-issue 42
 
 ```
 scripts/
-└── do-issue           # Исполняемый скрипт
+└── start-issue           # Исполняемый скрипт
 
 Makefile               # Добавить target install-scripts
 ```
@@ -218,9 +218,9 @@ Makefile               # Добавить target install-scripts
 install-scripts:
 	@echo "Installing scripts to ~/.local/bin/"
 	@mkdir -p ~/.local/bin
-	@cp scripts/do-issue ~/.local/bin/
-	@chmod +x ~/.local/bin/do-issue
-	@echo "✅ Installed: do-issue"
+	@cp scripts/start-issue ~/.local/bin/
+	@chmod +x ~/.local/bin/start-issue
+	@echo "✅ Installed: start-issue"
 	@echo "Make sure ~/.local/bin is in your PATH"
 ```
 

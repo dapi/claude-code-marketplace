@@ -58,7 +58,7 @@
     {
       "name": "zellij-dev-tab",
       "source": "./zellij-dev-tab",
-      "description": "Launch GitHub issue development in a separate zellij tab with do-issue"
+      "description": "Launch GitHub issue development in a separate zellij tab with start-issue"
     }
   ]
 }

@@ -44,21 +44,21 @@
 - "tab for issue development"
 - "open new tab for #99"
 
-### 🔧 do-issue команды (RU)
+### 🔧 start-issue команды (RU)
 
-- "do-issue в отдельной вкладке"
-- "запусти do-issue в новой вкладке"
-- "do-issue 45 в вкладке zellij"
-- "запусти do-issue в zellij"
-- "do-issue для #123 в новой вкладке"
+- "start-issue в отдельной вкладке"
+- "запусти start-issue в новой вкладке"
+- "start-issue 45 в вкладке zellij"
+- "запусти start-issue в zellij"
+- "start-issue для #123 в новой вкладке"
 
-### 🔧 do-issue Commands (EN)
+### 🔧 start-issue Commands (EN)
 
-- "run do-issue in new tab"
-- "do-issue in separate tab"
-- "launch do-issue in zellij tab"
-- "run do-issue 45 in new tab"
-- "do-issue #123 in zellij"
+- "run start-issue in new tab"
+- "start-issue in separate tab"
+- "launch start-issue in zellij tab"
+- "run start-issue 45 in new tab"
+- "start-issue #123 in zellij"
 
 ### 🔗 С URL
 
@@ -84,11 +84,11 @@
 - "как настроить zellij?"
 - "zellij documentation"
 
-### Общие вопросы о do-issue
+### Общие вопросы о start-issue
 
-- "что делает do-issue?"
-- "how does do-issue work?"
-- "где взять do-issue?"
+- "что делает start-issue?"
+- "how does start-issue work?"
+- "где взять start-issue?"
 
 ### Работа с issue без вкладок
 
@@ -127,7 +127,7 @@
 
 - "[verb] [issue] в [отдельной/новой] вкладке"
 - "[verb] [issue] in [new/separate] tab"
-- "do-issue в вкладке"
+- "start-issue в вкладке"
 - "zellij tab for [issue]"
 
 ### Required Combinations
