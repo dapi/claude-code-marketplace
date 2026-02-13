@@ -54,6 +54,11 @@
       "name": "requirements",
       "source": "./requirements",
       "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync"
+    },
+    {
+      "name": "task-router",
+      "source": "./task-router",
+      "description": "Smart task routing: classifies specs and routes to feature-dev or subagent-driven-dev"
     }
   ]
 }

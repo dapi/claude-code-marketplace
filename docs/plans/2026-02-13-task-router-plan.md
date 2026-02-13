@@ -66,7 +66,7 @@ The agent frontmatter should specify:
 - `name: task-classifier`
 - `description`: when to use (triggered by route-task command)
 - `model: haiku` for fast/cheap classification
-- Tools needed: Bash (for gh CLI, mkdir), WebFetch, Read, Write, Glob
+- Tools needed: Bash (for gh CLI, mkdir), WebFetch, Read, Write, ToolSearch (for Google Workspace MCP discovery)
 
 The agent prompt body should include:
 
@@ -107,7 +107,7 @@ mkdir -p /tmp/task-router
 
 ```
 S/M complexity → "feature-dev"
-L/XL + has_clear_tasks + NOT needs_exploration → "subagent-driven-dev"
+L/XL + has_clear_tasks + NOT needs_exploration + NOT architecture_unclear → "subagent-driven-dev"
 L/XL + (needs_exploration OR architecture_unclear) → "hybrid"
 L/XL + NOT has_clear_tasks → "subagent-driven-dev" (writing-plans will break it down)
 ```
@@ -210,9 +210,9 @@ Phase 5: Invoke workflow
     → Then: Skill("superpowers:subagent-driven-development")
 
   hybrid:
-    → Skill("feature-dev:feature-dev") but stop after phase 4 (architecture)
-    → Save architecture as plan
-    → Skill("superpowers:subagent-driven-development") with the plan
+    → Step 1: Skill("feature-dev:feature-dev") — only phases 1-4 (architecture)
+    → Step 2: Skill("superpowers:writing-plans") — create implementation plan
+    → Step 3: Skill("superpowers:subagent-driven-development") — execute plan
 ```
 
 **Step 2: Commit**

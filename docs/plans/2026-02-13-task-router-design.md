@@ -66,23 +66,25 @@ task-router/
 | `needs_exploration` | Mentions existing code, refactoring, "change", "update" (vs "create from scratch") |
 | `architecture_unclear` | No clear architecture, multiple approaches possible, "suggest", "how best" |
 | `has_clear_tasks` | Spec already broken into numbered steps/tasks/requirements |
-| `complexity` | S/M/L/XL using formula: models*3000 + endpoints*2000 + components*4000 + integrations*8000 |
+| `complexity` | S/M/L/XL based on count of distinct entities, endpoints, components, integrations: S (<=2), M (3-5), L (6-10), XL (10+) |
 
 #### Decision matrix
 
 | Complexity | needs_exploration | architecture_unclear | has_clear_tasks | Route |
 |------------|-------------------|---------------------|-----------------|-------|
 | S/M | any | any | any | **feature-dev** |
-| L/XL | no | no | yes | **writing-plans + subagent-driven-dev** |
-| L/XL | no | no | no | **writing-plans + subagent-driven-dev** |
+| L/XL | no | no | yes | **subagent-driven-dev** |
+| L/XL | no | no | no | **subagent-driven-dev** |
 | L/XL | yes | any | any | **hybrid** (feature-dev phases 1-4, then subagent-driven-dev) |
 | L/XL | no | yes | any | **hybrid** |
+
+> **Note:** Route values in JSON are `"feature-dev"`, `"subagent-driven-dev"`, `"hybrid"`. The `/route-task` command orchestrates the actual workflow: for `subagent-driven-dev` it invokes `writing-plans` first, then `subagent-driven-development`.
 
 #### Route descriptions
 
 - **feature-dev**: Full workflow — exploration, questions, architecture, implementation, review
-- **writing-plans + subagent-driven-dev**: Plan first, then fresh subagent per task with two-stage review
-- **hybrid**: feature-dev for exploration + architecture (phases 1-4), then transition to subagent-driven-dev for implementation
+- **subagent-driven-dev**: Command invokes writing-plans first, then fresh subagent per task with two-stage review
+- **hybrid**: feature-dev for exploration + architecture (phases 1-4), then writing-plans, then subagent-driven-dev for implementation
 
 ### Agent Response Format
 
@@ -94,6 +96,7 @@ task-router/
   "summary": "1-2 sentence summary of what needs to be built",
   "reasoning": "Why this route was chosen (1 sentence)",
   "spec_file": "/tmp/task-router/spec-org-repo-42.md",
+  "source": "github" | "google-doc" | "url",
   "signals": {
     "needs_exploration": true | false,
     "has_clear_tasks": true | false,

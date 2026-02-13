@@ -13,7 +13,7 @@ description: |
 
   TRIGGERS: возьми задачу, сделай задачу, take this task,
   реализуй по спеке, implement this spec, implement this issue,
-  route task, route this, /route-task,
+  route task, route this,
   сделай issue, do issue,
   github.com/issues, docs.google.com/document
 tools: Skill
@@ -91,8 +91,17 @@ User: Take this task https://github.com/org/repo/issues/99
 Assistant: [Вызывает Skill tool: task-router:route-task с args: "https://github.com/org/repo/issues/99"]
 ```
 
-### Пример 5: Явная команда
-```
-User: /route-task https://github.com/org/repo/issues/7
-Assistant: [Вызывает Skill tool: task-router:route-task с args: "https://github.com/org/repo/issues/7"]
-```
+## Когда НЕ активировать
+
+Не активируй автоматически если пользователь:
+- Просто обсуждает или упоминает ссылку в разговоре без action-слова ("посмотри issue #42", "что говорит эта спека")
+- Делает code review или обсуждает PR
+- Упоминает ссылку в контексте другой задачи
+
+Активируй только когда сообщение явно указывает на намерение **начать работу** над задачей (содержит action-слова: "возьми", "сделай", "реализуй", "take", "implement", "do", "start", "route").
+
+## Обработка ошибок
+
+- Если вызов Skill tool для "task-router:route-task" завершился ошибкой — покажи: "Не удалось запустить маршрутизацию задачи. Команда /route-task может быть недоступна."
+- Если в сообщении несколько URL — спроси пользователя какой именно маршрутизировать.
+- Если триггер сработал ложно — извинись и продолжи обычный разговор.

@@ -49,17 +49,47 @@ For short references (`#{number}`), omit `--repo`:
 gh issue view {number} --json title,body,labels,comments
 ```
 
+**Error handling for `gh` command:**
+
+| Bash output contains | Error title | Error summary |
+|---------------------|-------------|---------------|
+| "command not found" | "GitHub CLI not installed" | "The 'gh' command is not available. Install: https://cli.github.com" |
+| "HTTP 401" or "auth" | "GitHub authentication failed" | "Cannot access issue. Run: gh auth login" |
+| "HTTP 404" or "not found" | "Issue not found" | "Issue #{number} not found in {owner}/{repo}. Check the URL." |
+| "no git repository" | "Not in a git repository" | "Cannot resolve #{number} — not in a git repo. Use full URL instead." |
+
+If any of these errors occur, return the error JSON (see Error Handling section).
+
 ### Google Doc
 
-Use ToolSearch to find and call `mcp__google_workspace__get_doc_content` with these parameters:
+Use ToolSearch to find `mcp__google_workspace__get_doc_content`.
+
+**If ToolSearch returns no matching tool** — return the error JSON with:
+- title: "Google Workspace MCP unavailable"
+- summary: "Google Workspace MCP is not configured or not running. Cannot fetch Google Docs."
+
+**If the tool is found**, call it with:
 - `document_id`: the `{DOCUMENT_ID}` extracted from the URL
-- `user_google_email`: `danilpismenny@gmail.com`
+- `user_google_email`: use the email configured in the user's CLAUDE.md (for Google Workspace MCP)
+
+**If the tool call fails** — return the error JSON with:
+- title: "Google Doc access failed"
+- summary: "Cannot access document. Check Google Workspace authentication."
+
+**Do NOT fall back to WebFetch for Google Docs** — it will fetch a login page, not the document.
 
 ### Any Other URL
 
 Use the WebFetch tool:
 - `url`: the full URL
 - `prompt`: "Extract the full content of this page. Return all text, headings, lists, and code blocks."
+
+### Content Validation (after any fetch)
+
+After fetching content from any source, validate it before saving:
+
+1. If the content is empty or less than 50 words — return the error JSON with summary: "Empty or insufficient content from URL"
+2. If the content contains login/auth indicators ("Sign in", "Log in", "Enter your password", "CAPTCHA") — return the error JSON with summary: "URL appears to require authentication. Use a direct link or a different source."
 
 ## Step 3: Save Spec to File
 
@@ -68,7 +98,13 @@ First, create the directory:
 mkdir -p /tmp/task-router
 ```
 
-Then save the fetched content to a file using the Write tool. File naming:
+If `mkdir` fails (permissions, read-only filesystem) — return the error JSON with:
+- title: "Failed to save task spec"
+- summary: "Could not create /tmp/task-router/. Check disk space and permissions."
+
+Then save the fetched content to a file using the Write tool. If the Write tool returns an error — return the error JSON with the same title and the specific error.
+
+File naming:
 
 | Source | Filename |
 |--------|----------|
@@ -147,7 +183,9 @@ Apply the decision matrix in order:
 
 ## Step 6: Return JSON
 
-Return ONLY this JSON object. No markdown formatting, no code fences, no explanation before or after:
+Return ONLY this JSON object. No markdown formatting, no code fences, no explanation before or after.
+
+Template (code fences below are for readability only — your output must NOT include them):
 
 ```
 {
@@ -168,16 +206,17 @@ Return ONLY this JSON object. No markdown formatting, no code fences, no explana
 
 ## Error Handling
 
-If you cannot fetch the content (URL not accessible, empty response, authentication error):
+When any error occurs (fetch failure, file write failure, MCP unavailability, authentication error), return the error JSON below. Use the specific `title` and `summary` indicated in the error handling tables in Steps 2 and 3. If no specific message matches, use the generic ones.
 
-Return this JSON:
+Template (code fences below are for readability only — your output must NOT include them):
+
 ```
 {
   "route": "error",
   "complexity": null,
-  "title": "Failed to fetch task spec",
-  "summary": "Could not retrieve content from the provided URL",
-  "reasoning": "Error: {describe the error}",
+  "title": "{specific error title from the tables above, or 'Failed to fetch task spec'}",
+  "summary": "{specific error summary from the tables above, or 'Could not retrieve content from the provided URL'}",
+  "reasoning": "Error: {describe the actual error}",
   "spec_file": null,
   "source": "github" | "google-doc" | "url",
   "signals": {
@@ -194,7 +233,7 @@ Return this JSON:
 - Do not wrap JSON in markdown code fences.
 - Do not add any text before or after the JSON.
 - Always save the spec file before classifying.
-- For Google Docs, always use `danilpismenny@gmail.com` as the email.
+- For Google Docs, use the email configured in the user's CLAUDE.md for Google Workspace MCP.
 - Extract the title from the spec content (issue title, doc title, or page heading).
 - Keep the summary to 1-2 sentences maximum.
 - Keep the reasoning to 1 sentence maximum.
