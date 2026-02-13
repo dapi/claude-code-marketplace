@@ -4,19 +4,25 @@
     "PostToolUse": [
       {
         "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '🤖'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
       }
     ],
     "SessionStart": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '🤖'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
       }
     ],
     "Notification": [
@@ -26,13 +32,13 @@
       },
       {
         "matcher": "idle_prompt",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '🟢'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
       }
     ],
     "SessionEnd": [
