@@ -1,24 +1,20 @@
-# zellij-claude-status
+# zellij-tab-claude-status
 
 Zellij tab status indicator for Claude Code sessions.
 
 ## Features
 
-Shows Claude session state directly in Zellij UI:
+Shows Claude session state directly in Zellij tab:
 
-- **Tab name prefix**: Icon indicating current state
-  - 🟢 Ready — waiting for input
-  - 🤖 Working — processing request
-  - ✋ Needs input — permission prompt waiting
-
-- **Session name suffix**: Active subagent counter
-  - `my-session (3)` — 3 subagents running
+- 🤖 Working — processing request
+- 🟢 Ready — waiting for input
+- ✋ Needs input — permission prompt waiting
 
 ## Requirements
 
 - Zellij terminal multiplexer
 - Claude Code with plugin support
-- Rust with `wasm32-wasip1` target (for building dependency)
+- [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin
 
 ## Installation
 
@@ -33,9 +29,7 @@ make install-zellij-tab-status
 
 This installs:
 - Zellij WASM plugin (`~/.config/zellij/plugins/zellij-tab-status.wasm`)
-- CLI scripts (`~/.local/bin/zellij-tab-status`, `~/.local/bin/zellij-rename-tab`)
-
-Or manually from [zellij-tab-status](https://github.com/dapi/zellij-tab-status) repository.
+- CLI script (`~/.local/bin/zellij-tab-status`)
 
 Add to `~/.config/zellij/config.kdl`:
 
@@ -55,31 +49,24 @@ Restart Zellij.
 
 ## How it works
 
-The plugin uses Claude Code hooks to track session state:
+The plugin uses Claude Code hooks to update tab status:
 
-| Event | Action |
-|-------|--------|
-| SessionStart | Reset counter, show 🟢 |
-| UserPromptSubmit | Show 🤖 (working) |
-| SubagentStart | Increment counter |
-| SubagentStop | Decrement counter |
-| Stop | Show 🟢 (ready) |
-| Notification (permission) | Show ✋ (needs input) |
-| SessionEnd | Remove icon, restore original tab name |
-
-## Temporary files
-
-The plugin stores agent counter state in `/tmp/zellij-claude-*` files:
-- `zellij-claude-agents-{session}` — agent counter
-- `zellij-claude-session-{session}` — original session name
-
-Tab status (emoji prefix) is managed atomically by the zellij-tab-status WASM plugin.
+| Event | Script | Status |
+|-------|--------|--------|
+| SessionStart | on-session-start.sh | 🟢 |
+| UserPromptSubmit | on-prompt-submit.sh | 🤖 |
+| Notification (permission) | on-permission-prompt.sh | ✋ |
+| Stop | on-stop.sh | 🟢 |
+| SessionEnd | on-session-end.sh | --clear |
 
 ## Troubleshooting
 
-**Icons not showing**: Ensure you're running inside Zellij (`$ZELLIJ_SESSION_NAME` must be set).
+**Icons not showing**: Ensure you're running inside Zellij and `zellij-tab-status` command is available.
 
-**Counter stuck**: Run `/plugin reinstall zellij-claude-status@dapi` to reset state.
+```bash
+which zellij-tab-status
+zellij-tab-status 🔥  # test manually
+```
 
 ## License
 
