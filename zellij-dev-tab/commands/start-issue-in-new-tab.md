@@ -55,9 +55,17 @@ ISSUE_NUMBER=$(parse_issue_number "$ARGUMENTS")
 ### 3. Создай вкладку и запусти start-issue
 
 ```bash
-zellij action new-tab --name "#${ISSUE_NUMBER}" && \
-zellij action write-chars "start-issue $ARGUMENTS\n"
+# Создаём вкладку, запускаем команду, убираем пустую панель
+zellij action go-to-tab-name --create "#${ISSUE_NUMBER}" && \
+zellij action new-pane -- start-issue $ARGUMENTS && \
+zellij action focus-previous-pane && \
+zellij action close-pane
 ```
+
+**Как это работает:**
+1. `go-to-tab-name --create` — создаёт вкладку (или переключается если существует)
+2. `new-pane -- command` — запускает команду в новой панели
+3. `focus-previous-pane` + `close-pane` — убирает пустую shell-панель
 
 ## Примеры
 
