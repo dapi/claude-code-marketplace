@@ -23,7 +23,7 @@ claude-code-marketplace/
 ├── media-upload/                  # S3 media upload
 ├── requirements/                  # Requirements in Google Sheets
 ├── spec-reviewer/                 # Specification review (10 agents)
-├── zellij-tab-claude-status/      # Zellij tab status indicator (hooks)
+├── zellij-workflow/                # Zellij workflow: status, dev tabs, claude tabs
 └── [standard repo files]
 
 # Each plugin has structure:
@@ -646,15 +646,14 @@ git commit -m "Add plugin-name: brief description"
 | requirements | 1 command |
 | spec-reviewer | 10 agents, 1 skill, 1 command |
 | task-router | 1 agent, 1 skill, 1 command |
-| zellij-tab-claude-status | hooks only |
+| zellij-workflow | 2 skills, 2 commands, hooks |
 
-**Totals**: 16 agents, 9 skills, 7 commands
+**Totals**: 16 agents, 10 skills, 8 commands
 
-## zellij-tab-claude-status Plugin
+## zellij-workflow Plugin
 
 Special rules for this plugin:
 
-1. **NO `async: true`** in hooks — hooks must run synchronously so the tab has focus when getting its name
-2. **Use `hooks-handlers/`** directory for scripts (matches official plugin structure)
-3. **Suppress zellij-agents.sh errors** with `|| true` — session rename may fail but shouldn't break the hook
-4. **Requires zellij-tab-status plugin** — install from https://github.com/dapi/zellij-tab-status
+1. **NO `async: true`** in hooks -- hooks must run synchronously so the tab has focus when getting its name
+2. **All hook commands must end with `|| true`** -- graceful degradation if zellij-tab-status is not installed
+3. **Requires zellij-tab-status plugin** (optional) -- install from https://github.com/dapi/zellij-tab-status
