@@ -59,6 +59,11 @@
       "name": "zellij-dev-tab",
       "source": "./zellij-dev-tab",
       "description": "Launch GitHub issue development in a separate zellij tab with start-issue"
+    },
+    {
+      "name": "task-router",
+      "source": "./task-router",
+      "description": "Smart task routing: classifies specs and routes to feature-dev or subagent-driven-dev"
     }
   ]
 }
