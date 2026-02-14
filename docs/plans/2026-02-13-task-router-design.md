@@ -70,13 +70,11 @@ task-router/
 
 #### Decision matrix
 
-| Complexity | needs_exploration | architecture_unclear | has_clear_tasks | Route |
-|------------|-------------------|---------------------|-----------------|-------|
-| S/M | any | any | any | **feature-dev** |
-| L/XL | no | no | yes | **subagent-driven-dev** |
-| L/XL | no | no | no | **subagent-driven-dev** |
-| L/XL | yes | any | any | **hybrid** (feature-dev phases 1-4, then subagent-driven-dev) |
-| L/XL | no | yes | any | **hybrid** |
+| Complexity | needs_exploration OR architecture_unclear | Route |
+|------------|---------------------------------------------|-------|
+| S/M | any | **feature-dev** |
+| L/XL | yes | **hybrid** (feature-dev phases 1-4, then subagent-driven-dev) |
+| L/XL | no | **subagent-driven-dev** |
 
 > **Note:** Route values in JSON are `"feature-dev"`, `"subagent-driven-dev"`, `"hybrid"`. The `/route-task` command orchestrates the actual workflow: for `subagent-driven-dev` it invokes `writing-plans` first, then `subagent-driven-development`.
 

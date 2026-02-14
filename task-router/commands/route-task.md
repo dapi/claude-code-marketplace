@@ -30,6 +30,7 @@ Task:
   subagent_type: "task-router:task-classifier"
   description: "Classify task for routing"
   prompt: "Classify this task and determine the best workflow route: $ARGUMENTS"
+  max_turns: 10
 ```
 
 **Если Task tool завершился ошибкой** (таймаут, crash, модель недоступна) — покажи: "Не удалось классифицировать задачу. Агент-классификатор не запустился. Попробуй позже: /route-task {url}" и **останови выполнение**.
@@ -92,7 +93,7 @@ Task:
 |-------|-------------|
 | feature-dev | feature-dev (исследование + реализация) |
 | subagent-driven-dev | writing-plans → subagent-driven-dev (план + реализация по задачам) |
-| hybrid | brainstorming (исследование) → writing-plans → subagent-driven-dev (реализация) |
+| hybrid | feature-dev фазы 1-4 (исследование + архитектура) → writing-plans → subagent-driven-dev (реализация) |
 
 ---
 
@@ -148,10 +149,10 @@ Skill "{skill_name}" не найден. Установи необходимый 
 ### Вариант: hybrid
 
 Шаг 1 — вызови Skill tool:
-- skill: `"superpowers:brainstorming"`
-- args: "Спека задачи в {spec_file}. Прочитай спеку и проведи исследование: изучи кодовую базу, определи архитектуру, задай уточняющие вопросы. Результат — согласованное архитектурное решение."
+- skill: `"feature-dev:feature-dev"`
+- args: "Спека задачи в {spec_file}. Используй её как входные данные. Выполни ТОЛЬКО фазы 1-4 (exploration, questions, architecture). НЕ переходи к фазе реализации — после определения архитектуры ОСТАНОВИСЬ."
 
-Шаг 2 — после завершения brainstorming, вызови Skill tool:
+Шаг 2 — после завершения feature-dev фаз 1-4, вызови Skill tool:
 - skill: `"superpowers:writing-plans"`
 - args: "Спека в {spec_file}. Архитектура определена на предыдущем шаге. Создай план реализации."
 

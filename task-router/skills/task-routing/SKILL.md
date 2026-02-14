@@ -16,7 +16,7 @@ description: |
   route task, route this,
   сделай issue, do issue,
   github.com/issues, docs.google.com/document
-tools: Skill
+allowed-tools: Skill
 ---
 
 # Task Routing Skill

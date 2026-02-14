@@ -70,7 +70,7 @@ Use ToolSearch to find `mcp__google_workspace__get_doc_content`.
 
 **If the tool is found**, call it with:
 - `document_id`: the `{DOCUMENT_ID}` extracted from the URL
-- `user_google_email`: use the email configured in the user's CLAUDE.md (for Google Workspace MCP)
+- `user_google_email`: `danilpismenny@gmail.com`
 
 **If the tool call fails** — return the error JSON with:
 - title: "Google Doc access failed"
@@ -174,12 +174,11 @@ Count the number of distinct entities, endpoints, components, and integrations m
 
 ## Step 5: Determine Route
 
-Apply the decision matrix in order:
+Apply the decision matrix as an if/else chain (first match wins):
 
-1. If complexity is S or M: route = `"feature-dev"`
-2. If complexity is L or XL AND `has_clear_tasks` is true AND `needs_exploration` is false AND `architecture_unclear` is false: route = `"subagent-driven-dev"`
-3. If complexity is L or XL AND (`needs_exploration` is true OR `architecture_unclear` is true): route = `"hybrid"`
-4. If complexity is L or XL AND `has_clear_tasks` is false: route = `"subagent-driven-dev"`
+1. If complexity is S or M → route = `"feature-dev"`
+2. Else (L/XL) if `needs_exploration` is true OR `architecture_unclear` is true → route = `"hybrid"`
+3. Else (L/XL, no exploration needed, architecture clear) → route = `"subagent-driven-dev"`
 
 ## Step 6: Return JSON
 
@@ -233,7 +232,7 @@ Template (code fences below are for readability only — your output must NOT in
 - Do not wrap JSON in markdown code fences.
 - Do not add any text before or after the JSON.
 - Always save the spec file before classifying.
-- For Google Docs, use the email configured in the user's CLAUDE.md for Google Workspace MCP.
+- For Google Docs, use `danilpismenny@gmail.com` as the `user_google_email`.
 - Extract the title from the spec content (issue title, doc title, or page heading).
 - Keep the summary to 1-2 sentences maximum.
 - Keep the reasoning to 1 sentence maximum.
