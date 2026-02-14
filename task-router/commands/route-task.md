@@ -92,7 +92,7 @@ Task:
 |-------|-------------|
 | feature-dev | feature-dev (исследование + реализация) |
 | subagent-driven-dev | writing-plans → subagent-driven-dev (план + реализация по задачам) |
-| hybrid | feature-dev (фазы 1-4) → subagent-driven-dev (реализация) |
+| hybrid | brainstorming (исследование) → writing-plans → subagent-driven-dev (реализация) |
 
 ---
 
@@ -148,12 +148,12 @@ Skill "{skill_name}" не найден. Установи необходимый 
 ### Вариант: hybrid
 
 Шаг 1 — вызови Skill tool:
-- skill: `"feature-dev:feature-dev"`
-- args: "Спека задачи в {spec_file}. Выполни ТОЛЬКО фазы 1-4 (Discovery, Codebase Exploration, Clarifying Questions, Architecture Design). После одобрения архитектуры пользователем — ОСТАНОВИСЬ и верни результат."
+- skill: `"superpowers:brainstorming"`
+- args: "Спека задачи в {spec_file}. Прочитай спеку и проведи исследование: изучи кодовую базу, определи архитектуру, задай уточняющие вопросы. Результат — согласованное архитектурное решение."
 
-Шаг 2 — после завершения feature-dev, вызови Skill tool:
+Шаг 2 — после завершения brainstorming, вызови Skill tool:
 - skill: `"superpowers:writing-plans"`
-- args: "Архитектура одобрена. Спека в {spec_file}. Создай план реализации на основе выбранной архитектуры."
+- args: "Спека в {spec_file}. Архитектура определена на предыдущем шаге. Создай план реализации."
 
 Шаг 3 — после создания плана, вызови Skill tool:
 - skill: `"superpowers:subagent-driven-development"`
