@@ -1,7 +1,7 @@
 {
   "name": "task-router",
   "description": "Smart task routing: classifies specs and routes to feature-dev or subagent-driven-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
