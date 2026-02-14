@@ -1,0 +1,13 @@
+{
+  "name": "github-workflow",
+  "description": "GitHub workflow: issues, PRs, worktrees, sub-issues",
+  "version": "1.0.2",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "license": "MIT",
+  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues"]
+}

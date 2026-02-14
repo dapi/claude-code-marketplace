@@ -6,13 +6,13 @@
   },
   "plugins": [
     {
-      "name": "dev-tools",
-      "source": "./dev-tools",
-      "description": "GitHub workflow tools: issues, PRs, worktrees"
+      "name": "github-workflow",
+      "source": "./github-workflow",
+      "description": "GitHub workflow: issues, PRs, worktrees, sub-issues"
     },
     {
-      "name": "zellij-claude-status",
-      "source": "./zellij-claude-status",
+      "name": "zellij-tab-claude-status",
+      "source": "./zellij-tab-claude-status",
       "description": "Zellij tab status indicator — shows Claude session state via icon prefix"
     },
     {
@@ -46,14 +46,19 @@
       "description": "Manage long-running development projects across multiple sessions"
     },
     {
-      "name": "email",
-      "source": "./email",
-      "description": "Read and send emails via Himalaya CLI (IMAP/SMTP)"
+      "name": "himalaya",
+      "source": "./himalaya",
+      "description": "Email via Himalaya CLI (IMAP/SMTP)"
     },
     {
       "name": "requirements",
       "source": "./requirements",
       "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync"
+    },
+    {
+      "name": "zellij-dev-tab",
+      "source": "./zellij-dev-tab",
+      "description": "Launch GitHub issue development in a separate zellij tab with start-issue"
     },
     {
       "name": "task-router",

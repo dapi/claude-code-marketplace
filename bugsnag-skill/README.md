@@ -1,64 +1,63 @@
-# Bugsnag Skill Plugin
+# bugsnag-skill
 
-Plugin для интеграции с Bugsnag API - просмотр и управление ошибками в проектах.
+Bugsnag API integration for Claude Code — view and manage errors, organizations, projects.
 
-## Возможности
-
-- **Управление организациями** - Просмотр списка доступных организаций
-- **Управление проектами** - Просмотр списка проектов
-- **Просмотр ошибок** - Получение списка активных ошибок
-- **Детальный контекст** - Полная информация об ошибке включая stack trace
-- **Управление статусами** - Пометка ошибок как resolved
-- **Анализ паттернов** - Автоматический анализ повторяющихся ошибок
-
-## Установка
+## Installation
 
 ```bash
 /plugin install bugsnag-skill@dapi
 ```
 
-## Настройка
+## Components
 
-### Получение API ключа
+### Skill: bugsnag
 
-1. Перейдите в [Bugsnag Dashboard](https://app.bugsnag.com)
-2. Настройки → Organization → API Authentication
-3. Создайте Personal Access Token
-4. Получите ID проекта из настроек проекта
+Activates automatically when you ask about Bugsnag data: errors, projects, organizations.
 
-### Переменные окружения
+## Usage
+
+```
+"show bugsnag errors"
+"bugsnag details for error_123"
+"list bugsnag projects"
+"проанализируй bugsnag ошибки"
+"показать bugsnag ошибки"
+```
+
+### CLI Commands
+
+```bash
+./bugsnag.rb organizations   # List organizations
+./bugsnag.rb projects        # List projects
+./bugsnag.rb list            # List all errors
+./bugsnag.rb open            # Open errors only
+./bugsnag.rb details ERROR_ID # Error details
+./bugsnag.rb analyze         # Pattern analysis
+```
+
+## Configuration
+
+### API Key
+
+1. Go to [Bugsnag Dashboard](https://app.bugsnag.com)
+2. Settings → Organization → API Authentication
+3. Create a Personal Access Token
+4. Get project ID from project settings
+
+### Environment Variables
 
 ```bash
 export BUGSNAG_DATA_API_KEY="your_api_key_here"
 export BUGSNAG_PROJECT_ID="your_project_id_here"
 
-# Опционально
+# Optional
 export BUGSNAG_HTTP_PROXY="http://proxy.example.com:8080"
 ```
 
-## Использование
+## Documentation
 
-### Естественный язык
+See [skills/bugsnag/SKILL.md](./skills/bugsnag/SKILL.md)
 
-```
-"показать bugsnag ошибки"
-"bugsnag открытые ошибки"
-"bugsnag детали для error_123"
-"список проектов bugsnag"
-"проанализируй bugsnag ошибки"
-```
+## License
 
-### Команды скрипта
-
-```bash
-./bugsnag.rb organizations   # Список организаций
-./bugsnag.rb projects        # Список проектов
-./bugsnag.rb list            # Список всех ошибок
-./bugsnag.rb open            # Только открытые ошибки
-./bugsnag.rb details ERROR_ID # Детали ошибки
-./bugsnag.rb analyze         # Анализ паттернов
-```
-
-## Подробная документация
-
-См. [skills/bugsnag/SKILL.md](./skills/bugsnag/SKILL.md)
+MIT

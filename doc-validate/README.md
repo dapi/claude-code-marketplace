@@ -1,45 +1,55 @@
-# Doc Validate Plugin
+# doc-validate
 
-Валидация качества документации с интерактивными исправлениями.
+Documentation quality validation plugin for Claude Code — broken links, orphan docs, glossary, structure.
 
-## Возможности
-
-- **Проверка ссылок** — поиск битых ссылок в markdown
-- **Orphan документы** — файлы без входящих ссылок
-- **Глоссарий** — проверка терминологии и синонимов
-- **Структура** — анализ структуры документации
-- **Интерактивные фиксы** — автоматическое исправление проблем
-
-## Установка
+## Installation
 
 ```bash
 /plugin install doc-validate@dapi
 ```
 
-## Использование
+## Components
 
-### Команда
+### Command: /doc-validate
 
-```bash
+Run documentation validation with interactive fixes.
+
+```
 /doc-validate
 /doc-validate docs/
 ```
 
-### Естественный язык
+### Skill: doc-validate
+
+Activates automatically when you ask to validate or check documentation.
+
+## Usage
 
 ```
+/doc-validate docs/
 "validate docs"
+"check for broken links"
+"find orphan documents"
 "проверь документацию"
 "найди битые ссылки"
-"orphan docs"
-"check glossary"
 ```
 
-## Требования
+## Checks
+
+- **Links** — find broken markdown links
+- **Orphan docs** — files without incoming links
+- **Glossary** — terminology and synonym consistency
+- **Structure** — documentation structure analysis
+
+## Requirements
 
 - Ruby 3.0+
 - Bundler
 
-## Подробная документация
+## Documentation
 
-См. [skills/doc-validate/SKILL.md](./skills/doc-validate/SKILL.md)
+See [skills/doc-validate/SKILL.md](./skills/doc-validate/SKILL.md)
+
+## License
+
+MIT

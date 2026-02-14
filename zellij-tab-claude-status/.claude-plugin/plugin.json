@@ -1,0 +1,13 @@
+{
+  "name": "zellij-tab-claude-status",
+  "description": "Zellij tab status indicator — shows Claude session state via icon prefix in tab name",
+  "version": "1.0.22",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "license": "MIT",
+  "keywords": ["zellij", "status", "hooks", "tab", "indicator"]
+}

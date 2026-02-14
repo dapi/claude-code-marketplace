@@ -1,0 +1,13 @@
+{
+  "name": "zellij-dev-tab",
+  "description": "Launch GitHub issue development in a separate zellij tab with start-issue",
+  "version": "1.0.0",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "keywords": ["zellij", "github", "issues", "development", "tabs", "workflow"]
+}

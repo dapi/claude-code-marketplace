@@ -1,49 +1,57 @@
-# Cluster Efficiency Plugin
+# cluster-efficiency
 
-Комплексный анализ эффективности ресурсов Kubernetes кластера.
+Kubernetes cluster efficiency analysis plugin for Claude Code — resource utilization, Karpenter, OOM, workloads.
 
-## Возможности
-
-- **Анализ нод** — утилизация CPU/Memory, распределение подов
-- **Анализ workloads** — requests vs actual usage, переоценённые ресурсы
-- **Karpenter анализ** — консолидация, provisioning, события
-- **OOM анализ** — глубокий анализ OOM kills
-- **Оркестрация** — комплексный отчёт по всем аспектам
-
-## Установка
+## Installation
 
 ```bash
 /plugin install cluster-efficiency@dapi
 ```
 
-## Использование
+## Components
 
-### Команда
+### Command: /cluster-efficiency
 
-```bash
+Launch a comprehensive cluster analysis.
+
+```
 /cluster-efficiency
 /cluster-efficiency --deep
 ```
 
-### Естественный язык
+### Skill: cluster-efficiency
+
+Activates automatically when you ask about cluster resource efficiency.
+
+### Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `cluster-efficiency-orchestrator` | Analysis orchestration |
+| `cluster-node-analyzer` | Node efficiency analysis |
+| `cluster-workload-analyzer` | Workload analysis (requests vs actual) |
+| `cluster-karpenter-analyzer` | Karpenter consolidation and provisioning |
+| `cluster-oom-analyzer` | OOM kill analysis |
+
+## Usage
 
 ```
+/cluster-efficiency
+"analyze cluster efficiency"
 "проанализируй эффективность кластера"
+"find over-provisioned resources"
 "почему ноды не консолидируются"
-"найди переоценённые ресурсы"
-"оптимизируй затраты на кластер"
 ```
 
-## Агенты
+## Requirements
 
-| Агент | Назначение |
-|-------|------------|
-| `cluster-orchestrator` | Оркестратор анализа |
-| `cluster-node-analyzer` | Анализ эффективности нод |
-| `cluster-workload-analyzer` | Анализ workloads |
-| `cluster-karpenter-analyzer` | Анализ Karpenter |
-| `cluster-oom-analyzer` | Анализ OOM kills |
+- `kubectl` configured with cluster access
+- Prometheus/metrics-server (for utilization data)
 
-## Подробная документация
+## Documentation
 
-См. [skills/cluster-efficiency/SKILL.md](./skills/cluster-efficiency/SKILL.md)
+See [skills/cluster-efficiency/SKILL.md](./skills/cluster-efficiency/SKILL.md)
+
+## License
+
+MIT

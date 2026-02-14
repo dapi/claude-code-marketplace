@@ -41,6 +41,7 @@ env/
 # Build outputs
 dist/
 build/
+target/
 *.egg-info/
 
 # Test artifacts
@@ -53,3 +54,4 @@ htmlcov/
 *.bak
 *.orig
 .playwright-mcp/
+.worktrees/

@@ -1,57 +1,56 @@
-# Spec Reviewer Plugin
+# spec-reviewer
 
-Комплексный анализ спецификаций и ТЗ на гапы, нестыковки, противоречия и оценку объёма.
+Specification review plugin for Claude Code — analyze specs for gaps, inconsistencies, and scope estimation with 10 specialized agents.
 
-## Возможности
-
-- **Бизнес-анализ** — проверка целей, user stories, acceptance criteria
-- **API анализ** — endpoints, контракты, интеграции
-- **UX/UI анализ** — user flows, states, accessibility
-- **Анализ данных** — модели, схемы БД, миграции
-- **Инфраструктура** — deployment, безопасность, мониторинг
-- **Тестируемость** — можно ли написать тесты по спеке
-- **Оценка объёма** — декомпозиция на части
-- **Анализ рисков** — технические и бизнес риски
-- **AI-готовность** — готовность для выполнения AI-агентами
-
-## Установка
+## Installation
 
 ```bash
 /plugin install spec-reviewer@dapi
 ```
 
-## Использование
+## Components
 
-### Команда
+### Command: /spec-review
 
-```bash
+Launch a comprehensive specification review.
+
+```
 /spec-review path/to/spec.md
 ```
 
-### Естественный язык
+### Skill: spec-review
+
+Activates automatically when you ask to review specifications or requirements.
+
+### Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `spec-classifier` | Classification and routing |
+| `spec-analyst` | Business analysis |
+| `spec-api` | API and integrations |
+| `spec-ux` | UX/UI analysis |
+| `spec-data` | Data models and schemas |
+| `spec-infra` | Infrastructure and security |
+| `spec-test` | Testability |
+| `spec-scoper` | Scope estimation |
+| `spec-risk` | Risk analysis |
+| `spec-ai-readiness` | AI agent readiness |
+
+## Usage
 
 ```
+/spec-review path/to/spec.md
+"review spec docs/spec.md"
 "проверь спецификацию docs/spec.md"
-"ревью ТЗ на гапы"
 "найди нестыковки в требованиях"
 "оцени объём спецификации"
 ```
 
-## Агенты
+## Documentation
 
-| Агент | Назначение |
-|-------|------------|
-| `spec-classifier` | Классификация и маршрутизация |
-| `spec-analyst` | Бизнес-анализ |
-| `spec-api` | API и интеграции |
-| `spec-ux` | UX/UI анализ |
-| `spec-data` | Данные и схемы |
-| `spec-infra` | Инфраструктура и безопасность |
-| `spec-test` | Тестируемость |
-| `spec-scoper` | Оценка объёма |
-| `spec-risk` | Анализ рисков |
-| `spec-ai-readiness` | Готовность для AI |
+See [skills/spec-review/SKILL.md](./skills/spec-review/SKILL.md)
 
-## Подробная документация
+## License
 
-См. [skills/spec-review/SKILL.md](./skills/spec-review/SKILL.md)
+MIT

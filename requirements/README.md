@@ -1,24 +1,44 @@
-# Requirements Plugin
+# requirements
 
-Управление реестром требований проекта через Google Spreadsheet с синхронизацией GitHub issues.
+Project requirements registry via Google Spreadsheet with GitHub issues sync.
 
-## Установка
+## Installation
 
 ```bash
 /plugin install requirements@dapi
 ```
 
-## Использование
+## Components
 
-```bash
-/requirements init          # Создать таблицу из шаблона
-/requirements status        # Статус требований
-/requirements sync          # Синхронизация с GitHub issues
-/requirements add <title>   # Добавить требование
-/requirements update <ID> <col> <val>  # Обновить поле
+### Command: /requirements
+
+Manage project requirements with subcommands.
+
+```
+/requirements init          # Create spreadsheet from template
+/requirements status        # Requirements status
+/requirements sync          # Sync with GitHub issues
+/requirements add <title>   # Add requirement
+/requirements update <ID> <col> <val>  # Update field
 ```
 
-## Требования
+## Usage
+
+```
+/requirements status
+/requirements sync
+/requirements add "User authentication"
+```
+
+## Requirements
 
 - Google Workspace MCP
-- GitHub CLI (`gh`)
+- [gh CLI](https://cli.github.com)
+
+## Documentation
+
+See [commands/requirements.md](./commands/requirements.md)
+
+## License
+
+MIT
