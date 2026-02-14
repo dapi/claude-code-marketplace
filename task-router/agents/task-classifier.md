@@ -180,6 +180,8 @@ Apply the decision matrix as an if/else chain (first match wins):
 2. Else (L/XL) if `needs_exploration` is true OR `architecture_unclear` is true → route = `"hybrid"`
 3. Else (L/XL, no exploration needed, architecture clear) → route = `"subagent-driven-dev"`
 
+> Note: `has_clear_tasks` is informational metadata included in the output JSON for the user's benefit. It does not affect routing — both L/XL cases without exploration/unclear_arch resolve to `subagent-driven-dev` regardless (writing-plans handles task breakdown).
+
 ## Step 6: Return JSON
 
 Return ONLY this JSON object. No markdown formatting, no code fences, no explanation before or after.

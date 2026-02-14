@@ -107,10 +107,11 @@ mkdir -p /tmp/task-router
 
 ```
 S/M complexity → "feature-dev"
-L/XL + has_clear_tasks + NOT needs_exploration + NOT architecture_unclear → "subagent-driven-dev"
 L/XL + (needs_exploration OR architecture_unclear) → "hybrid"
-L/XL + NOT has_clear_tasks → "subagent-driven-dev" (writing-plans will break it down)
+L/XL + NOT needs_exploration + NOT architecture_unclear → "subagent-driven-dev"
 ```
+
+> `has_clear_tasks` is captured as informational metadata but does not affect routing — both L/XL cases without exploration/unclear_arch resolve to `subagent-driven-dev` regardless (writing-plans will break down unstructured specs).
 
 **Response format (MUST return ONLY this JSON):**
 
