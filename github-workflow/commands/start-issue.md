@@ -1,6 +1,7 @@
 ---
 description: Start working on a GitHub issue by creating git worktree with proper branch naming
 argument-hint: <issue-url>
+version: 1.0.0
 ---
 
 # Start Issue
