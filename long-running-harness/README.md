@@ -1,22 +1,33 @@
-# Long Running Harness Plugin
+# long-running-harness
 
-Управление долгосрочными проектами разработки между сессиями.
+Manage long-running development projects across multiple Claude Code sessions.
 
-## Установка
+## Installation
 
 ```bash
 /plugin install long-running-harness@dapi
 ```
 
-## Использование
+## Components
+
+### Skill: long-running-harness
+
+Activates automatically when you ask to start, continue, or manage multi-session projects.
+
+## Usage
 
 ```
 "start new project [description]"
 "continue working on [project]"
-"начать новый проект"
+"project status"
+"начать новый проект [описание]"
 "продолжить работу над проектом"
 ```
 
-## Подробная документация
+## Documentation
 
-См. [skills/long-running-harness/SKILL.md](./skills/long-running-harness/SKILL.md)
+See [skills/long-running-harness/SKILL.md](./skills/long-running-harness/SKILL.md)
+
+## License
+
+MIT

@@ -1,76 +1,55 @@
-# GitHub Workflow
+# github-workflow
 
 GitHub workflow plugin for Claude Code — issues, PRs, worktrees, sub-issues.
-
-## Features
-
-### Skills
-
-- **github-issues** — Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues
-
-### Commands
-
-- `/github-workflow:start-issue <url>` — Start work on GitHub issue (creates worktree, branch)
-- `/github-workflow:fix-pr` — Iterative PR review and fix cycle
 
 ## Installation
 
 ```bash
-/plugin marketplace add dapi/claude-code-marketplace
 /plugin install github-workflow@dapi
 ```
 
-## Dependencies
+## Components
 
-GitHub CLI extensions (optional but recommended):
+### Skill: github-issues
 
-| Extension | Purpose | Install |
-|-----------|---------|---------|
-| [gh-sub-issue](https://github.com/yahsan2/gh-sub-issue) | Sub-issue hierarchy | `gh extension install yahsan2/gh-sub-issue` |
+Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues. Activates automatically when you mention GitHub issue URLs.
 
-Commands dependency:
+### Command: /start-issue
 
-| Command | Dependency | Install |
-|---------|------------|---------|
-| `/fix-pr` | `pr-review-toolkit` | `/plugin install pr-review-toolkit@claude-code-plugins` |
+Start work on GitHub issue — creates worktree and branch.
+
+```
+/start-issue https://github.com/owner/repo/issues/123
+```
+
+### Command: /fix-pr
+
+Iterative PR review and fix cycle until no critical issues remain.
+
+```
+/fix-pr
+/fix-pr --max-iterations=3
+```
 
 ## Usage
 
-### GitHub Issues Skill
-
-Activates automatically when you mention GitHub issue URLs or ask to work with issues:
-
 ```
-"прочитай https://github.com/owner/repo/issues/123"
 "read issue #45"
-"отметь пункт 1 как выполненный"
+"прочитай issue #45"
 "create sub-issue for #123"
+"отметь пункт 1 как выполненный"
 "download images from issue"
 ```
 
-Uses `gh` CLI instead of WebFetch. Supports atomic checkbox operations for parallel work.
+## Requirements
 
-### Start Issue
+- [gh CLI](https://cli.github.com)
+- [gh-sub-issue](https://github.com/yahsan2/gh-sub-issue) extension (optional)
+- [pr-review-toolkit](https://github.com/anthropics/claude-code-plugins) plugin (for `/fix-pr`)
 
-```bash
-/github-workflow:start-issue https://github.com/owner/repo/issues/123
-```
+## Documentation
 
-Creates:
-- Git worktree in `../worktrees/<type>/<number>-<description>`
-- Branch named by type: `feature/`, `fix/`, or `chore/`
-- Runs `./init.sh` if exists
-
-### Fix PR
-
-Iteratively reviews and fixes PR until no critical issues:
-
-```bash
-/github-workflow:fix-pr                    # up to 5 iterations
-/github-workflow:fix-pr --max-iterations=3 # up to 3 iterations
-```
-
-Runs 4 review agents in parallel, then fixes issues, repeats until clean.
+See [skills/github-issues/SKILL.md](./skills/github-issues/SKILL.md)
 
 ## License
 

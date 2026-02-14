@@ -1,93 +1,39 @@
 # zellij-dev-tab
 
-Плагин для запуска разработки GitHub issue в отдельной вкладке zellij.
+Launch GitHub issue development in a separate Zellij tab.
 
-## Назначение
-
-Автоматизирует создание изолированной вкладки терминала для работы над конкретным issue:
-
-1. Создаёт новую вкладку zellij с именем `#ISSUE_NUMBER`
-2. Запускает `start-issue` с переданным номером/URL
-
-## Установка
+## Installation
 
 ```bash
 /plugin install zellij-dev-tab@dapi
 ```
 
-## Использование
+## Components
 
-Просто скажите Claude что хотите работать над issue в отдельной вкладке:
+### Skill: zellij-dev-tab
 
-```
-Запусти разработку issue #45 в отдельной вкладке
+Creates a new Zellij tab named `#ISSUE_NUMBER` and runs `start-issue` inside it.
 
-Start development of issue 123 in new zellij tab
-
-Открой https://github.com/owner/repo/issues/78 в новой вкладке
-```
-
-## Поддерживаемые форматы
-
-| Формат | Пример |
-|--------|--------|
-| Число | `45` |
-| С решёткой | `#45` |
-| URL | `https://github.com/owner/repo/issues/45` |
-
-## Prerequisites
-
-### zellij
-
-Терминальный мультиплексор. Установка:
-
-```bash
-cargo install zellij
-# или через пакетный менеджер
-```
-
-### start-issue
-
-Скрипт для работы с GitHub issues через git worktree и Claude Code. Создаёт изолированный worktree для issue и запускает Claude Code сессию.
-
-**Установка**: скопируйте скрипт в `~/.local/bin/` и сделайте исполняемым:
-
-```bash
-# start-issue должен быть в PATH
-chmod +x ~/.local/bin/start-issue
-```
-
-**Что делает start-issue**:
-1. Парсит номер issue из URL или числа
-2. Создаёт git worktree для работы над issue
-3. Запускает Claude Code в worktree директории
-4. Опционально выполняет `init.sh` для настройки окружения
-
-## Структура
+## Usage
 
 ```
-zellij-dev-tab/
-├── .claude-plugin/
-│   └── plugin.json
-├── skills/
-│   └── zellij-dev-tab/
-│       ├── SKILL.md
-│       └── TRIGGER_EXAMPLES.md
-└── README.md
+"start issue #45 in new tab"
+"launch issue 123 in separate tab"
+"запусти разработку issue #45 в новой вкладке"
+"открой issue в новой вкладке"
 ```
 
-## Примеры триггеров
+Supported formats: `45`, `#45`, `https://github.com/owner/repo/issues/45`
 
-**Русский:**
-- "запусти разработку в отдельной вкладке"
-- "создай вкладку для issue #123"
-- "start-issue в новой вкладке"
+## Requirements
 
-**English:**
-- "start development in separate tab"
-- "new zellij tab for issue"
-- "run start-issue in new tab"
+- [Zellij](https://zellij.dev) terminal multiplexer
+- `start-issue` script in PATH (see `scripts/start-issue`)
 
-## Лицензия
+## Documentation
+
+See [skills/zellij-dev-tab/SKILL.md](./skills/zellij-dev-tab/SKILL.md)
+
+## License
 
 MIT

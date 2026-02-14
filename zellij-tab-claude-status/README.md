@@ -1,29 +1,15 @@
 # zellij-tab-claude-status
 
-Zellij tab status indicator for Claude Code sessions.
-
-## Features
-
-Shows Claude session state directly in Zellij tab:
-
-- 🤖 Working — processing request
-- 🟢 Ready — waiting for input
-- ✋ Needs input — permission prompt waiting
-
-## Requirements
-
-- Zellij terminal multiplexer
-- Claude Code with plugin support
-- [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin
+Zellij tab status indicator — shows Claude session state via icon prefix in tab name.
 
 ## Installation
 
 ### Step 1: Install Zellij plugin dependency
 
+Install [zellij-tab-status](https://github.com/dapi/zellij-tab-status):
+
 ```bash
 # From marketplace root
-git clone https://github.com/dapi/claude-code-marketplace
-cd claude-code-marketplace
 make install-zellij-tab-status
 ```
 
@@ -47,17 +33,31 @@ Restart Zellij.
 /plugin install zellij-tab-claude-status@dapi
 ```
 
-## How it works
+## Status Icons
+
+| Icon | State | Description |
+|------|-------|-------------|
+| `◉` | Working | Processing request |
+| `○` | Ready | Waiting for input |
+| `✋` | Needs input | Permission prompt waiting |
+
+## How It Works
 
 The plugin uses Claude Code hooks to update tab status:
 
-| Event | Script | Status |
-|-------|--------|--------|
-| SessionStart | on-session-start.sh | 🟢 |
-| UserPromptSubmit | on-prompt-submit.sh | 🤖 |
-| Notification (permission) | on-permission-prompt.sh | ✋ |
-| Stop | on-stop.sh | 🟢 |
-| SessionEnd | on-session-end.sh | --clear |
+| Event | Status |
+|-------|--------|
+| SessionStart | `○` |
+| UserPromptSubmit | `◉` |
+| Notification (permission/elicitation) | `✋` |
+| Notification (idle_prompt) | `○` |
+| Stop | `○` |
+| SessionEnd | --clear |
+
+## Requirements
+
+- [Zellij](https://zellij.dev) terminal multiplexer
+- [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin
 
 ## Troubleshooting
 
@@ -65,7 +65,7 @@ The plugin uses Claude Code hooks to update tab status:
 
 ```bash
 which zellij-tab-status
-zellij-tab-status 🔥  # test manually
+zellij-tab-status test  # test manually
 ```
 
 ## License

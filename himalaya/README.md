@@ -1,27 +1,37 @@
-# Himalaya Plugin
+# himalaya
 
-Чтение и отправка email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
+Email plugin for Claude Code via [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
 
-## Установка
+## Installation
 
 ```bash
 /plugin install himalaya@dapi
 ```
 
-## Требования
+## Components
 
-- [Himalaya](https://github.com/pimalaya/himalaya) установлен и настроен
+### Skill: himalaya
 
-## Использование
+Activates automatically when you ask to read or send email.
+
+## Usage
 
 ```
 "check my email"
 "show unread emails"
-"send email to recipient@example.com"
+"send email to user@example.com"
 "проверить почту"
 "отправить письмо"
 ```
 
-## Подробная документация
+## Requirements
 
-См. [skills/himalaya/SKILL.md](./skills/himalaya/SKILL.md)
+- [Himalaya](https://github.com/pimalaya/himalaya) installed and configured
+
+## Documentation
+
+See [skills/himalaya/SKILL.md](./skills/himalaya/SKILL.md)
+
+## License
+
+MIT

@@ -16,93 +16,133 @@ Personal marketplace of Claude Code plugins for development workflows.
 
 ## Plugins
 
-| Plugin | Description |
-|--------|-------------|
-| **github-workflow** | GitHub workflow: issues, PRs, worktrees, sub-issues |
-| **zellij-claude-status** | Zellij tab status indicator — shows Claude session state via icon prefix |
-| **bugsnag-skill** | Bugsnag API integration: view and manage errors, organizations, projects |
-| **spec-reviewer** | Specification review: analyze specs for gaps, inconsistencies (10 agents) |
-| **cluster-efficiency** | Kubernetes cluster efficiency analysis (5 agents) |
-| **doc-validate** | Documentation quality validation: broken links, orphan docs, glossary |
-| **media-upload** | Upload images and media files to S3, auto-trigger after Playwright |
-| **long-running-harness** | Manage long-running development projects across multiple sessions |
-| **himalaya** | Email via Himalaya CLI (IMAP/SMTP) |
-| **requirements** | Project requirements registry via Google Spreadsheet with GitHub sync |
-
-## Plugin Details
-
 ### github-workflow
 
-GitHub workflow: issues, PRs, worktrees.
+GitHub workflow: issues, PRs, worktrees, sub-issues.
 
-**Commands:**
-- `/start-issue <url>` — Start work on GitHub issue (creates worktree + branch)
-- `/fix-pr` — Iterative PR review & fix cycle
+**Components:** skill `github-issues`, commands `/start-issue`, `/fix-pr`
 
-**Skills:**
-- `github-issues` — Read/edit issues via `gh` CLI
+```
+/start-issue https://github.com/owner/repo/issues/123
+"read issue #45"
+"create sub-issue for #123"
+```
 
-### zellij-claude-status
+### zellij-dev-tab
+
+Launch GitHub issue development in a separate Zellij tab.
+
+**Components:** skill `zellij-dev-tab`
+
+```
+"start issue #45 in new tab"
+"запусти разработку в отдельной вкладке"
+```
+
+### zellij-tab-claude-status
 
 Zellij tab status indicator — shows Claude session state via icon prefix.
+Requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin.
 
-**Icons:** 🟢 Ready | 🤖 Working | ✋ Needs input
+**Icons:** `◉` Working | `○` Ready | `✋` Needs input
 
 ### bugsnag-skill
 
-Bugsnag API integration for error monitoring.
+Bugsnag API integration: view and manage errors, organizations, projects.
 
-**Triggers:** `show bugsnag errors`, `bugsnag details`, `ошибки bugsnag`
+**Components:** skill `bugsnag`
 
 **Requires:** `BUGSNAG_DATA_API_KEY`, `BUGSNAG_PROJECT_ID`
 
+```
+"show bugsnag errors"
+"bugsnag details for error_123"
+"ошибки bugsnag"
+```
+
 ### spec-reviewer
 
-Specification review with 10 specialized agents.
+Specification review: analyze specs for gaps, inconsistencies, and scope estimation.
 
-**Command:** `/spec-review path/to/spec.md`
+**Components:** command `/spec-review`, 10 agents
 
 **Agents:** classifier, analyst, api, ux, data, infra, test, scoper, risk, ai-readiness
 
+```
+/spec-review path/to/spec.md
+"проверь спецификацию docs/spec.md"
+```
+
 ### cluster-efficiency
 
-Kubernetes cluster efficiency analysis with 5 agents.
+Kubernetes cluster efficiency analysis: resource utilization, Karpenter, OOM, workloads.
 
-**Command:** `/cluster-efficiency`
+**Components:** command `/cluster-efficiency`, skill `cluster-efficiency`, 5 agents
 
 **Agents:** orchestrator, node-analyzer, workload-analyzer, karpenter-analyzer, oom-analyzer
 
+```
+/cluster-efficiency
+"проанализируй эффективность кластера"
+```
+
 ### doc-validate
 
-Documentation quality validation.
+Documentation quality validation: broken links, orphan docs, glossary, structure.
 
-**Command:** `/doc-validate`
+**Components:** command `/doc-validate`, skill `doc-validate`
 
-**Checks:** broken links, orphan docs, glossary, structure
+```
+/doc-validate docs/
+"validate docs"
+"проверь документацию"
+```
 
 ### media-upload
 
-Upload images/media to S3. Auto-triggers after Playwright screenshots.
+Upload images and media files to S3. Auto-triggers after Playwright screenshots.
 
-**Triggers:** `upload to s3`, `get shareable link`
+**Components:** skill `media-upload`
+
+```
+"upload image to s3"
+"загрузить файл в s3"
+```
 
 ### long-running-harness
 
-Multi-session project management.
+Manage long-running development projects across multiple sessions.
 
-**Triggers:** `init project`, `continue project`, `project status`
+**Components:** skill `long-running-harness`
+
+```
+"start new project [description]"
+"continue working on [project]"
+```
 
 ### himalaya
 
-Email via [Himalaya CLI](https://github.com/pimalaya/himalaya).
+Email via [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
 
-**Triggers:** `check email`, `send email`, `проверить почту`
+**Components:** skill `himalaya`
+
+```
+"check my email"
+"send email to user@example.com"
+"проверить почту"
+```
 
 ### requirements
 
-Project requirements via Google Spreadsheet with GitHub issues sync.
+Project requirements registry via Google Spreadsheet with GitHub issues sync.
 
-**Command:** `/requirements [init|status|sync|add|update]`
+**Components:** command `/requirements`
+
+```
+/requirements init
+/requirements status
+/requirements sync
+```
 
 ## Dependencies
 
@@ -112,6 +152,7 @@ Some plugins require external tools:
 |------|---------|---------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
+| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-tab-claude-status | See plugin README |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Scripts
