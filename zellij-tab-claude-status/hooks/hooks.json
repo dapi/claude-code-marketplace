@@ -4,47 +4,47 @@
     "PostToolUse": [
       {
         "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉' < /dev/null"}]
       }
     ],
     "PostToolUseFailure": [
       {
         "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' < /dev/null"}]
       }
     ],
     "SessionStart": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' < /dev/null"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉' < /dev/null"}]
       }
     ],
     "Notification": [
       {
         "matcher": "permission_prompt|elicitation_dialog",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '✋'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '✋' < /dev/null"}]
       },
       {
         "matcher": "idle_prompt",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' < /dev/null"}]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' < /dev/null"}]
       }
     ],
     "SessionEnd": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status --clear"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status --clear < /dev/null"}]
       }
     ]
   }
