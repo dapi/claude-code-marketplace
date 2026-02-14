@@ -5,7 +5,11 @@ argument-hint: <GitHub Issue URL | Google Doc URL | любой URL>
 
 # /route-task — Маршрутизация задачи в workflow
 
+**Version: 1.0.0**
+
 Получает ссылку на задачу, классифицирует её через haiku-агента и запускает подходящий workflow разработки.
+
+Перед началом работы покажи пользователю: `route-task v1.0.0`
 
 ---
 
