@@ -49,7 +49,8 @@ Activates automatically when you ask to review specifications or requirements.
 
 ## Documentation
 
-See [skills/spec-review/SKILL.md](./skills/spec-review/SKILL.md)
+- [Skill definition](./skills/spec-review/SKILL.md)
+- [Alternatives & related skills](./ALTERNATIVES.md)
 
 ## License
 
