@@ -5,6 +5,7 @@ description: |
   НЕ вызывай напрямую — используется через cluster-efficiency-orchestrator.
 model: haiku
 color: yellow
+tools: Bash
 ---
 
 # Workload Efficiency Analyzer
