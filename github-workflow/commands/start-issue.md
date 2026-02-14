@@ -127,13 +127,13 @@ argument-hint: <issue-url>
 
 11. **Приступи к реализации:**
 
-    Убедись что текущий рабочий каталог (CWD) = `<WORKTREE_PATH>`.
+   Убедись что текущий рабочий каталог (CWD) = `<WORKTREE_PATH>`.
 
-    Вызови Skill tool:
-    - skill: "task-router:route-task"
-    - args: "<ISSUE_URL>"
+   Вызови Skill tool:
+   - skill: "task-router:route-task"
+   - args: "<ISSUE_URL>"
 
-    Task router автоматически классифицирует задачу и запустит подходящий workflow (feature-dev или subagent-driven-dev).
+   Task router автоматически классифицирует задачу и запустит подходящий workflow (feature-dev или subagent-driven-dev).
 
 ---
 
