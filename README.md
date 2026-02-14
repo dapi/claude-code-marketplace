@@ -2,6 +2,8 @@
 
 Personal marketplace of Claude Code plugins for development workflows.
 
+**[Русская версия](README.ru.md)**
+
 ## Installation
 
 ```bash
@@ -15,6 +17,20 @@ Personal marketplace of Claude Code plugins for development workflows.
 ```
 
 ## Plugins
+
+| Plugin | Description | Components |
+|--------|-------------|------------|
+| [bugsnag-skill](#bugsnag-skill) | Bugsnag API integration: errors, organizations, projects | 1 skill |
+| [cluster-efficiency](#cluster-efficiency) | Kubernetes cluster efficiency analysis | 5 agents, 1 skill, 1 command |
+| [doc-validate](#doc-validate) | Documentation quality validation | 1 skill, 1 command |
+| [github-workflow](#github-workflow) | GitHub issues, PRs, worktrees, sub-issues | 1 skill, 2 commands |
+| [himalaya](#himalaya) | Email via Himalaya CLI (IMAP/SMTP) | 1 skill |
+| [long-running-harness](#long-running-harness) | Multi-session project management | 1 skill |
+| [media-upload](#media-upload) | S3 media/image upload | 1 skill |
+| [requirements](#requirements) | Requirements registry via Google Sheets | 1 command |
+| [spec-reviewer](#spec-reviewer) | Specification review and analysis | 10 agents, 1 skill, 1 command |
+| [zellij-dev-tab](#zellij-dev-tab) | GitHub issue dev in separate Zellij tab | 1 skill |
+| [zellij-tab-claude-status](#zellij-tab-claude-status) | Claude session status in Zellij tab | hooks |
 
 ### github-workflow
 

@@ -2,6 +2,8 @@
 
 Персональный маркетплейс плагинов Claude Code для рабочих процессов разработки.
 
+**[English version](README.md)**
+
 ## Установка
 
 ```bash
@@ -15,6 +17,20 @@
 ```
 
 ## Плагины
+
+| Плагин | Описание | Компоненты |
+|--------|----------|------------|
+| [bugsnag-skill](#bugsnag-skill) | Интеграция с Bugsnag API: ошибки, организации, проекты | 1 навык |
+| [cluster-efficiency](#cluster-efficiency) | Анализ эффективности ресурсов Kubernetes кластера | 5 агентов, 1 навык, 1 команда |
+| [doc-validate](#doc-validate) | Валидация качества документации | 1 навык, 1 команда |
+| [github-workflow](#github-workflow) | GitHub issues, PR, worktrees, sub-issues | 1 навык, 2 команды |
+| [himalaya](#himalaya) | Email через Himalaya CLI (IMAP/SMTP) | 1 навык |
+| [long-running-harness](#long-running-harness) | Управление проектами между сессиями | 1 навык |
+| [media-upload](#media-upload) | Загрузка медиа/изображений в S3 | 1 навык |
+| [requirements](#requirements) | Реестр требований через Google Sheets | 1 команда |
+| [spec-reviewer](#spec-reviewer) | Ревью и анализ спецификаций | 10 агентов, 1 навык, 1 команда |
+| [zellij-dev-tab](#zellij-dev-tab) | Разработка issue в отдельной вкладке Zellij | 1 навык |
+| [zellij-tab-claude-status](#zellij-tab-claude-status) | Статус сессии Claude во вкладке Zellij | хуки |
 
 ### github-workflow
 
