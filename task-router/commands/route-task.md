@@ -96,6 +96,24 @@ Task:
 | feature-dev | feature-dev (исследование + реализация) |
 | subagent-driven-dev | writing-plans → subagent-driven-dev (план + реализация по задачам) |
 
+### Предварительные проверки (перед подтверждением)
+
+**Проверка spec-файла:**
+Проверь существование `{spec_file}` через Read tool. Если файл не найден или пуст — покажи: "Файл спеки {spec_file} не найден. Запусти /route-task заново." и **останови выполнение**.
+
+**Проверка зависимостей:**
+Если Skill tool не может найти требуемый skill — покажи:
+
+```
+Skill "{skill_name}" не найден. Установи необходимый плагин:
+- feature-dev — для workflow feature-dev
+- superpowers — для workflow subagent-driven-dev (writing-plans + subagent-driven-development)
+
+Установить: /plugin install {plugin_name}@dapi
+```
+
+И **останови выполнение** (до запроса подтверждения).
+
 ---
 
 ## Фаза 4-NS: Задача требует полноценной спеки (needs-spec)
@@ -165,23 +183,7 @@ Task:
 
 ## Фаза 6: Запуск выбранного workflow
 
-### Предварительные проверки
-
-**Проверка spec-файла:**
-Перед запуском workflow проверь существование `{spec_file}` через Read tool. Если файл не найден или пуст — покажи: "Файл спеки {spec_file} не найден. Запусти /route-task заново." и **останови выполнение**.
-
-**Проверка зависимостей:**
-Если Skill tool не может найти требуемый skill — покажи:
-
-```
-Skill "{skill_name}" не найден. Установи необходимый плагин:
-- feature-dev — для workflow feature-dev
-- superpowers — для workflow subagent-driven-dev (writing-plans + subagent-driven-development)
-
-Установить: /plugin install {plugin_name}@dapi
-```
-
-И **останови выполнение**.
+> Проверки spec-файла и зависимостей уже выполнены в Фазе 4.
 
 ### Вариант: feature-dev
 

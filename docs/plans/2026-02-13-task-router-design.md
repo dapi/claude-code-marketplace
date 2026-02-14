@@ -66,7 +66,7 @@ task-router/
 | `needs_exploration` | Mentions existing code, refactoring, "change", "update" (vs "create from scratch") |
 | `architecture_unclear` | No clear architecture, multiple approaches possible, "suggest", "how best" |
 | `has_clear_tasks` | Spec already broken into numbered steps/tasks/requirements |
-| `complexity` | S/M/L/XL based on count of distinct entities, endpoints, components, integrations: S (<=2), M (3-5), L (6-10), XL (10+) |
+| `complexity` | S/M/L/XL based on count of distinct entities, endpoints, components, integrations: S (1-2), M (3-5), L (6-10), XL (11+) |
 
 #### Decision matrix
 

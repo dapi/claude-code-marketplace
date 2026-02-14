@@ -130,7 +130,7 @@ fi
 echo -e "${YELLOW}[4/10] Content Categorization${NC}"
 
 # Check for emoji categories (📊, 🔍, ✅, etc.)
-EMOJI_COUNT=$(grep -oE '[\x{1F300}-\x{1F9FF}]' "$SKILL_FILE" | wc -l || echo "0")
+EMOJI_COUNT=$(grep -oP '[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{1F1E0}-\x{1F1FF}]' "$SKILL_FILE" 2>/dev/null | wc -l || echo "0")
 
 if [ "$EMOJI_COUNT" -ge 3 ]; then
   echo -e "  ${GREEN}✅ Content categorized with emoji (${EMOJI_COUNT} found)${NC}"
@@ -147,7 +147,7 @@ fi
 # ============================================================
 echo -e "${YELLOW}[5/10] Multilingual Support${NC}"
 
-if grep -qE '[а-яА-Я]+' "$SKILL_FILE"; then
+if grep -qP '[а-яА-ЯёЁ]+' "$SKILL_FILE" 2>/dev/null || grep -q 'возьми\|сделай\|задач\|спеке\|реализуй' "$SKILL_FILE"; then
   echo -e "  ${GREEN}✅ Russian language support detected${NC}"
   SCORE=$((SCORE + 10))
 else
@@ -317,7 +317,7 @@ if [ "$SCORE" -lt 90 ]; then
     echo -e "  ${YELLOW}→ Create TRIGGER_EXAMPLES.md with 20+ examples${NC}"
   fi
 
-  if ! grep -qE '[а-яА-Я]+' "$SKILL_FILE"; then
+  if ! grep -qP '[а-яА-ЯёЁ]+' "$SKILL_FILE" 2>/dev/null && ! grep -q 'возьми\|сделай\|задач\|спеке\|реализуй' "$SKILL_FILE"; then
     echo -e "  ${YELLOW}→ Add Russian language support${NC}"
   fi
 

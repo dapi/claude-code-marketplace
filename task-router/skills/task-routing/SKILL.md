@@ -1,21 +1,29 @@
 ---
 name: task-routing
 description: |
-  **AUTO-TRIGGER**: Обнаруживает ссылки на задачи и упоминания issue в сообщениях пользователя и автоматически запускает маршрутизацию через /route-task.
+  **UNIVERSAL TRIGGER**: ROUTE/TAKE/IMPLEMENT any task FROM a URL or issue reference
 
-  Используй когда:
-  - "возьми задачу", "сделай задачу", "take this task"
-  - "реализуй по спеке", "implement this spec", "implement this issue"
-  - "route task", "route this", "/route-task"
-  - "сделай issue #NNN", "do issue #NNN" (ОБЯЗАТЕЛЬНО action-слово + "issue"/"задачу" для #NNN)
-  - пользователь вставил ссылку на GitHub Issue: `github.com/.../issues/N`
-  - пользователь вставил ссылку на Google Doc: `docs.google.com/document/d/...`
+  🔗 **URLs & References**:
+  - "get task from github.com/.../issues/N", "fetch spec from docs.google.com/..."
+  - "retrieve task from https://...", "show issue from URL"
 
-  TRIGGERS: возьми задачу, сделай задачу, take this task,
-  реализуй по спеке, implement this spec, implement this issue,
-  route task, route this,
-  сделай issue, do issue,
-  github.com/issues, docs.google.com/document
+  🚀 **Action Triggers (EN)**:
+  - "take this task", "implement this spec", "do issue #NNN"
+  - "route task", "route this", "start issue #NNN"
+  - "list what in this issue", "check this task", "display task"
+
+  🇷🇺 **Триггеры (RU)**:
+  - "возьми задачу", "сделай задачу", "реализуй по спеке"
+  - "сделай issue #NNN", "возьми issue #NNN"
+
+  ⚠️ **#NNN**: action-слово + "issue"/"задачу" обязательны. Голый #NNN — НЕ триггер.
+
+  TRIGGERS: route task, route this, возьми задачу, сделай задачу,
+    take this task, implement this spec, implement this issue,
+    get task from, show issue, list task, display task,
+    retrieve spec, fetch task, check this task, analyze task,
+    реализуй по спеке, сделай issue, do issue, start issue,
+    what in this issue, github.com/issues, docs.google.com/document
 allowed-tools: Skill
 ---
 

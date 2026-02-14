@@ -101,7 +101,7 @@ mkdir -p /tmp/task-router
 | `needs_exploration` | References existing code, "change/update/refactor/fix" vs "create/build/new" |
 | `architecture_unclear` | No clear architecture, "suggest approach", "how best", multiple options |
 | `has_clear_tasks` | Numbered steps, task breakdown, checklist items, "Step 1/2/3" |
-| `complexity` | S: <=2 entities, M: 3-5, L: 6-10, XL: 10+ (models + endpoints + components) |
+| `complexity` | S: 1-2 entities, M: 3-5, L: 6-10, XL: 11+ (models + endpoints + components) |
 
 **Routing decision matrix:**
 

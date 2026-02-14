@@ -98,11 +98,13 @@ First, create the directory:
 mkdir -p /tmp/task-router
 ```
 
-If `mkdir` fails (permissions, read-only filesystem) — return the error JSON with:
-- title: "Failed to save task spec"
-- summary: "Could not create /tmp/task-router/. Check disk space and permissions."
+If `mkdir` fails (permissions or read-only filesystem) — return the error JSON with:
+- title: "Failed to create directory"
+- summary: "Could not create /tmp/task-router/. Check filesystem permissions."
 
-Then save the fetched content to a file using the Write tool. If the Write tool returns an error — return the error JSON with the same title and the specific error.
+Then save the fetched content to a file using the Write tool. If the Write tool returns an error — return the error JSON with:
+- title: "Failed to save task spec"
+- summary: "Could not write to {spec_file}. Check disk space and permissions."
 
 File naming:
 
@@ -167,10 +169,10 @@ Count the number of distinct entities, endpoints, components, and integrations m
 
 | Complexity | Count of entities/endpoints/components |
 |------------|---------------------------------------|
-| S | 2 or fewer |
-| M | 3 to 5 |
-| L | 6 to 10 |
-| XL | more than 10 |
+| S | 1-2 |
+| M | 3-5 |
+| L | 6-10 |
+| XL | 11 or more |
 
 ## Step 5: Determine Route
 
@@ -184,9 +186,7 @@ Apply the decision matrix as an if/else chain (first match wins):
 
 ## Step 6: Return JSON
 
-Return ONLY this JSON object. No markdown formatting, no code fences, no explanation before or after.
-
-Template (code fences below are for readability only — your output must NOT include them):
+Return ONLY this JSON object. No markdown formatting, no code fences, no explanation before or after. The code fences in the template below are for readability only — your actual output must NOT include them.
 
 ```
 {
@@ -207,9 +207,7 @@ Template (code fences below are for readability only — your output must NOT in
 
 ## Error Handling
 
-When any error occurs (fetch failure, file write failure, MCP unavailability, authentication error), return the error JSON below. Use the specific `title` and `summary` indicated in the error handling tables in Steps 2 and 3. If no specific message matches, use the generic ones.
-
-Template (code fences below are for readability only — your output must NOT include them):
+When any error occurs (fetch failure, file write failure, MCP unavailability, authentication error), return the error JSON below. Use the specific `title` and `summary` indicated in the error handling tables in Steps 2 and 3. If no specific message matches, use the generic ones. The code fences below are for readability only — your actual output must NOT include them.
 
 ```
 {
