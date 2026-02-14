@@ -11,9 +11,9 @@
       "description": "GitHub workflow: issues, PRs, worktrees, sub-issues"
     },
     {
-      "name": "zellij-tab-claude-status",
-      "source": "./zellij-tab-claude-status",
-      "description": "Zellij tab status indicator — shows Claude session state via icon prefix"
+      "name": "zellij-workflow",
+      "source": "./zellij-workflow",
+      "description": "Zellij workflow: tab status indicators, issue development tabs, Claude session tabs"
     },
     {
       "name": "bugsnag-skill",
@@ -54,11 +54,6 @@
       "name": "requirements",
       "source": "./requirements",
       "description": "Project requirements registry via Google Spreadsheet with GitHub issues sync"
-    },
-    {
-      "name": "zellij-dev-tab",
-      "source": "./zellij-dev-tab",
-      "description": "Launch GitHub issue development in a separate zellij tab with start-issue"
     },
     {
       "name": "task-router",
