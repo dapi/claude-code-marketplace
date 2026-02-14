@@ -9,5 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues"]
+  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues", "plan"]
 }
