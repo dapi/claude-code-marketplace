@@ -45,9 +45,8 @@
 | Сложность | Сигналы | Маршрут |
 |-----------|---------|---------|
 | S/M | любые | feature-dev |
-| L/XL | есть задачи, нет исследования, архитектура ясна | subagent-driven-dev |
-| L/XL | нужно исследование ИЛИ архитектура неясна | hybrid (brainstorming → plan → subagent) |
-| L/XL | нет задач | subagent-driven-dev |
+| L/XL | нужно исследование ИЛИ архитектура неясна | hybrid (feature-dev фазы 1-4 → plan → subagent) |
+| L/XL | архитектура ясна, исследование не нужно | subagent-driven-dev |
 
 ## Компоненты
 
@@ -59,4 +58,6 @@
 
 ## Подробная документация
 
-См. [commands/route-task.md](./commands/route-task.md)
+- [Команда /route-task](./commands/route-task.md) — оркестрация workflow
+- [Агент task-classifier](./agents/task-classifier.md) — haiku-классификатор
+- [Скилл task-routing](./skills/task-routing/SKILL.md) — автотриггер
