@@ -12,7 +12,6 @@ description: |
   - "/cluster-efficiency --deep"
 model: sonnet
 color: cyan
-tools: Bash, Read
 ---
 
 # Cluster Efficiency Orchestrator
