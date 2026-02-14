@@ -1,0 +1,628 @@
+# zellij-claude-tab Plugin Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Create a plugin that launches interactive Claude Code sessions in separate Zellij tabs with arbitrary instructions.
+
+**Architecture:** New plugin `zellij-claude-tab` with one skill (auto-trigger on "run in new tab") and one slash command (`/run-in-new-tab`). Uses temp file for prompt passing to avoid escaping issues. The `claude "prompt"` CLI invocation starts an interactive session.
+
+**Tech Stack:** Markdown (skill/command definitions), Bash (zellij actions, temp files)
+
+**Design doc:** `docs/plans/2026-02-14-zellij-claude-tab-design.md`
+
+---
+
+### Task 1: Create plugin directory structure and plugin.json
+
+**Files:**
+- Create: `zellij-claude-tab/.claude-plugin/plugin.json`
+
+**Step 1: Create directory structure**
+
+```bash
+mkdir -p zellij-claude-tab/.claude-plugin
+mkdir -p zellij-claude-tab/skills/zellij-claude-tab
+mkdir -p zellij-claude-tab/commands
+```
+
+**Step 2: Create plugin.json**
+
+Create `zellij-claude-tab/.claude-plugin/plugin.json`:
+
+```json
+{
+  "name": "zellij-claude-tab",
+  "description": "Launch interactive Claude Code sessions in separate zellij tabs with arbitrary instructions",
+  "version": "1.0.0",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/dapi/claude-code-marketplace",
+  "repository": "https://github.com/dapi/claude-code-marketplace",
+  "keywords": ["zellij", "claude", "session", "tabs", "workflow", "parallel"]
+}
+```
+
+**Step 3: Verify JSON is valid**
+
+Run: `python3 -c "import json; json.load(open('zellij-claude-tab/.claude-plugin/plugin.json'))"`
+Expected: No output (valid JSON)
+
+---
+
+### Task 2: Create SKILL.md
+
+**Files:**
+- Create: `zellij-claude-tab/skills/zellij-claude-tab/SKILL.md`
+
+**Step 1: Create the skill file**
+
+Create `zellij-claude-tab/skills/zellij-claude-tab/SKILL.md`:
+
+```markdown
+---
+name: zellij-claude-tab
+description: |
+  **UNIVERSAL TRIGGER**: EXECUTE/RUN/LAUNCH Claude session with instructions IN separate zellij TAB.
+
+  Common patterns:
+  - "execute/run/launch [task/plan] in new tab"
+  - "start claude session in new tab with [instructions]"
+  - "vypolni/zapusti [zadachu] v novoj vkladke zellij"
+
+  **Execute Plan/Task**:
+  - "run this plan in a new zellij tab"
+  - "execute plan from docs/plans/... in separate tab"
+  - "launch this task in new tab", "start in parallel tab"
+  - "vypolni plan v otdel'noj vkladke"
+
+  **Start Session**:
+  - "open claude session in new tab"
+  - "start new claude in zellij tab with these instructions"
+  - "create tab and run claude with prompt"
+  - "otkroj sessiju claude v novoj vkladke"
+
+  **Delegate Work**:
+  - "delegate this to a new tab"
+  - "run this in background tab", "parallel session for this"
+  - "send to new tab", "offload to separate tab"
+  - "zapusti v parallel'noj vkladke"
+
+  TRIGGERS: run in new tab, execute in tab, launch in tab, new tab claude,
+  claude session tab, zellij claude tab, parallel tab, delegate to tab,
+  start session tab, run plan tab, execute plan tab, separate session,
+  vypolni v vkladke, zapusti v vkladke, novaja vkladka, sessija v vkladke,
+  parallel'naja sessija, otdel'naja vkladka, delegiruj v vkladku
+allowed-tools: Bash
+---
+
+# Zellij Claude Tab Skill
+
+Launch an interactive Claude Code session in a separate zellij tab with arbitrary instructions.
+The session remains a working chat after processing the initial prompt.
+
+## MANDATORY CHECKS
+
+**Claude MUST verify before executing:**
+
+```bash
+# 1. Check we are inside zellij
+if [ -z "$ZELLIJ" ]; then
+  echo "Error: not in a zellij session. Start zellij first."
+  # DO NOT execute, warn user
+fi
+
+# 2. Check claude is available
+if ! command -v claude &> /dev/null; then
+  echo "Error: claude not found in PATH"
+  # DO NOT execute, warn user
+fi
+```
+
+**If checks fail** -- inform the user and DO NOT run `zellij action`.
+
+## How It Works
+
+1. Claude receives instructions to execute in a new tab
+2. Generates a short tab name from context (e.g. `plan-audit`, `#123`, `refactor`)
+3. Writes prompt to a temp file (avoids escaping issues)
+4. Creates zellij tab and launches `claude` with the prompt
+5. Cleans up temp file after claude reads it
+
+## Execution Steps
+
+### Step 1: Determine tab name
+
+Auto-generate a short name (1-2 words, max 20 chars) from the instruction context:
+- Has issue reference -> `#123`
+- Has plan file -> `plan-audit`
+- General task -> `refactor`, `fix-tests`, etc.
+
+### Step 2: Write prompt to temp file
+
+```bash
+PROMPT_FILE=$(mktemp /tmp/claude-tab-XXXXXX.md)
+cat > "$PROMPT_FILE" << 'PROMPT_EOF'
+<instructions here - the full prompt for the new session>
+PROMPT_EOF
+```
+
+### Step 3: Create tab and launch claude
+
+```bash
+TAB_NAME="<auto-generated>"
+PROJECT_DIR=$(pwd)
+
+zellij action go-to-tab-name --create "$TAB_NAME" && \
+zellij action new-pane -- bash -c "cd $PROJECT_DIR && claude \"\$(cat $PROMPT_FILE)\" ; rm $PROMPT_FILE" && \
+zellij action focus-previous-pane && \
+zellij action close-pane
+```
+
+**How it works:**
+1. `go-to-tab-name --create` -- creates tab (or switches if exists)
+2. `new-pane -- command` -- runs command in a new pane
+3. `focus-previous-pane` + `close-pane` -- removes empty shell pane
+4. `claude "$(cat file)"` -- starts **interactive** session with initial prompt
+5. `rm $PROMPT_FILE` -- cleanup after claude starts
+
+## Examples
+
+### Example 1: Execute a plan
+
+**User:** "Execute the plan from docs/plans/skill-audit-plan.md in a new zellij tab"
+
+**Claude writes to temp file:**
+```
+Execute the plan from docs/plans/2026-02-14-skill-audit-plan.md for issue #20.
+Use superpowers:executing-plans.
+```
+
+**Claude runs:**
+```bash
+PROMPT_FILE=$(mktemp /tmp/claude-tab-XXXXXX.md)
+cat > "$PROMPT_FILE" << 'PROMPT_EOF'
+Execute the plan from docs/plans/2026-02-14-skill-audit-plan.md for issue #20. Use superpowers:executing-plans.
+PROMPT_EOF
+zellij action go-to-tab-name --create "plan-audit" && \
+zellij action new-pane -- bash -c "cd /home/danil/code/claude-code-marketplace && claude \"\$(cat $PROMPT_FILE)\" ; rm $PROMPT_FILE" && \
+zellij action focus-previous-pane && \
+zellij action close-pane
+```
+
+### Example 2: Arbitrary task
+
+**User:** "Run refactoring of the auth module in a separate tab"
+
+**Claude generates tab name:** `refactor-auth`
+**Prompt:** "Refactor the auth module: <details from conversation context>"
+
+### Example 3: Issue-related
+
+**User:** "Start working on issue #45 in a new tab with executing-plans"
+
+**Tab name:** `#45`
+**Prompt:** "Work on issue #45. Use superpowers:executing-plans."
+
+## Dependencies
+
+- **zellij** -- terminal multiplexer (must be running)
+- **claude** -- Claude Code CLI (must be in PATH in new tab)
+
+## Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `zellij: command not found` | zellij not installed | `cargo install zellij` |
+| `Not in zellij session` | Running outside zellij | Start zellij first |
+| `claude: command not found` | Claude CLI not in PATH | Install Claude Code |
+| Temp file not created | /tmp not writable | Check disk space/permissions |
+
+## Important
+
+- Skill works **only inside zellij session**
+- New tab inherits PATH from parent session
+- Session is **interactive** (not -p print mode) -- remains a working chat
+- Temp file is removed after claude reads the prompt
+```
+
+**Step 2: Verify no supplementary plane emoji**
+
+Run: `./scripts/lint_no_emoji.sh zellij-claude-tab`
+Expected: PASS (no emoji in plugin files)
+
+---
+
+### Task 3: Create TRIGGER_EXAMPLES.md
+
+**Files:**
+- Create: `zellij-claude-tab/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`
+
+**Step 1: Create trigger examples**
+
+Create `zellij-claude-tab/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
+
+```markdown
+# Zellij Claude Tab Trigger Examples
+
+## [YES] Should Activate
+
+### Execute Plan (EN)
+
+- "execute this plan in a new zellij tab"
+- "run the plan from docs/plans/audit.md in separate tab"
+- "launch plan execution in new tab"
+- "start executing this plan in a parallel tab"
+- "open a new tab and execute this plan"
+- "run this in a new zellij tab"
+- "execute in separate tab"
+
+### Vypolnit' Plan (RU)
+
+- "vypolni etot plan v novoj vkladke zellij"
+- "zapusti plan v otdel'noj vkladke"
+- "otkroj novuju vkladku i vypolni plan"
+- "vypolni v parallel'noj vkladke"
+- "zapusti v otdel'noj sessii zellij"
+- "vypolni zadachu v novoj vkladke"
+- "zapusti v novom tabe"
+
+### Start Session (EN)
+
+- "start a claude session in new tab"
+- "open claude in a new zellij tab with these instructions"
+- "create a new tab and run claude"
+- "launch claude session in separate tab"
+- "start new session in tab"
+- "claude in new tab"
+
+### Nachat' Sessiju (RU)
+
+- "otkroj sessiju claude v novoj vkladke"
+- "sozdaj vkladku i zapusti claude"
+- "novaja sessija claude v vkladke"
+- "zapusti claude v novoj vkladke s instrukcijami"
+- "sessija v otdel'noj vkladke"
+
+### Delegate Work (EN)
+
+- "delegate this task to a new tab"
+- "offload this to a separate tab"
+- "run this in a background tab"
+- "send this work to a new tab"
+- "parallel session for this task"
+- "hand this off to a new tab"
+
+### Delegirovat' (RU)
+
+- "delegiruj eto v novuju vkladku"
+- "otprav' v otdel'nuju vkladku"
+- "zapusti parallel'no v drugoj vkladke"
+- "perenesi v novuju vkladku"
+
+### With Plan File Reference
+
+- "execute docs/plans/2026-02-14-skill-audit-plan.md in new tab"
+- "run the plan from skill-audit-plan.md in a zellij tab"
+- "vypolni plan iz docs/plans/audit.md v novoj vkladke"
+- "launch docs/plans/refactor-plan.md in separate tab"
+
+### With Issue Reference
+
+- "execute plan for issue #20 in new tab"
+- "start working on #45 in a separate zellij tab"
+- "vypolni zadachu #123 v novoj vkladke"
+
+### Combined / Polite
+
+- "could you run this in a new zellij tab?"
+- "please execute the plan in a separate tab"
+- "I'd like this running in a new tab"
+- "mozhesh' zapustit' v novoj vkladke?"
+- "pozhalujsta vypolni v otdel'noj vkladke"
+
+## [NO] Should NOT Activate
+
+### General zellij Questions
+
+- "what is zellij?"
+- "how to install zellij?"
+- "kak nastroit' zellij?"
+- "zellij documentation"
+- "zellij keyboard shortcuts"
+
+### Tab Management (no claude session)
+
+- "rename this tab"
+- "close the tab"
+- "switch to another tab"
+- "list zellij tabs"
+- "pereimenovat' vkladku"
+
+### Issue Without Tab Context
+
+- "show issue #123"
+- "read issue 45"
+- "create a new issue"
+- "close issue #78"
+
+### Run Commands (not claude session)
+
+- "run tests"
+- "execute make build"
+- "start the server"
+- "run npm install"
+
+### Questions About Plans
+
+- "show me the plan"
+- "what does the plan contain?"
+- "read docs/plans/audit.md"
+- "pokaz plan"
+
+## Key Trigger Words
+
+### Verbs
+
+**EN:** execute, run, launch, start, open, create, delegate, offload, send
+**RU:** vypolni, zapusti, otkroj, sozdaj, delegiruj, otprav', perenesi
+
+### Nouns
+
+**EN:** tab, session, claude, plan, task, instructions
+**RU:** vkladka, sessija, plan, zadacha, instrukcii
+
+### Context Patterns
+
+- "[verb] [task/plan] in [new/separate] [tab/session]"
+- "[verb] [zadachu/plan] v [novoj/otdel'noj] [vkladke/sessii]"
+- "claude [session] in [new] tab"
+- "delegate/offload to [new] tab"
+
+### Required Combinations
+
+For activation, the request needs:
+1. **Action** (execute, run, start, launch / vypolni, zapusti)
+2. **Tab/Session** (tab, session, vkladka / vkladka, sessija)
+3. **Context** (instructions, plan, task, or implicit from conversation)
+```
+
+---
+
+### Task 4: Create slash command
+
+**Files:**
+- Create: `zellij-claude-tab/commands/run-in-new-tab.md`
+
+**Step 1: Create the command file**
+
+Create `zellij-claude-tab/commands/run-in-new-tab.md`:
+
+```markdown
+---
+description: Run Claude session in new zellij tab with given instructions
+argument-hint: <instructions or plan-file-path>
+---
+
+# Run in New Tab
+
+Launch an interactive Claude Code session in a new zellij tab.
+
+## Input
+
+- **INSTRUCTIONS**: `$ARGUMENTS` -- prompt text or path to a plan file
+
+## Steps
+
+### 1. Check environment
+
+```bash
+# Check we are in zellij
+if [ -z "$ZELLIJ" ]; then
+  echo "[FAIL] Not in zellij session. Run zellij first."
+  exit 1
+fi
+
+# Check claude is available
+if ! command -v claude &> /dev/null; then
+  echo "[FAIL] claude not found in PATH"
+  exit 1
+fi
+```
+
+**If checks fail** -- inform user and DO NOT continue.
+
+### 2. Determine tab name and prompt
+
+If `$ARGUMENTS` is a file path (ends with `.md`), read the file to extract context for tab naming.
+Otherwise use `$ARGUMENTS` directly as the prompt.
+
+Generate a short tab name (1-2 words) from the content.
+
+### 3. Write prompt to temp file
+
+```bash
+PROMPT_FILE=$(mktemp /tmp/claude-tab-XXXXXX.md)
+echo "$ARGUMENTS" > "$PROMPT_FILE"
+```
+
+If arguments reference a plan file, the prompt should be:
+```
+Execute the plan from <plan-file-path>. Use superpowers:executing-plans.
+```
+
+### 4. Create tab and launch claude
+
+```bash
+PROJECT_DIR=$(pwd)
+TAB_NAME="<auto-generated>"
+
+zellij action go-to-tab-name --create "$TAB_NAME" && \
+zellij action new-pane -- bash -c "cd $PROJECT_DIR && claude \"\$(cat $PROMPT_FILE)\" ; rm $PROMPT_FILE" && \
+zellij action focus-previous-pane && \
+zellij action close-pane
+```
+
+## Examples
+
+```bash
+/run-in-new-tab Execute plan from docs/plans/skill-audit-plan.md. Use executing-plans.
+/run-in-new-tab Refactor auth module following DRY principles
+/run-in-new-tab Fix all failing tests in spec-reviewer plugin
+```
+
+## Result
+
+- New zellij tab created with auto-generated name
+- Interactive Claude Code session running with the given instructions
+- Session remains a working chat after initial prompt
+```
+
+---
+
+### Task 5: Create README.md
+
+**Files:**
+- Create: `zellij-claude-tab/README.md`
+
+**Step 1: Create README**
+
+Create `zellij-claude-tab/README.md`:
+
+```markdown
+# zellij-claude-tab
+
+Launch interactive Claude Code sessions in separate zellij tabs with arbitrary instructions.
+
+## What it does
+
+When you need to run a task in a parallel Claude session (e.g. execute a plan, delegate work), this plugin automates the entire flow:
+
+1. Creates a new zellij tab with an auto-generated name
+2. Starts an interactive `claude` session with your instructions
+3. The session remains a working chat after processing the initial prompt
+
+## Usage
+
+### Via skill (automatic)
+
+Say something like:
+- "Execute the plan from docs/plans/audit-plan.md in a new zellij tab"
+- "Run this task in a separate tab"
+- "Delegate this to a new tab"
+
+### Via command (explicit)
+
+```
+/run-in-new-tab Execute plan from docs/plans/skill-audit-plan.md. Use executing-plans.
+/run-in-new-tab Refactor the auth module
+```
+
+## Requirements
+
+- **zellij** -- must be running (the command is executed inside a zellij session)
+- **claude** -- Claude Code CLI must be in PATH
+
+## Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Skill | [skills/zellij-claude-tab/SKILL.md](./skills/zellij-claude-tab/SKILL.md) | Auto-activates on trigger phrases |
+| Command | [commands/run-in-new-tab.md](./commands/run-in-new-tab.md) | Explicit `/run-in-new-tab` invocation |
+
+## How it works internally
+
+1. Writes instructions to a temp file (`/tmp/claude-tab-XXXXXX.md`)
+2. Creates zellij tab: `zellij action go-to-tab-name --create "tab-name"`
+3. Runs: `claude "$(cat /tmp/claude-tab-XXXXXX.md)"` in a new pane
+4. Removes empty default shell pane
+5. Cleans up temp file after claude reads it
+```
+
+---
+
+### Task 6: Register in marketplace.json
+
+**Files:**
+- Modify: `.claude-plugin/marketplace.json`
+
+**Step 1: Add plugin entry**
+
+Add to the `plugins` array in `.claude-plugin/marketplace.json`:
+
+```json
+{
+  "name": "zellij-claude-tab",
+  "source": "./zellij-claude-tab",
+  "description": "Launch interactive Claude Code sessions in separate zellij tabs with arbitrary instructions"
+}
+```
+
+Place it after the `zellij-dev-tab` entry (line ~62) for logical grouping.
+
+**Step 2: Verify JSON is valid**
+
+Run: `python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"`
+Expected: No output (valid JSON)
+
+---
+
+### Task 7: Quality checks and validation
+
+**Step 1: Run emoji lint**
+
+Run: `./scripts/lint_no_emoji.sh zellij-claude-tab`
+Expected: PASS
+
+**Step 2: Run skill trigger review**
+
+Run: `./scripts/review_skill_triggers.sh zellij-claude-tab/zellij-claude-tab`
+Expected: Score >= 75/100
+
+**Step 3: Verify no absolute paths**
+
+Run: `grep -r "^/" zellij-claude-tab/skills/ zellij-claude-tab/commands/ zellij-claude-tab/README.md || echo "OK: no absolute paths"`
+Expected: "OK: no absolute paths"
+
+**Step 4: Verify no parent marketplace references**
+
+Run: `grep -r "\.\./\.\./\.claude-plugin" zellij-claude-tab/ || echo "OK: no marketplace refs"`
+Expected: "OK: no marketplace refs"
+
+**Step 5: Fix any issues found, re-run checks**
+
+---
+
+### Task 8: Commit
+
+**Step 1: Stage and commit**
+
+```bash
+git add zellij-claude-tab/ .claude-plugin/marketplace.json
+git commit -m "Add zellij-claude-tab plugin: launch Claude sessions in separate zellij tabs"
+```
+
+---
+
+### Task 9: Update CLAUDE.md plugin table (optional)
+
+**Files:**
+- Modify: `CLAUDE.md` (Current State section)
+
+**Step 1: Update the plugins table**
+
+Add row:
+```
+| zellij-claude-tab | 1 skill, 1 command |
+```
+
+Update totals: 10 skills, 8 commands.
+
+**Step 2: Commit**
+
+```bash
+git add CLAUDE.md
+git commit -m "Update CLAUDE.md: add zellij-claude-tab to plugin table"
+```
