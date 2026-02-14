@@ -33,13 +33,15 @@ fi
 # Review all skills if --all flag
 if [ "$1" == "--all" ]; then
   echo "Reviewing all skills..."
-  SKILLS=$(find . -type f -name "SKILL.md" -not -path "*/node_modules/*")
+  SKILLS=$(find . -type f -name "SKILL.md" -not -path "*/node_modules/*" -not -path "*/.worktrees/*")
 
   for SKILL_FILE in $SKILLS; do
-    SKILL_PATH=$(dirname "$SKILL_FILE" | sed 's|^\./||')
+    # Extract plugin-name/skill-name from path like ./plugin/skills/skill-name/SKILL.md
+    PLUGIN_NAME=$(echo "$SKILL_FILE" | sed 's|^\./||' | cut -d'/' -f1)
+    SKILL_NAME=$(basename "$(dirname "$SKILL_FILE")")
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    bash "$0" "$SKILL_PATH"
+    bash "$0" "$PLUGIN_NAME/$SKILL_NAME"
   done
   exit 0
 fi
@@ -139,7 +141,7 @@ count = sum(1 for ch in content if ord(ch) >= 0x10000)
 print(count)
 " 2>/dev/null || echo "0")
 
-BOLD_HEADERS=$(grep -c '\*\*.*\*\*' "$SKILL_FILE" || echo "0")
+BOLD_HEADERS=$(grep -c '\*\*.*\*\*' "$SKILL_FILE" 2>/dev/null) || BOLD_HEADERS=0
 
 if [ "$SUPP_PLANE_COUNT" -eq 0 ] && [ "$BOLD_HEADERS" -ge 2 ]; then
   echo -e "  ${GREEN}✅ Clean encoding, bold headers for categorization ($BOLD_HEADERS found)${NC}"
@@ -232,7 +234,8 @@ if [ -f "$EXAMPLES_FILE" ]; then
   echo -e "  ${GREEN}✅ TRIGGER_EXAMPLES.md exists${NC}"
 
   # Count examples
-  EXAMPLE_COUNT=$(grep -cE '^-\s+".*"$' "$EXAMPLES_FILE" || echo "0")
+  # Support both list format (- "example") and table format (| "example" | ... |)
+  EXAMPLE_COUNT=$(grep -cE '^-\s+".*"$|^\|\s+".*"' "$EXAMPLES_FILE" 2>/dev/null) || EXAMPLE_COUNT=0
 
   echo -e "  ${BLUE}ℹ️  Example count: $EXAMPLE_COUNT${NC}"
 
@@ -275,7 +278,7 @@ fi
 echo -e "${YELLOW}[10/10] Negative Examples${NC}"
 
 if [ -f "$EXAMPLES_FILE" ]; then
-  if grep -q "Should NOT Activate" "$EXAMPLES_FILE" || grep -q "НЕ должны активировать" "$EXAMPLES_FILE"; then
+  if grep -qi "Should NOT\|НЕ должн\|НЕ ДОЛЖЕН\|НЕ активир\|НЕ срабат" "$EXAMPLES_FILE"; then
     echo -e "  ${GREEN}✅ Negative examples documented${NC}"
     SCORE=$((SCORE + 10))
   else

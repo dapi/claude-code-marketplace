@@ -4,7 +4,8 @@ description: |
   **UNIVERSAL TRIGGER**: Use when user wants to ANALYZE Kubernetes cluster resource efficiency.
 
   Common patterns:
-  - "analyze cluster efficiency", "check cluster resources"
+  - "analyze/check/get cluster efficiency", "show cluster resources"
+  - "list/display/retrieve node utilization", "fetch cluster metrics"
   - "проанализируй эффективность кластера", "проверь ресурсы кластера"
   - "find over-provisioned workloads", "найди переоцененные ресурсы"
   - "why nodes are not consolidating", "почему ноды не консолидируются"

@@ -5,20 +5,23 @@ description: |
 
   Common patterns:
   - "start/open/launch [issue] in new tab"
+  - "get/show/display issue in zellij tab"
   - "запусти/открой/создай [issue] в вкладке"
 
-   **Start Development**:
+  **Start Development**:
   - "start development in separate tab"
   - "launch issue #123 in new zellij tab"
+  - "check out issue in new tab", "fetch issue to tab"
   - "запусти разработку в отдельной вкладке"
 
-   **Create/Open Tab**:
+  **Create/Open Tab**:
   - "create tab for issue #45"
-  - "open new tab for issue"
+  - "open new tab for issue", "list and start issue in tab"
   - "создай вкладку для задачи"
 
-   **Run start-issue**:
-  - "run start-issue in new tab"
+  **Retrieve & Run**:
+  - "retrieve issue #N and start in tab"
+  - "run start-issue in new tab", "analyze issue in tab"
   - "start-issue в отдельной вкладке"
 
   TRIGGERS: start issue tab, open issue tab, launch issue tab, create tab issue,
