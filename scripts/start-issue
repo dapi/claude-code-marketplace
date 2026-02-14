@@ -84,7 +84,7 @@ Options:
   --flat                     Use flat worktree structure (replace / with - in path)
   --no-init                  Skip init.sh execution
   --no-claude                Only create worktree, don't start Claude session
-  --command, -c <cmd>        Custom initial command for Claude (default: /feature-dev)
+  --command, -c <cmd>        Custom initial command for Claude (default: /task-router:route-task)
   --ai                       Use Claude AI for branch name (default: fast bash heuristics)
   --dry-run                  Show what would be done without executing
   --version, -v              Show version
@@ -503,12 +503,12 @@ start_claude_session() {
 
     log_info "🚀 Starting Claude Code session..."
 
-    # Use custom command if provided, otherwise default to feature-dev
+    # Use custom command if provided, otherwise default to task-router
     local cmd
     if [[ -n "$INITIAL_COMMAND" ]]; then
         cmd="$INITIAL_COMMAND $ISSUE_URL"
     else
-        cmd="/feature-dev:feature-dev implement feature $ISSUE_URL"
+        cmd="/task-router:route-task $ISSUE_URL"
     fi
 
     if [[ "$DRY_RUN" == "true" ]]; then

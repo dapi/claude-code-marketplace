@@ -127,12 +127,13 @@ argument-hint: <issue-url>
 
 11. **Приступи к реализации:**
 
-   Перейди в рабочий каталог и сделай его текущим (CWD):
-   ```bash
-   cd <WORKTREE_PATH>
-   ```
+    Убедись что текущий рабочий каталог (CWD) = `<WORKTREE_PATH>`.
 
-   Убедись что ты находишься в `<WORKTREE_PATH>` — это твой рабочий каталог для всей дальнейшей работы. Изучи issue и начни реализацию задачи.
+    Вызови Skill tool:
+    - skill: "task-router:route-task"
+    - args: "<ISSUE_URL>"
+
+    Task router автоматически классифицирует задачу и запустит подходящий workflow (feature-dev или subagent-driven-dev).
 
 ---
 
