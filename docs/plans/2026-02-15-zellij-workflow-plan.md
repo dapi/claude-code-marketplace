@@ -61,7 +61,7 @@ Expected: No output (valid)
 
 **Step 1: Create hooks.json**
 
-Create `zellij-workflow/hooks/hooks.json` -- exact copy from `zellij-tab-claude-status/hooks/hooks.json`:
+Create `zellij-workflow/hooks/hooks.json` -- based on `zellij-tab-claude-status/hooks/hooks.json` with `|| true` added to all commands for graceful degradation:
 
 ```json
 {
@@ -70,59 +70,66 @@ Create `zellij-workflow/hooks/hooks.json` -- exact copy from `zellij-tab-claude-
     "PostToolUse": [
       {
         "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉' || true"}]
       }
     ],
     "PostToolUseFailure": [
       {
         "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' || true"}]
       }
     ],
     "SessionStart": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' || true"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '◉'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '◉' || true"}]
       }
     ],
     "Notification": [
       {
         "matcher": "permission_prompt|elicitation_dialog",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '✋'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '✋' || true"}]
       },
       {
         "matcher": "idle_prompt",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' || true"}]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '○'"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '○' || true"}]
       }
     ],
     "SessionEnd": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status --clear"}]
+        "hooks": [{"type": "command", "command": "zellij-tab-status --clear || true"}]
       }
     ]
   }
 }
 ```
 
-**IMPORTANT:** No `async: true` anywhere -- hooks must be synchronous for correct tab focus.
+**IMPORTANT:**
+- No `async: true` anywhere -- hooks must be synchronous for correct tab focus
+- All commands end with `|| true` -- graceful degradation if zellij-tab-status is not installed
 
 **Step 2: Verify JSON**
 
 Run: `python3 -c "import json; json.load(open('zellij-workflow/hooks/hooks.json'))"`
 Expected: No output (valid)
+
+**Step 3: Migrate test-plugin.sh**
+
+Copy from `zellij-tab-claude-status/test-plugin.sh` to `zellij-workflow/test-plugin.sh`.
+Update paths inside the script to reference `zellij-workflow/hooks/hooks.json`.
 
 ---
 
@@ -138,11 +145,22 @@ Copy from `zellij-dev-tab/skills/zellij-dev-tab/SKILL.md` to `zellij-workflow/sk
 
 No content changes needed -- file is self-contained with no references to parent plugin structure.
 
-**Step 2: Copy TRIGGER_EXAMPLES.md**
+**Step 2: Copy TRIGGER_EXAMPLES.md with cross-skill negatives**
 
 Copy from `zellij-dev-tab/skills/zellij-dev-tab/TRIGGER_EXAMPLES.md` to `zellij-workflow/skills/zellij-dev-tab/TRIGGER_EXAMPLES.md`.
 
-No content changes needed.
+**Add cross-skill negative examples** to the "Should NOT Activate" section:
+
+```markdown
+### Claude session requests (use zellij-claude-tab instead)
+
+- "execute plan in a new zellij tab"
+- "run claude with these instructions in new tab"
+- "launch plan from docs/plans/audit.md in separate tab"
+- "delegate this task to a new tab"
+- "выполни план в новой вкладке"
+- "запусти claude с инструкциями в отдельной вкладке"
+```
 
 **Step 3: Verify no absolute paths**
 
@@ -220,14 +238,20 @@ The session remains a working chat after processing the initial prompt.
 **Claude MUST verify before executing:**
 
 ```bash
-# Check we are inside zellij
+# 1. Check we are inside zellij
 if [ -z "$ZELLIJ" ]; then
   echo "Error: not in a zellij session. Start zellij first."
   # DO NOT execute, warn user
 fi
+
+# 2. Check claude CLI is available
+if ! command -v claude &>/dev/null; then
+  echo "Error: claude not found in PATH. Install Claude Code CLI."
+  # DO NOT execute, warn user
+fi
 ```
 
-**If check fails** -- inform the user and DO NOT run `zellij action`.
+**If any check fails** -- inform the user and DO NOT run `zellij action`.
 
 ## How It Works
 
@@ -247,7 +271,17 @@ Auto-generate a short name (1-2 words, max 20 chars) from the instruction contex
 - General task -> `refactor`, `fix-tests`, etc.
 - Fallback -> `claude-<HH:MM>` (e.g. `claude-14:35`)
 
-If a tab with the chosen name already exists, append a numeric suffix: `plan-audit-2`.
+**Handle tab name collisions:**
+
+```bash
+# Check if tab with chosen name already exists, append suffix if needed
+EXISTING=$(zellij action query-tab-names 2>/dev/null || true)
+if echo "$EXISTING" | grep -qx "$TAB_NAME"; then
+  N=2
+  while echo "$EXISTING" | grep -qx "${TAB_NAME}-${N}"; do N=$((N+1)); done
+  TAB_NAME="${TAB_NAME}-${N}"
+fi
+```
 
 ### Step 2: Write prompt to temp file
 
@@ -266,10 +300,12 @@ PROJECT_DIR=$(pwd)
 
 zellij action go-to-tab-name --create "$TAB_NAME" && \
 zellij action new-pane -- bash -c \
-  "cd $PROJECT_DIR && PROMPT=\$(cat $PROMPT_FILE) && rm $PROMPT_FILE && claude \"\$PROMPT\"" && \
+  "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\"" && \
 zellij action focus-previous-pane && \
 zellij action close-pane
 ```
+
+**NOTE:** Single quotes around `$PROJECT_DIR` and `$PROMPT_FILE` inside the bash -c string prevent issues with spaces in paths. These variables are expanded before bash -c runs, so the single quotes end up in the inner shell command.
 
 **How it works:**
 1. `go-to-tab-name --create` -- creates tab (or switches if exists)
@@ -297,7 +333,7 @@ cat > "$PROMPT_FILE" << 'PROMPT_EOF'
 Execute the plan from docs/plans/2026-02-14-skill-audit-plan.md for issue #20. Use superpowers:executing-plans.
 PROMPT_EOF
 zellij action go-to-tab-name --create "plan-audit" && \
-zellij action new-pane -- bash -c "cd $(pwd) && PROMPT=\$(cat $PROMPT_FILE) && rm $PROMPT_FILE && claude \"\$PROMPT\"" && \
+zellij action new-pane -- bash -c "cd '$(pwd)' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\"" && \
 zellij action focus-previous-pane && \
 zellij action close-pane
 ```
@@ -361,6 +397,9 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "open a new tab and execute this plan"
 - "run this in a new zellij tab"
 - "execute in separate tab"
+- "run the implementation plan in another tab"
+- "execute this plan file in a fresh tab"
+- "kick off the plan in a new zellij tab"
 
 ### **Выполнить план (RU)**
 
@@ -371,6 +410,8 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "запусти в отдельной сессии zellij"
 - "выполни задачу в новой вкладке"
 - "запусти в новом табе"
+- "исполни план в другой вкладке"
+- "план выполнения запусти в табе zellij"
 
 ### Start Session (EN)
 
@@ -380,6 +421,9 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "launch claude session in separate tab"
 - "start new session in tab"
 - "claude in new tab"
+- "spin up a claude session in another tab"
+- "new claude tab with this prompt"
+- "fire up claude in a fresh zellij tab"
 
 ### **Начать сессию (RU)**
 
@@ -388,6 +432,8 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "новая сессия claude в вкладке"
 - "запусти claude в новой вкладке с инструкциями"
 - "сессия в отдельной вкладке"
+- "нужна новая сессия claude в табе"
+- "создай claude сессию в отдельной вкладке"
 
 ### Delegate Work (EN)
 
@@ -397,6 +443,8 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "send this work to a new tab"
 - "parallel session for this task"
 - "hand this off to a new tab"
+- "move this work to its own tab"
+- "fork this into a new tab"
 
 ### **Делегировать (RU)**
 
@@ -404,6 +452,8 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "отправь в отдельную вкладку"
 - "запусти параллельно в другой вкладке"
 - "перенеси в новую вкладку"
+- "вынеси эту работу в отдельный таб"
+- "раздели на параллельную вкладку"
 
 ### With Plan File Reference
 
@@ -411,12 +461,16 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "run the plan from skill-audit-plan.md in a zellij tab"
 - "выполни план из docs/plans/audit.md в новой вкладке"
 - "launch docs/plans/refactor-plan.md in separate tab"
+- "open docs/plans/migration.md in a new tab and execute it"
+- "запусти docs/plans/feature-plan.md в отдельной вкладке"
 
 ### With Issue Reference + Instructions
 
 - "execute plan for issue #20 in new tab"
 - "start working on #45 in a separate zellij tab with executing-plans"
 - "выполни задачу #123 в новой вкладке с планом"
+- "run the plan for #78 in another tab"
+- "запусти план для issue #56 в параллельной вкладке"
 
 ### Combined / Polite
 
@@ -425,6 +479,8 @@ Create `zellij-workflow/skills/zellij-claude-tab/TRIGGER_EXAMPLES.md`:
 - "I'd like this running in a new tab"
 - "можешь запустить в новой вкладке?"
 - "пожалуйста выполни в отдельной вкладке"
+- "would you mind running this in its own tab?"
+- "будь добр, запусти в отдельном табе"
 
 ## [NO] Should NOT Activate
 
@@ -522,9 +578,14 @@ if [ -z "$ZELLIJ" ]; then
   echo "[FAIL] Not in zellij session. Run zellij first."
   exit 1
 fi
+
+if ! command -v claude &>/dev/null; then
+  echo "[FAIL] claude not found in PATH. Install Claude Code CLI."
+  exit 1
+fi
 ```
 
-**If check fails** -- inform user and DO NOT continue.
+**If any check fails** -- inform user and DO NOT continue.
 
 ### 2. Determine tab name and prompt
 
@@ -536,7 +597,15 @@ Otherwise use `$ARGUMENTS` directly as the prompt.
 
 Generate a short tab name (1-2 words) from the content.
 Fallback: `claude-<HH:MM>`.
-If tab name exists, append suffix: `-2`, `-3`.
+
+**Handle tab name collisions:**
+```bash
+EXISTING=$(zellij action query-tab-names 2>/dev/null || true)
+if echo "$EXISTING" | grep -qx "$TAB_NAME"; then
+  N=2; while echo "$EXISTING" | grep -qx "${TAB_NAME}-${N}"; do N=$((N+1)); done
+  TAB_NAME="${TAB_NAME}-${N}"
+fi
+```
 
 ### 3. Write prompt to temp file
 
@@ -553,7 +622,7 @@ TAB_NAME="<auto-generated>"
 
 zellij action go-to-tab-name --create "$TAB_NAME" && \
 zellij action new-pane -- bash -c \
-  "cd $PROJECT_DIR && PROMPT=\$(cat $PROMPT_FILE) && rm $PROMPT_FILE && claude \"\$PROMPT\"" && \
+  "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\"" && \
 zellij action focus-previous-pane && \
 zellij action close-pane
 ```
@@ -655,7 +724,7 @@ load_plugins {
 
 ## Requirements
 
-- [Zellij](https://zellij.dev) terminal multiplexer
+- [Zellij](https://zellij.dev) >= 0.40 terminal multiplexer (`query-tab-names` support)
 - [zellij-tab-status](https://github.com/dapi/zellij-tab-status) (optional, for status icons)
 - `start-issue` in PATH (for issue development tabs)
 - `claude` CLI in PATH (for Claude session tabs)
@@ -729,7 +798,12 @@ Expected: "OK"
 Run: `grep -i "async" zellij-workflow/hooks/hooks.json || echo "OK: no async"`
 Expected: "OK: no async"
 
-**Step 6: Fix any issues, re-run checks**
+**Step 6: Verify all hook commands have || true**
+
+Run: `grep '"command":' zellij-workflow/hooks/hooks.json | grep -v '|| true' && echo "FAIL: missing || true" || echo "OK: all have || true"`
+Expected: "OK: all have || true"
+
+**Step 7: Fix any issues, re-run checks**
 
 ---
 
@@ -762,10 +836,9 @@ git commit -m "Replace zellij-tab-claude-status and zellij-dev-tab with unified 
 
 **Step 1: Update Current State section**
 
-Replace these rows in the plugin table:
+Replace this row in the plugin table:
 ```
 | zellij-tab-claude-status | hooks only |
-| zellij-dev-tab | 1 skill, 1 command (in zellij-workflow) |
 ```
 
 With:
@@ -773,7 +846,9 @@ With:
 | zellij-workflow | 2 skills, 2 commands, hooks |
 ```
 
-Update totals accordingly.
+Note: `zellij-dev-tab` is not in the current CLAUDE.md table (only in marketplace.json), so only `zellij-tab-claude-status` needs replacing.
+
+Update totals accordingly (plugin count stays the same if zellij-dev-tab was not listed; adjust if it was).
 
 Also update the `zellij-tab-claude-status Plugin` special rules section to reference `zellij-workflow` instead.
 
