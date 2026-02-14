@@ -604,7 +604,7 @@ git commit -m "Add plugin-name: brief description"
 
 ## Current State
 
-**Plugins**: 10 active plugins in marketplace
+**Plugins**: 11 active plugins in marketplace
 
 | Plugin | Components |
 |--------|------------|
@@ -617,9 +617,10 @@ git commit -m "Add plugin-name: brief description"
 | media-upload | 1 skill |
 | requirements | 1 command |
 | spec-reviewer | 10 agents, 1 skill, 1 command |
+| task-router | 1 agent, 1 skill, 1 command |
 | zellij-tab-claude-status | hooks only |
 
-**Totals**: 15 agents, 8 skills, 6 commands
+**Totals**: 16 agents, 9 skills, 7 commands
 
 ## zellij-tab-claude-status Plugin
 

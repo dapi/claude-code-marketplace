@@ -29,6 +29,7 @@
 | [media-upload](#media-upload) | Загрузка медиа/изображений в S3 | 1 навык |
 | [requirements](#requirements) | Реестр требований через Google Sheets | 1 команда |
 | [spec-reviewer](#spec-reviewer) | Ревью и анализ спецификаций | 10 агентов, 1 навык, 1 команда |
+| [task-router](#task-router) | Классификация задач и маршрутизация в workflow | 1 агент, 1 навык, 1 команда |
 | [zellij-dev-tab](#zellij-dev-tab) | Разработка issue в отдельной вкладке Zellij | 1 навык |
 | [zellij-tab-claude-status](#zellij-tab-claude-status) | Статус сессии Claude во вкладке Zellij | хуки |
 
@@ -87,6 +88,27 @@
 ```
 /spec-review path/to/spec.md
 "проверь спецификацию docs/spec.md"
+```
+
+### task-router
+
+Классификация задач и маршрутизация в workflow. Получает задачу по URL, определяет сложность и направляет в оптимальный workflow разработки.
+
+**Компоненты:** команда `/route-task`, навык `task-routing`, агент `task-classifier`
+
+**Требуются:** плагины `feature-dev`, `superpowers`
+
+| Сложность | Маршрут |
+|-----------|---------|
+| S/M | feature-dev |
+| L/XL (архитектура ясна) | subagent-driven-dev |
+| L/XL (нужно исследование) | needs-spec + brainstorming |
+
+```
+/route-task https://github.com/org/repo/issues/42
+/route-task https://docs.google.com/document/d/1abc/edit
+"возьми задачу #123"
+"реализуй по спеке https://..."
 ```
 
 ### cluster-efficiency

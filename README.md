@@ -29,6 +29,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 | [media-upload](#media-upload) | S3 media/image upload | 1 skill |
 | [requirements](#requirements) | Requirements registry via Google Sheets | 1 command |
 | [spec-reviewer](#spec-reviewer) | Specification review and analysis | 10 agents, 1 skill, 1 command |
+| [task-router](#task-router) | Smart task classification and workflow routing | 1 agent, 1 skill, 1 command |
 | [zellij-dev-tab](#zellij-dev-tab) | GitHub issue dev in separate Zellij tab | 1 skill |
 | [zellij-tab-claude-status](#zellij-tab-claude-status) | Claude session status in Zellij tab | hooks |
 
@@ -87,6 +88,27 @@ Specification review: analyze specs for gaps, inconsistencies, and scope estimat
 ```
 /spec-review path/to/spec.md
 "проверь спецификацию docs/spec.md"
+```
+
+### task-router
+
+Smart task classification and workflow routing. Fetches task from URL, classifies complexity, and routes to the optimal development workflow.
+
+**Components:** command `/route-task`, skill `task-routing`, agent `task-classifier`
+
+**Requires:** plugins `feature-dev`, `superpowers`
+
+| Complexity | Route |
+|------------|-------|
+| S/M | feature-dev |
+| L/XL (clear architecture) | subagent-driven-dev |
+| L/XL (needs research) | needs-spec + brainstorming |
+
+```
+/route-task https://github.com/org/repo/issues/42
+/route-task https://docs.google.com/document/d/1abc/edit
+"take task #123"
+"реализуй по спеке https://..."
 ```
 
 ### cluster-efficiency
