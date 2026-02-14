@@ -11,7 +11,8 @@ description: |
    **Reading**:
   - "check inbox", "show unread emails", "what's in my mail"
   - "read email from [sender]", "find emails about [topic]"
-  - "проверить входящие", "непрочитанные", "что в почте"
+  - "show email folders", "list mail folders"
+  - "проверить входящие", "непрочитанные", "что в почте", "покажи папки"
 
    **Sending**:
   - "send email to [address]", "compose email"
@@ -28,8 +29,8 @@ description: |
   - "install himalaya" (setup)
 
   TRIGGERS: email, mail, inbox, send, check, read, show, list, get,
-  compose, reply, forward, unread, fetch, view, display,
-  отправить, проверить, прочитать, показать, получить, письмо, почта
+  compose, reply, forward, unread, fetch, view, display, folder, folders,
+  отправить, проверить, прочитать, показать, получить, письмо, почта, папка, папки
 allowed-tools: Bash
 ---
 

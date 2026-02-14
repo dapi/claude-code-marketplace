@@ -5,7 +5,7 @@ description: |
 
   **URLs & References**:
   - "get task from github.com/.../issues/N", "fetch spec from docs.google.com/..."
-  - "retrieve task from https://...", "show issue from URL"
+  - "retrieve task from https://..."
 
   **Action Triggers (EN)**:
   - "take this task", "implement this spec", "do issue #NNN"
@@ -20,7 +20,7 @@ description: |
 
   TRIGGERS: route task, route this, возьми задачу, сделай задачу,
     take this task, implement this spec, implement this issue,
-    get task from, show issue, list task, display task,
+    get task from, list task, display task,
     retrieve spec, fetch task, check this task, analyze task,
     реализуй по спеке, сделай issue, do issue, start issue,
     what in this issue, github.com/issues, docs.google.com/document
