@@ -479,26 +479,40 @@ update-all:
 # ============================================================================
 
 ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
-ZELLIJ_TAB_STATUS_REPO = https://github.com/dapi/zellij-tab-status.git
-ZELLIJ_TAB_STATUS_DIR = /tmp/zellij-tab-status
+SCRIPTS_DIR = $(HOME)/.local/bin
+
+ZELLIJ_TAB_STATUS_VERSION = v0.3.1
+ZELLIJ_TAB_STATUS_WASM_URL = https://github.com/dapi/zellij-tab-status/releases/download/$(ZELLIJ_TAB_STATUS_VERSION)/zellij-tab-status.wasm
+ZELLIJ_TAB_STATUS_RAW_URL = https://raw.githubusercontent.com/dapi/zellij-tab-status/$(ZELLIJ_TAB_STATUS_VERSION)/scripts
+ZELLIJ_TAB_STATUS_SCRIPTS = zellij-tab-status
 
 ZELLIJ_TAB_NAME_VERSION = v0.4.1
 ZELLIJ_TAB_NAME_URL = https://github.com/Cynary/zellij-tab-name/releases/download/$(ZELLIJ_TAB_NAME_VERSION)/zellij-tab-name.wasm
 
 # Install zellij-tab-status plugin (required for zellij-tab-claude-status)
 install-zellij-tab-status:
-	@echo "📦 Installing zellij-tab-status plugin..."
-	@if [ -d "$(ZELLIJ_TAB_STATUS_DIR)" ]; then \
-		echo "   → Updating existing repo..."; \
-		cd $(ZELLIJ_TAB_STATUS_DIR) && git pull; \
-	else \
-		echo "   → Cloning repository..."; \
-		git clone $(ZELLIJ_TAB_STATUS_REPO) $(ZELLIJ_TAB_STATUS_DIR); \
-	fi
-	@echo "   → Building and installing..."
-	@cd $(ZELLIJ_TAB_STATUS_DIR) && make install
+	@echo "Installing zellij-tab-status $(ZELLIJ_TAB_STATUS_VERSION)..."
+	@mkdir -p $(ZELLIJ_PLUGINS_DIR)
+	@mkdir -p $(SCRIPTS_DIR)
+	@echo "   -> Downloading WASM plugin..."
+	@curl -sL "$(ZELLIJ_TAB_STATUS_WASM_URL)" -o "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
+	@echo "   -> Downloading scripts..."
+	@for script in $(ZELLIJ_TAB_STATUS_SCRIPTS); do \
+		curl -sL "$(ZELLIJ_TAB_STATUS_RAW_URL)/$$script" -o "$(SCRIPTS_DIR)/$$script"; \
+		chmod +x "$(SCRIPTS_DIR)/$$script"; \
+	done
 	@echo ""
-	@echo "   Then restart Zellij."
+	@echo "Installed:"
+	@echo "   Plugin: $(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
+	@echo "   Script: $(SCRIPTS_DIR)/zellij-tab-status"
+	@echo ""
+	@echo "Add to ~/.config/zellij/config.kdl:"
+	@echo ""
+	@echo '   load_plugins {'
+	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"'
+	@echo '   }'
+	@echo ""
+	@echo "Then restart Zellij."
 
 # Install zellij-tab-name plugin for cross-tab renaming
 install-zellij-tab-name:

@@ -53,5 +53,5 @@ else
 fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
-    zellij-rename-tab "▷ #${ISSUE_NUMBER}"
+    zellij-tab-status --set-name "▷ #${ISSUE_NUMBER}"
 fi
