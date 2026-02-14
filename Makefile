@@ -12,6 +12,9 @@ MARKETPLACE_PATH = $(shell pwd)
 MARKETPLACE_JSON = $(MARKETPLACE_PATH)/.claude-plugin/marketplace.json
 PLUGIN ?= github-workflow
 
+# Allow running claude CLI from within a Claude Code session
+CLAUDE = env -u CLAUDECODE claude
+
 # List of all plugins in marketplace (extracted from marketplace.json)
 ALL_PLUGINS = $(shell jq -r '.plugins[].name' $(MARKETPLACE_JSON) 2>/dev/null)
 
@@ -27,12 +30,12 @@ update: update-marketplace update-plugin
 
 # Update local marketplace
 update-marketplace:
-	claude plugin marketplace update dapi
+	$(CLAUDE) plugin marketplace update dapi
 
 # Update all installed plugins from dapi marketplace
 update-plugin:
 	@echo "🔄 Updating all plugins from dapi marketplace..."
-	@plugins=$$(claude plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //'); \
+	@plugins=$$($(CLAUDE) plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //'); \
 	if [ -z "$$plugins" ]; then \
 		echo "⚠️  No plugins from dapi marketplace installed"; \
 		exit 0; \
@@ -40,15 +43,15 @@ update-plugin:
 	count=0; \
 	for plugin in $$plugins; do \
 		echo "→ Updating $$plugin..."; \
-		claude plugin update "$$plugin" && count=$$((count + 1)); \
+		$(CLAUDE) plugin update "$$plugin" && count=$$((count + 1)); \
 	done; \
 	echo "✅ Updated $$count plugin(s)"
 
 # Deploy any plugin: make deploy or make deploy PLUGIN=zellij-claude-status
 deploy: ensure-marketplace
-	claude plugin uninstall $(PLUGIN)@dapi || true
-	claude plugin marketplace update dapi
-	claude plugin install $(PLUGIN)@dapi
+	$(CLAUDE) plugin uninstall $(PLUGIN)@dapi || true
+	$(CLAUDE) plugin marketplace update dapi
+	$(CLAUDE) plugin install $(PLUGIN)@dapi
 	@echo "🚀 $(PLUGIN) deployed. Restart Claude to apply changes."
 
 # ============================================================================
@@ -57,7 +60,7 @@ deploy: ensure-marketplace
 
 # Install single plugin (legacy, for current profile only)
 install: ensure-marketplace
-	claude plugin install github-workflow@dapi
+	$(CLAUDE) plugin install github-workflow@dapi
 
 # Install scripts to ~/.local/bin
 install-scripts:
@@ -90,11 +93,11 @@ install-marketplace-all:
 		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		profile_name=$$(basename "$$dir"); \
 		abs_dir=$$(cd "$$dir" && pwd); \
-		if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
+		if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
 			echo "📁 $$profile_name: ✓ already registered"; \
 			skipped=$$((skipped + 1)); \
 		else \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace add $(MARKETPLACE_PATH) 2>/dev/null; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace add $(MARKETPLACE_PATH) 2>/dev/null; then \
 				echo "📁 $$profile_name: ✅ added"; \
 				added=$$((added + 1)); \
 			else \
@@ -122,11 +125,11 @@ install-plugins-all: install-marketplace-all
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$profile_name"; \
 		for plugin in $(ALL_PLUGINS); do \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
 				echo "   ✓ $$plugin (already installed)"; \
 				skipped=$$((skipped + 1)); \
 			else \
-				if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin install $$plugin@dapi 2>/dev/null; then \
+				if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin install $$plugin@dapi 2>/dev/null; then \
 					echo "   ✅ $$plugin"; \
 					installed=$$((installed + 1)); \
 				else \
@@ -179,7 +182,7 @@ install-dry-run:
 
 # Uninstall single plugin (legacy, for current profile only)
 uninstall:
-	claude plugin uninstall github-workflow@dapi || true
+	$(CLAUDE) plugin uninstall github-workflow@dapi || true
 
 # Remove scripts from ~/.local/bin
 uninstall-scripts:
@@ -212,8 +215,8 @@ uninstall-plugins-all:
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$profile_name"; \
 		for plugin in $(ALL_PLUGINS); do \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
-				if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin uninstall $$plugin@dapi 2>/dev/null; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
+				if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin uninstall $$plugin@dapi 2>/dev/null; then \
 					echo "   ✓ $$plugin removed"; \
 					removed=$$((removed + 1)); \
 				else \
@@ -240,8 +243,8 @@ uninstall-marketplace-all:
 		[ -f "$$dir/settings.json" ] || [ -f "$$dir/.credentials.json" ] || continue; \
 		profile_name=$$(basename "$$dir"); \
 		abs_dir=$$(cd "$$dir" && pwd); \
-		if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace remove dapi 2>/dev/null; then \
+		if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace remove dapi 2>/dev/null; then \
 				echo "📁 $$profile_name: ✓ removed"; \
 				removed=$$((removed + 1)); \
 			else \
@@ -288,12 +291,12 @@ uninstall-dry-run:
 		abs_dir=$$(cd "$$dir" && pwd); \
 		installed_count=0; \
 		for plugin in $(ALL_PLUGINS); do \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin list 2>/dev/null | grep -q "$$plugin@dapi"; then \
 				installed_count=$$((installed_count + 1)); \
 			fi; \
 		done; \
 		has_marketplace="no"; \
-		if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
+		if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace list 2>/dev/null | grep -q "dapi"; then \
 			has_marketplace="yes"; \
 		fi; \
 		echo "   • $$profile_name (plugins: $$installed_count, marketplace: $$has_marketplace)"; \
@@ -333,8 +336,8 @@ reinstall-dry-run:
 
 # Ensure marketplace points to current directory (works from worktrees too)
 ensure-marketplace:
-	@claude plugin marketplace remove dapi 2>/dev/null || true
-	@claude plugin marketplace add $(MARKETPLACE_PATH)
+	@$(CLAUDE) plugin marketplace remove dapi 2>/dev/null || true
+	@$(CLAUDE) plugin marketplace add $(MARKETPLACE_PATH)
 
 # Release targets
 # Usage: make release (auto minor) or make release VERSION=1.3.0
@@ -452,16 +455,16 @@ update-all:
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 		echo "📁 Profile: $$profile_name"; \
-		plugins=$$(CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //'); \
+		plugins=$$(CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //'); \
 		if [ -z "$$plugins" ]; then \
 			echo "   ⚠️  No dapi plugins installed"; \
 			continue; \
 		fi; \
 		profiles=$$((profiles + 1)); \
 		echo "   → Updating marketplace..."; \
-		CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin marketplace update dapi 2>/dev/null || true; \
+		CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace update dapi 2>/dev/null || true; \
 		for plugin in $$plugins; do \
-			if CLAUDE_CONFIG_DIR="$$abs_dir" claude plugin update "$$plugin" 2>/dev/null; then \
+			if CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin update "$$plugin" 2>/dev/null; then \
 				echo "   ✅ $$plugin"; \
 				total_updated=$$((total_updated + 1)); \
 			else \
