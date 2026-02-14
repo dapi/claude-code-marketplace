@@ -2,7 +2,7 @@
 
 ## ✅ Should Activate
 
-### 📸 Screenshots (EN)
+###  Screenshots (EN)
 
 - "upload screenshot"
 - "save screenshot to s3"
@@ -14,7 +14,7 @@
 - "share the screenshot"
 - "get public link for screenshot"
 
-### 📸 Screenshots (RU)
+###  Screenshots (RU)
 
 - "загрузи скриншот"
 - "сохрани скриншот"
@@ -23,7 +23,7 @@
 - "залей скриншот в s3"
 - "получи ссылку на скриншот"
 
-### 🖼️ Images (EN)
+### ️ Images (EN)
 
 - "upload image"
 - "save image to s3"
@@ -38,7 +38,7 @@
 - "attach image to issue"
 - "get public link for image"
 
-### 🖼️ Images (RU)
+### ️ Images (RU)
 
 - "загрузи картинку"
 - "сохрани изображение"
@@ -48,7 +48,7 @@
 - "приложи картинку"
 - "получи публичную ссылку на изображение"
 
-### 📁 Explicit Paths (EN)
+###  Explicit Paths (EN)
 
 - "upload /tmp/screenshot.png"
 - "upload ./images/logo.png to s3"
@@ -56,13 +56,13 @@
 - "upload /home/user/image.gif"
 - "upload the file at /tmp/page-2024-01-31.png"
 
-### 📁 Explicit Paths (RU)
+###  Explicit Paths (RU)
 
 - "загрузи /tmp/screenshot.png"
 - "залей файл ./images/logo.png"
 - "сохрани ~/Downloads/photo.jpg"
 
-### 📦 Batch Upload (EN)
+###  Batch Upload (EN)
 
 - "upload all screenshots from ./folder/"
 - "upload all png from ./screenshots/"
@@ -70,14 +70,14 @@
 - "upload *.jpg from current directory"
 - "upload all files from ./media/"
 
-### 📦 Batch Upload (RU)
+###  Batch Upload (RU)
 
 - "загрузи все скриншоты из ./folder/"
 - "загрузи все png из ./screenshots/"
 - "залей все картинки из ./images/"
 - "загрузи все jpg файлы"
 
-### 📎 General Upload Commands (EN)
+###  General Upload Commands (EN)
 
 - "upload to bucket"
 - "save to s3"
@@ -87,7 +87,7 @@
 - "upload media file"
 - "share file via s3"
 
-### 📎 General Upload Commands (RU)
+###  General Upload Commands (RU)
 
 - "загрузи в s3"
 - "сохрани в bucket"
@@ -95,7 +95,7 @@
 - "залей в cdn"
 - "загрузи медиафайл"
 
-### 📜 History Commands (EN)
+###  History Commands (EN)
 
 - "show recent uploads"
 - "last uploads"
@@ -103,20 +103,20 @@
 - "what did I upload recently"
 - "find yesterday's uploads"
 
-### 📜 History Commands (RU)
+###  History Commands (RU)
 
 - "покажи последние загрузки"
 - "история загрузок"
 - "что я загружал"
 - "найди вчерашние загрузки"
 
-### 📄 Documents (EN)
+###  Documents (EN)
 
 - "upload pdf to s3"
 - "save document to bucket"
 - "upload this pdf file"
 
-### 📄 Documents (RU)
+###  Documents (RU)
 
 - "загрузи pdf в s3"
 - "сохрани документ"
@@ -169,7 +169,7 @@
 - "compare s3 vs azure blob"
 - "which is better minio or aws s3"
 
-## 🎯 Key Trigger Words
+##  Key Trigger Words
 
 ### Verbs (EN)
 - upload, save, attach, share, get (link), put

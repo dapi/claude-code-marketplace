@@ -8,17 +8,17 @@ description: |
   - "send email to [recipient]"
   - "проверить почту", "отправить письмо"
 
-  📥 **Reading**:
+   **Reading**:
   - "check inbox", "show unread emails", "what's in my mail"
   - "read email from [sender]", "find emails about [topic]"
   - "проверить входящие", "непрочитанные", "что в почте"
 
-  📤 **Sending**:
+   **Sending**:
   - "send email to [address]", "compose email"
   - "reply to email", "forward email"
   - "отправить письмо", "ответить на письмо", "написать письмо"
 
-  📋 **Accounts**:
+   **Accounts**:
   - "list email accounts", "switch to work email"
   - "список почтовых аккаунтов", "использовать рабочую почту"
 

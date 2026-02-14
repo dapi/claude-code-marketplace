@@ -2,7 +2,7 @@
 
 ## ✅ Should Activate (положительные примеры)
 
-### 🚀 Запуск разработки (RU)
+###  Запуск разработки (RU)
 
 - "запусти разработку в отдельной вкладке"
 - "начни работу над issue в новой вкладке"
@@ -13,7 +13,7 @@
 - "работа над issue 78 в отдельной вкладке"
 - "запусти работу над #99 в вкладке"
 
-### 🚀 Start Development (EN)
+###  Start Development (EN)
 
 - "start development in separate tab"
 - "open issue in new zellij tab"
@@ -24,7 +24,7 @@
 - "work on issue in new tab"
 - "start issue development in tab"
 
-### 📑 Создание вкладки (RU)
+###  Создание вкладки (RU)
 
 - "создай вкладку для issue #123"
 - "новая вкладка для задачи 45"
@@ -34,7 +34,7 @@
 - "новая вкладка zellij для задачи"
 - "вкладка для работы над issue 56"
 
-### 📑 Create Tab (EN)
+###  Create Tab (EN)
 
 - "new tab for issue"
 - "create tab for issue #123"
@@ -44,7 +44,7 @@
 - "tab for issue development"
 - "open new tab for #99"
 
-### 🔧 start-issue команды (RU)
+###  start-issue команды (RU)
 
 - "start-issue в отдельной вкладке"
 - "запусти start-issue в новой вкладке"
@@ -52,7 +52,7 @@
 - "запусти start-issue в zellij"
 - "start-issue для #123 в новой вкладке"
 
-### 🔧 start-issue Commands (EN)
+###  start-issue Commands (EN)
 
 - "run start-issue in new tab"
 - "start-issue in separate tab"
@@ -60,14 +60,14 @@
 - "run start-issue 45 in new tab"
 - "start-issue #123 in zellij"
 
-### 🔗 С URL
+###  С URL
 
 - "открой https://github.com/owner/repo/issues/123 в новой вкладке"
 - "запусти https://github.com/dapi/project/issues/45 в вкладке zellij"
 - "start https://github.com/org/repo/issues/78 in new tab"
 - "open github issue URL in zellij tab"
 
-### 🎯 Комбинированные запросы
+###  Комбинированные запросы
 
 - "можешь запустить issue 45 в отдельной вкладке?"
 - "пожалуйста открой #123 в новой вкладке zellij"
@@ -111,7 +111,7 @@
 - "best practices for development"
 - "что такое GitHub issues?"
 
-## 🎯 Key Trigger Words
+##  Key Trigger Words
 
 ### Verbs (действия)
 

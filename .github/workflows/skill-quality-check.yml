@@ -3,15 +3,17 @@ name: Skill Quality Check
 on:
   pull_request:
     paths:
-      - '**/skills/**/SKILL.md'
-      - '**/skills/**/TRIGGER_EXAMPLES.md'
+      - '**/skills/**'
+      - '**/agents/**'
+      - '**/commands/**'
   push:
     branches:
       - master
       - main
     paths:
-      - '**/skills/**/SKILL.md'
-      - '**/skills/**/TRIGGER_EXAMPLES.md'
+      - '**/skills/**'
+      - '**/agents/**'
+      - '**/commands/**'
 
 jobs:
   review-skills:
@@ -24,8 +26,18 @@ jobs:
         with:
           fetch-depth: 0  # Full history for accurate diff
 
-      - name: Make review script executable
-        run: chmod +x scripts/review_skill_triggers.sh
+      - name: Make scripts executable
+        run: chmod +x scripts/review_skill_triggers.sh scripts/lint_no_emoji.sh
+
+      - name: Lint encoding (no supplementary plane emoji)
+        id: emoji-lint
+        run: |
+          ./scripts/lint_no_emoji.sh || {
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "::error::Supplementary plane characters (emoji U+10000+) found in plugin files. Run: ./scripts/lint_no_emoji.sh --fix"
+            exit 1
+          }
+          echo "status=passed" >> $GITHUB_OUTPUT
 
       - name: Find changed skills
         id: changed-skills

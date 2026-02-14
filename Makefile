@@ -4,7 +4,8 @@
         reinstall reinstall-all reinstall-dry-run \
         release release-patch release-minor release-major ensure-marketplace list-claude-profiles update-all \
         install-zellij-tab-status install-zellij-tab-name \
-        test-hooks-install test-hooks-uninstall
+        test-hooks-install test-hooks-uninstall \
+        lint lint-emoji
 
 PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
@@ -518,6 +519,21 @@ install-zellij-tab-name:
 	@echo '   }'
 	@echo ""
 	@echo "   Then restart zellij."
+
+# ============================================================================
+# LINT TARGETS
+# ============================================================================
+
+# Run all linters
+lint: lint-emoji
+
+# Check for supplementary plane emoji (U+10000+) that cause API surrogate errors
+lint-emoji:
+	@./scripts/lint_no_emoji.sh
+
+# Auto-fix: remove supplementary plane emoji from all plugins
+lint-emoji-fix:
+	@./scripts/lint_no_emoji.sh --fix
 
 # ============================================================================
 # TESTING TARGETS

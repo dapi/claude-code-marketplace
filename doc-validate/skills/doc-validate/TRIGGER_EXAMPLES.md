@@ -2,7 +2,7 @@
 
 ## ✅ Should Activate
 
-### 📝 Formatting & Structure (lint)
+###  Formatting & Structure (lint)
 
 **English:**
 - "validate docs"
@@ -31,7 +31,7 @@
 - "/doc:lint --interactive"
 - "/doc:lint --batch"
 
-### 🔗 Links & Navigation (links)
+###  Links & Navigation (links)
 
 **English:**
 - "find broken links"
@@ -56,7 +56,7 @@
 - "/doc:links"
 - "/doc:links --mermaid"
 
-### 📚 Terminology & Glossary (terms)
+###  Terminology & Glossary (terms)
 
 **English:**
 - "check terminology"
@@ -79,7 +79,7 @@
 **Commands:**
 - "/doc:terms"
 
-### 📐 Viewpoints & Artifacts (viewpoints)
+###  Viewpoints & Artifacts (viewpoints)
 
 **English:**
 - "check viewpoints"
@@ -123,7 +123,7 @@
 **Commands:**
 - "/doc:contradictions"
 
-### 🕳️ Gaps & Completeness (gaps)
+### ️ Gaps & Completeness (gaps)
 
 **English:**
 - "find gaps in docs"
@@ -145,7 +145,7 @@
 **Commands:**
 - "/doc:gaps"
 
-### 📋 Full Audit (review)
+###  Full Audit (review)
 
 **English:**
 - "full doc review"
@@ -166,7 +166,7 @@
 - "/doc:review"
 - "/doc:review --batch"
 
-### 🔧 Interactive & Batch Modes
+###  Interactive & Batch Modes
 
 **English:**
 - "lint docs interactively"
@@ -179,7 +179,7 @@
 - "исправь проблемы в документации"
 - "проверка для CI/CD"
 
-### 💬 Contextual Triggers
+###  Contextual Triggers
 
 **English:**
 - "before commit check docs"
@@ -223,7 +223,7 @@
 
 ---
 
-## 🎯 Key Trigger Words
+##  Key Trigger Words
 
 ### Action Verbs
 | English | Russian |

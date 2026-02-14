@@ -113,8 +113,8 @@ argument-hint: <issue-url>
 9. **Выведи результат:**
    ```
    ✅ Worktree создан: <WORKTREE_PATH>
-   📋 Issue: <ISSUE_URL>
-   🌿 Ветка: <BRANCH_NAME>
+    Issue: <ISSUE_URL>
+    Ветка: <BRANCH_NAME>
    ```
 
 10. **Приступи к реализации:**
@@ -206,7 +206,7 @@ Refs #<номер-issue>
 **Вывод:**
 ```
 ✅ Задача завершена!
-📋 Issue: <ISSUE_URL>
-🔀 PR: <PR_URL>
+ Issue: <ISSUE_URL>
+ PR: <PR_URL>
 ✔️ Review: passed
 ```

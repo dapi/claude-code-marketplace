@@ -74,17 +74,17 @@ description: |
   - "send email to [recipient]"
   - "проверить почту", "отправить письмо"
 
-  📥 **Reading**:
+   **Reading**:
   - "check inbox", "show unread emails"
   - "read email from [sender]"
   - "проверить входящие", "непрочитанные"
 
-  📤 **Sending**:
+   **Sending**:
   - "send email to [address]"
   - "reply to email"
   - "отправить письмо", "ответить на письмо"
 
-  📋 **Accounts**:
+   **Accounts**:
   - "list email accounts", "switch to work email"
   - "список почтовых аккаунтов"
 

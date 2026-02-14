@@ -517,6 +517,24 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 - Skill descriptions must explicitly state activation criteria
 - Include concrete examples, not vague generalizations
 
+### Encoding Safety (NO EMOJI in plugin files)
+
+**CRITICAL**: Plugin files (.md, .json) must NOT contain supplementary plane Unicode characters (U+10000+). This includes all emoji like `U+1F680` etc. These characters require UTF-16 surrogate pairs and cause `"no low surrogate in string"` API errors when Claude Code serializes large payloads.
+
+**What to use instead:**
+- Categories: `**Bold Headers**` instead of emoji prefixes
+- Status markers: `[YES]`, `[NO]`, `[OK]`, `[FAIL]` instead of checkmarks/crosses
+- Bullets: `- `, `* `, `>` instead of decorative emoji
+
+**Validation:**
+```bash
+make lint-emoji           # Check all plugins
+make lint-emoji-fix       # Auto-remove emoji
+./scripts/lint_no_emoji.sh task-router  # Check single plugin
+```
+
+**CI enforced**: The `skill-quality-check` workflow blocks merge if emoji are found.
+
 ### JSON Validity
 - All `plugin.json` files must be valid JSON
 - YAML frontmatter must be properly formatted
@@ -533,6 +551,16 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 ## Makefile Targets
 
 Используй `make` для типовых операций с плагинами и релизами.
+
+### Линтинг
+
+```bash
+# Проверить все плагины на запрещённые emoji
+make lint-emoji
+
+# Авто-удалить emoji из всех плагинов
+make lint-emoji-fix
+```
 
 ### Обновление плагинов
 

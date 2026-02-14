@@ -78,7 +78,7 @@ Task(subagent_type="cluster-efficiency:karpenter-analyzer", prompt="...")
 ```
 === CLUSTER EFFICIENCY SUMMARY ===
 
-📊 Утилизация:
+ Утилизация:
 - Средняя CPU: X% (target: 70%)
 - Средняя Memory: Y%
 - Ноды с низкой утилизацией: N
@@ -87,11 +87,11 @@ Task(subagent_type="cluster-efficiency:karpenter-analyzer", prompt="...")
 - [HIGH] ...
 - [MEDIUM] ...
 
-💰 Потенциальная экономия:
+ Потенциальная экономия:
 - CPU: Xm можно освободить
 - Memory: XGi можно освободить
 
-📝 Рекомендации:
+ Рекомендации:
 1. ...
 2. ...
 ```
@@ -104,7 +104,7 @@ Task(subagent_type="cluster-efficiency:karpenter-analyzer", prompt="...")
 | Memory utilization | >60% | 40-60% | <40% |
 | Requests efficiency | >60% | 30-60% | <30% |
 
-## 🛡️ Правила безопасности
+## ️ Правила безопасности
 
 ### Журнал изменений: `docs/resource-changes.md`
 
@@ -138,7 +138,7 @@ Task(subagent_type="cluster-efficiency:karpenter-analyzer", prompt="...")
 ### Формат вывода с защитой
 
 ```
-📝 Рекомендации:
+ Рекомендации:
 
 ✅ МОЖНО ОПТИМИЗИРОВАТЬ:
 1. dev/test-app: CPU 500m → 100m (Prometheus max 7d: 45m)

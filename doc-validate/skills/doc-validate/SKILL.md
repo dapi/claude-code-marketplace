@@ -3,13 +3,13 @@ name: doc-validate
 description: |
   **UNIVERSAL TRIGGER**: Validate/check/lint documentation quality.
 
-  📝 **Formatting**: "validate docs", "doc lint", "проверь документацию"
-  🔗 **Links**: "broken links", "orphan docs", "битые ссылки"
-  📚 **Terms**: "check glossary", "терминология", "synonyms"
-  📐 **Viewpoints**: "check artifacts", "state diagrams", "threat model"
+   **Formatting**: "validate docs", "doc lint", "проверь документацию"
+   **Links**: "broken links", "orphan docs", "битые ссылки"
+   **Terms**: "check glossary", "терминология", "synonyms"
+   **Viewpoints**: "check artifacts", "state diagrams", "threat model"
   ⚡ **Contradictions**: "find conflicts", "противоречия"
-  🕳️ **Gaps**: "missing coverage", "пробелы", "completeness"
-  📋 **Review**: "full audit", "полный аудит", "/doc:review"
+  ️ **Gaps**: "missing coverage", "пробелы", "completeness"
+   **Review**: "full audit", "полный аудит", "/doc:review"
 
   TRIGGERS: doc lint, validate docs, проверь документацию, broken links,
   orphan, glossary, viewpoints, contradictions, gaps, coverage,
@@ -53,10 +53,10 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 **Пример вывода**:
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟢 [LINT-001] Битая ссылка
+ [LINT-001] Битая ссылка
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📄 03_REQUIREMENTS.md:45
+ 03_REQUIREMENTS.md:45
    > [см. архитектуру](architecture/MISSING.md)
 
 ❌ Файл не существует: architecture/MISSING.md
@@ -83,7 +83,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 
 **Пример вывода**:
 ```
-📊 Граф документации
+ Граф документации
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Всего документов: 35
@@ -112,19 +112,19 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 
 **Пример вывода**:
 ```
-📚 Загружен глоссарий: 16 терминов
-🚫 Запрещённых синонимов: 5 групп
+ Загружен глоссарий: 16 терминов
+ Запрещённых синонимов: 5 групп
 
 Сканирование 24 файлов...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟡 [TERM-001] Запрещённый синоним
+ [TERM-001] Запрещённый синоним
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📄 08_KEY_SECURITY.md:82
+ 08_KEY_SECURITY.md:82
    Запрещённый синоним: "wallet" → используйте "кошелёк"
 
-📊 Покрытие глоссария
+ Покрытие глоссария
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Используется: 14/16 терминов (87%)
 ```
@@ -137,12 +137,12 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 
 | Viewpoint | Артефакт | Приоритет |
 |-----------|----------|-----------|
-| Data | STATE_MACHINES.md | 🔴 must |
-| Data | DATA_FLOWS.md | 🟡 should |
-| Business Rules | BUSINESS_RULES.md | 🔴 must |
-| Security | THREAT_MODEL.md | 🔴 must (критично для крипто) |
-| Integration | EVENT_CATALOG.md | 🟡 should |
-| Traceability | RTM.md | 🟡 should |
+| Data | STATE_MACHINES.md |  must |
+| Data | DATA_FLOWS.md |  should |
+| Business Rules | BUSINESS_RULES.md |  must |
+| Security | THREAT_MODEL.md |  must (критично для крипто) |
+| Integration | EVENT_CATALOG.md |  should |
+| Traceability | RTM.md |  should |
 
 **Пример вывода**:
 ```
@@ -154,9 +154,9 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 | Data | DATA_FLOWS | ❌ | architecture/DATA_FLOWS.md |
 | Security | THREAT_MODEL | ✅ | architecture/THREAT_MODEL.md |
 
-📊 Общее покрытие viewpoints: 3/6 (50%)
+ Общее покрытие viewpoints: 3/6 (50%)
 
-🔴 Security viewpoint не полностью покрыт — критично для крипто-системы!
+ Security viewpoint не полностью покрыт — критично для крипто-системы!
 ```
 
 ### `/doc:contradictions` — Противоречия ✅
@@ -174,24 +174,24 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 ```
 ⚡ /doc:contradictions — Поиск противоречий
 
-📊 Извлечение параметров из документации...
+ Извлечение параметров из документации...
    Найдено 194 параметров в 25 файлах
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 КРИТИЧНЫЕ ПРОТИВОРЕЧИЯ
+ КРИТИЧНЫЕ ПРОТИВОРЕЧИЯ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔴 [CONTRADICTION-001] Параметр "confirmations" имеет разные значения
-   📍 03_REQUIREMENTS.md:45 → 3
-   📍 architecture/FLOWS.md:128 → 6
+ [CONTRADICTION-001] Параметр "confirmations" имеет разные значения
+    03_REQUIREMENTS.md:45 → 3
+    architecture/FLOWS.md:128 → 6
    ⚠️ Разница: 100%
 
-🔴 [CONTRADICTION-002] Параметр "hot_wallet_limit" имеет разные значения
-   📍 03_REQUIREMENTS.md:52 → 10%
-   📍 08_KEY_SECURITY.md:23 → 5%
+ [CONTRADICTION-002] Параметр "hot_wallet_limit" имеет разные значения
+    03_REQUIREMENTS.md:52 → 10%
+    08_KEY_SECURITY.md:23 → 5%
    ⚠️ Разница: 100%
 
-📊 Итого: 8 критичных, 10 предупреждений
+ Итого: 8 критичных, 10 предупреждений
 ```
 
 ### `/doc:gaps` — Полнота ✅
@@ -207,19 +207,19 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 
 **Пример вывода**:
 ```
-🕳️ /doc:gaps — Анализ полноты покрытия
+️ /doc:gaps — Анализ полноты покрытия
 
-📊 Сканирование документации на гапы...
+ Сканирование документации на гапы...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟡 ПРЕДУПРЕЖДЕНИЯ (требуют внимания)
+ ПРЕДУПРЕЖДЕНИЯ (требуют внимания)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🟡 [GAP-001] Найдены интеграции (69), но нет Event Catalog
-   📍 architecture/EVENT_CATALOG.md — отсутствует
-   💡 Рекомендация: создайте EVENT_CATALOG.md для документирования событий
+ [GAP-001] Найдены интеграции (69), но нет Event Catalog
+    architecture/EVENT_CATALOG.md — отсутствует
+    Рекомендация: создайте EVENT_CATALOG.md для документирования событий
 
-📊 Итого: 0 критичных, 1 предупреждение
+ Итого: 0 критичных, 1 предупреждение
 ```
 
 ### `/doc:review` — Полный аудит ✅
@@ -242,11 +242,11 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 **Пример вывода**:
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║               📋 ИТОГОВЫЙ ОТЧЁТ DOC:REVIEW                   ║
+║                ИТОГОВЫЙ ОТЧЁТ DOC:REVIEW                   ║
 ╚══════════════════════════════════════════════════════════════╝
 
 ┌────────────────┬──────────┬──────────┬──────────┐
-│ Команда        │ 🔴 Крит. │ 🟡 Важн. │ 🟢 Инфо  │
+│ Команда        │  Крит. │  Важн. │  Инфо  │
 ├────────────────┼──────────┼──────────┼──────────┤
 │ lint           │        0 │        6 │       92 │
 │ links          │        0 │        0 │        0 │
@@ -258,18 +258,18 @@ allowed-tools: Bash, Read, Glob, Grep, Write, Edit
 │ ИТОГО          │        8 │      214 │      102 │
 └────────────────┴──────────┴──────────┴──────────┘
 
-📐 Покрытие viewpoints: 3/6 (50%)
-📚 Покрытие глоссария: 94%
+ Покрытие viewpoints: 3/6 (50%)
+ Покрытие глоссария: 94%
 
 ⏱️  Время выполнения: 0.4 сек
 
-💡 Рекомендации:
-  • 🔴 Исправьте 8 критических проблем в первую очередь
+ Рекомендации:
+  •  Исправьте 8 критических проблем в первую очередь
   • ⚡ Разрешите противоречия в числовых параметрах
-  • 📐 Увеличьте покрытие viewpoints (сейчас 50%)
+  •  Увеличьте покрытие viewpoints (сейчас 50%)
 
 ╔══════════════════════════════════════╗
-║     🏆 ОБЩАЯ ОЦЕНКА: 85/100 (B)      ║
+║      ОБЩАЯ ОЦЕНКА: 85/100 (B)      ║
 ╚══════════════════════════════════════╝
 ```
 
@@ -395,9 +395,9 @@ opus (недоступен) → sonnet → haiku → native (без AI)
 
 | Приоритет | Категории |
 |-----------|-----------|
-| 🔴 Критичные | contradictions, gaps, missing_threat_model |
-| 🟡 Важные | duplicates, terms, missing_state_diagrams |
-| 🟢 Информация | broken_links, formatting, orphans |
+|  Критичные | contradictions, gaps, missing_threat_model |
+|  Важные | duplicates, terms, missing_state_diagrams |
+|  Информация | broken_links, formatting, orphans |
 
 ## Ограничения текущей версии (v1.1.0)
 

@@ -12,7 +12,7 @@ description: |
 
   Specific analysis types supported:
 
-  📊 **Nodes Utilization**:
+   **Nodes Utilization**:
   - "show node utilization", "check nodes efficiency"
   - "low utilization nodes", "ноды с низкой утилизацией"
   - "node consolidation candidates", "кандидаты на консолидацию"
@@ -22,17 +22,17 @@ description: |
   - "CPU/memory efficiency", "эффективность CPU/памяти"
   - "requests vs actual usage", "requests vs фактическое потребление"
 
-  🔄 **Karpenter Analysis**:
+   **Karpenter Analysis**:
   - "karpenter consolidation status", "статус консолидации"
   - "consolidation blockers", "блокеры консолидации"
   - "nodepool configuration", "конфигурация NodePool"
 
-  💰 **Cost Optimization**:
+   **Cost Optimization**:
   - "cluster cost optimization", "оптимизация затрат"
   - "resource savings recommendations", "рекомендации по экономии"
   - "YAML resource patches", "YAML патчи ресурсов"
 
-  📈 **Historical Analysis** (with Prometheus):
+   **Historical Analysis** (with Prometheus):
   - "analyze with prometheus", "historical resource usage"
   - "7-day resource trends", "тренды за 7 дней"
 
@@ -160,7 +160,7 @@ Task(subagent_type="cluster-efficiency:node-analyzer",
 ```
 === CLUSTER EFFICIENCY SUMMARY ===
 
-📊 Утилизация:
+ Утилизация:
 - Средняя CPU: X% (target: 70%)
 - Средняя Memory: Y%
 - Ноды с низкой утилизацией: N
@@ -169,16 +169,16 @@ Task(subagent_type="cluster-efficiency:node-analyzer",
 - [HIGH] ...
 - [MEDIUM] ...
 
-💰 Потенциальная экономия:
+ Потенциальная экономия:
 - CPU: Xm можно освободить
 - Memory: XGi можно освободить
 - Нод можно консолидировать: N
 
-📝 Рекомендации:
+ Рекомендации:
 1. ...
 2. ...
 
-📁 Отчет сохранен: ./logs/cluster-efficiency_TIMESTAMP.log
+ Отчет сохранен: ./logs/cluster-efficiency_TIMESTAMP.log
 ```
 
 ## Критерии эффективности

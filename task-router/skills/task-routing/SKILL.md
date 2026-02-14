@@ -3,20 +3,20 @@ name: task-routing
 description: |
   **UNIVERSAL TRIGGER**: ROUTE/TAKE/IMPLEMENT any task FROM a URL or issue reference
 
-  🔗 **URLs & References**:
+  **URLs & References**:
   - "get task from github.com/.../issues/N", "fetch spec from docs.google.com/..."
   - "retrieve task from https://...", "show issue from URL"
 
-  🚀 **Action Triggers (EN)**:
+  **Action Triggers (EN)**:
   - "take this task", "implement this spec", "do issue #NNN"
   - "route task", "route this", "start issue #NNN"
   - "list what in this issue", "check this task", "display task"
 
-  🇷🇺 **Триггеры (RU)**:
+  **Triggers (RU)**:
   - "возьми задачу", "сделай задачу", "реализуй по спеке"
   - "сделай issue #NNN", "возьми issue #NNN"
 
-  ⚠️ **#NNN**: action-слово + "issue"/"задачу" обязательны. Голый #NNN — НЕ триггер.
+  **#NNN**: action-слово + "issue"/"задачу" обязательны. Голый #NNN -- НЕ триггер.
 
   TRIGGERS: route task, route this, возьми задачу, сделай задачу,
     take this task, implement this spec, implement this issue,

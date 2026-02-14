@@ -2,7 +2,7 @@
 
 ## ✅ Should Activate (76 examples)
 
-### 🚀 Initialize New Project (EN)
+###  Initialize New Project (EN)
 - "init long-running project for building a todo app"
 - "initialize new multi-session project"
 - "start new long-running project: clone of Twitter"
@@ -17,7 +17,7 @@
 - "set up incremental development environment"
 - "initialize feature tracking for new project"
 
-### 🚀 Initialize New Project (RU)
+###  Initialize New Project (RU)
 - "инициализируй долгосрочный проект"
 - "начни новый проект на несколько сессий"
 - "создай harness для проекта"
@@ -29,7 +29,7 @@
 - "создай progress tracking для нового проекта"
 - "инициализация CLI проекта"
 
-### 🔄 Continue Work (EN)
+###  Continue Work (EN)
 - "continue project"
 - "resume work on the project"
 - "pick up where I left off"
@@ -46,7 +46,7 @@
 - "what should I work on next"
 - "continue the harness project"
 
-### 🔄 Continue Work (RU)
+###  Continue Work (RU)
 - "продолжи работу над проектом"
 - "продолжить проект"
 - "возобновить разработку"
@@ -60,7 +60,7 @@
 - "следующая сессия проекта"
 - "продолжаем работу"
 
-### 📊 Status & Progress (EN)
+###  Status & Progress (EN)
 - "show project progress"
 - "what features are done"
 - "project status"
@@ -74,7 +74,7 @@
 - "show session history"
 - "what was done last session"
 
-### 📊 Status & Progress (RU)
+###  Status & Progress (RU)
 - "покажи прогресс проекта"
 - "статус проекта"
 - "что сделано"
@@ -86,7 +86,7 @@
 - "что было сделано в прошлой сессии"
 - "оставшиеся фичи"
 
-### 🔧 Management (EN)
+###  Management (EN)
 - "mark feature F005 as done"
 - "update progress for feature"
 - "add new feature to the list"
@@ -96,7 +96,7 @@
 - "end session with summary"
 - "finalize current session"
 
-### 🔧 Management (RU)
+###  Management (RU)
 - "отметь фичу F005 как готовую"
 - "обнови прогресс"
 - "добавь новую фичу в список"
@@ -132,7 +132,7 @@
 
 ---
 
-## 🎯 Key Trigger Words
+##  Key Trigger Words
 
 ### Action Verbs
 | English | Russian | Context |
@@ -161,7 +161,7 @@
 
 ---
 
-## 📋 Category Coverage
+##  Category Coverage
 
 | Category | EN Examples | RU Examples | Total |
 |----------|-------------|-------------|-------|

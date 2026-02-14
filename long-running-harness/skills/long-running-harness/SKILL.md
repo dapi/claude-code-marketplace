@@ -11,22 +11,22 @@ description: |
 
   Session types supported:
 
-  🚀 **Initialize (first run)**:
+   **Initialize (first run)**:
   - "init long-running project", "start new multi-session project"
   - "set up project harness", "create progress tracking"
   - "initialize [web-app/api/cli] project", "начать долгий проект"
 
-  🔄 **Continue (subsequent sessions)**:
+   **Continue (subsequent sessions)**:
   - "continue project", "resume work", "продолжить работу"
   - "pick up where I left off", "what's next", "следующая фича"
   - "next feature", "continue implementation"
 
-  📊 **Status & Progress**:
+   **Status & Progress**:
   - "show project progress", "what features are done"
   - "project status", "статус проекта", "что сделано"
   - "remaining features", "what's left to do"
 
-  🔧 **Management**:
+   **Management**:
   - "mark feature as done", "update progress"
   - "add new feature to list", "reprioritize features"
 
@@ -55,7 +55,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
 
 Skill для управления долгосрочными проектами, которые требуют работы через множество сессий Claude. Основан на исследовании Anthropic.
 
-**📚 Источник**: [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) (Anthropic Engineering, Nov 2025)
+** Источник**: [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) (Anthropic Engineering, Nov 2025)
 
 ---
 
@@ -235,7 +235,7 @@ project/
 - ✅ F013: Theme persistence in localStorage
 
 ### In Progress
-- 🔄 F014: System theme detection (80% done, need media query listener)
+-  F014: System theme detection (80% done, need media query listener)
 
 ### Blockers
 - None
@@ -282,7 +282,7 @@ project/
 #!/bin/bash
 set -e
 
-echo "🔧 Setting up Rails environment..."
+echo " Setting up Rails environment..."
 
 # 1. Install dependencies
 bundle install
@@ -347,7 +347,7 @@ Claude выполнит startup checklist автоматически.
 Оператор должен завершить сессию когда:
 - ⏰ Прошло 30-45 минут активной работы
 - ✅ Завершена 1-2 фичи
-- 🔄 Claude начинает делать много изменений без коммитов
+-  Claude начинает делать много изменений без коммитов
 - ⚠️ Контекст становится длинным (Claude начинает забывать)
 
 **Команда для завершения**:
@@ -451,10 +451,10 @@ Claude:
 Человек: "Статус проекта"
 
 Claude:
-📊 Project Status: notion-clone
+ Project Status: notion-clone
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ Completed: 12/47 features (25%)
-🔄 In Progress: F013 (block drag-and-drop)
+ In Progress: F013 (block drag-and-drop)
 ⏭️ Next Priority: F014 (nested pages)
 
 Recent Sessions:

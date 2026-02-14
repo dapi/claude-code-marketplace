@@ -125,21 +125,32 @@ else
 fi
 
 # ============================================================
-# TEST 4: Categorization (10 points)
+# TEST 4: No Supplementary Plane Characters (10 points)
 # ============================================================
-echo -e "${YELLOW}[4/10] Content Categorization${NC}"
+echo -e "${YELLOW}[4/10] Encoding Safety (no surrogate-prone chars)${NC}"
 
-# Check for emoji categories (📊, 🔍, ✅, etc.)
-EMOJI_COUNT=$(grep -oP '[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{1F1E0}-\x{1F1FF}]' "$SKILL_FILE" 2>/dev/null | wc -l || echo "0")
+# Check for supplementary plane characters (U+10000+) that cause
+# "no low surrogate in string" API errors in large payloads.
+# Use bold headers (**text**) for categorization instead of emoji.
+SUPP_PLANE_COUNT=$(python3 -c "
+with open('$SKILL_FILE', 'r') as f:
+    content = f.read()
+count = sum(1 for ch in content if ord(ch) >= 0x10000)
+print(count)
+" 2>/dev/null || echo "0")
 
-if [ "$EMOJI_COUNT" -ge 3 ]; then
-  echo -e "  ${GREEN}✅ Content categorized with emoji (${EMOJI_COUNT} found)${NC}"
+BOLD_HEADERS=$(grep -c '\*\*.*\*\*' "$SKILL_FILE" || echo "0")
+
+if [ "$SUPP_PLANE_COUNT" -eq 0 ] && [ "$BOLD_HEADERS" -ge 2 ]; then
+  echo -e "  ${GREEN}✅ Clean encoding, bold headers for categorization ($BOLD_HEADERS found)${NC}"
   SCORE=$((SCORE + 10))
-elif [ "$EMOJI_COUNT" -gt 0 ]; then
-  echo -e "  ${YELLOW}⚠️  Some categorization (${EMOJI_COUNT} emoji)${NC}"
-  SCORE=$((SCORE + 5))
+elif [ "$SUPP_PLANE_COUNT" -eq 0 ]; then
+  echo -e "  ${GREEN}✅ Clean encoding (no supplementary plane chars)${NC}"
+  SCORE=$((SCORE + 8))
 else
-  echo -e "  ${RED}❌ No visual categorization${NC}"
+  echo -e "  ${RED}❌ Found $SUPP_PLANE_COUNT supplementary plane char(s) — risk of surrogate pair errors${NC}"
+  echo -e "  ${YELLOW}  Run: ./scripts/lint_no_emoji.sh --fix $(dirname $(dirname $SKILL_FILE))${NC}"
+  SCORE=$((SCORE + 0))
 fi
 
 # ============================================================

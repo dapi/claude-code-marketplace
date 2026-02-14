@@ -7,17 +7,17 @@ description: |
   - "start/open/launch [issue] in new tab"
   - "запусти/открой/создай [issue] в вкладке"
 
-  🚀 **Start Development**:
+   **Start Development**:
   - "start development in separate tab"
   - "launch issue #123 in new zellij tab"
   - "запусти разработку в отдельной вкладке"
 
-  📑 **Create/Open Tab**:
+   **Create/Open Tab**:
   - "create tab for issue #45"
   - "open new tab for issue"
   - "создай вкладку для задачи"
 
-  🔧 **Run start-issue**:
+   **Run start-issue**:
   - "run start-issue in new tab"
   - "start-issue в отдельной вкладке"
 

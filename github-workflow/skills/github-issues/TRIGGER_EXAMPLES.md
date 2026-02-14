@@ -118,7 +118,7 @@
 - "create subtask" (no parent issue)
 - "show checkboxes" (no issue specified)
 
-## 🎯 Key Trigger Patterns
+##  Key Trigger Patterns
 
 ### URL Pattern
 ```

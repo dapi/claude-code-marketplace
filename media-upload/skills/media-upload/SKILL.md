@@ -11,21 +11,21 @@ description: |
   - "сделай скриншот и сохрани" (screenshot + upload)
   - "открой сайт и сделай скриншот" (implies upload)
 
-  📸 **Screenshots** (AUTO-ACTIVATE after Playwright screenshot):
+   **Screenshots** (AUTO-ACTIVATE after Playwright screenshot):
   - After `browser_take_screenshot` → automatically offer to upload
   - "upload screenshot", "save screenshot", "attach screenshot"
   - "загрузи скриншот", "приложи скриншот", "сохрани скриншот"
   - "сделай скриншот [сайта]" → take screenshot + upload to S3
 
-  🖼️ **Images**:
+  ️ **Images**:
   - "upload/save/attach image/picture/photo"
   - "share png/jpg/gif", "get link for image"
 
-  📦 **Batch**:
+   **Batch**:
   - "upload all png from ./folder/"
   - "загрузи все картинки"
 
-  📜 **History**:
+   **History**:
   - "show/list recent uploads"
   - "покажи загрузки"
 
@@ -604,21 +604,21 @@ jq '.uploads[-10:]' ~/.media-upload-history.json
 ```
 ✅ Image uploaded!
 
-📎 URL: https://s3.example.com/bucket/2024/01/31/screenshot.png
-📋 Markdown: ![screenshot](https://s3.example.com/bucket/2024/01/31/screenshot.png)
-📦 Size: 245 KB
+ URL: https://s3.example.com/bucket/2024/01/31/screenshot.png
+ Markdown: ![screenshot](https://s3.example.com/bucket/2024/01/31/screenshot.png)
+ Size: 245 KB
 ```
 
 **Presigned URL** (длинный, временный):
 ```
 ✅ Image uploaded!
 
-📎 URL: https://s3.example.com/bucket/2024/01/31/screenshot.png?X-Amz-...
+ URL: https://s3.example.com/bucket/2024/01/31/screenshot.png?X-Amz-...
 ⏰ Expires: 7 days
-📋 Markdown: ![screenshot](URL)
-📦 Size: 245 KB
+ Markdown: ![screenshot](URL)
+ Size: 245 KB
 
-💡 Tip: Настройте публичный доступ к bucket для коротких постоянных ссылок
+ Tip: Настройте публичный доступ к bucket для коротких постоянных ссылок
 ```
 
 ### Batch:
@@ -633,7 +633,7 @@ jq '.uploads[-10:]' ~/.media-upload-history.json
 
 Total: 1.2 MB
 
-📋 Markdown (all):
+ Markdown (all):
 ![screenshot-1](https://cdn...)
 ![screenshot-2](https://cdn...)
 ```

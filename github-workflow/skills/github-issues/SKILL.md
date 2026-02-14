@@ -5,22 +5,22 @@ description: |
 
   **CRITICAL RULE**: ALWAYS use `gh` CLI for GitHub issues, NEVER use WebFetch!
 
-  📖 **Reading**: "read issue #N", "show issue", "прочитай задачу"
+   **Reading**: "read issue #N", "show issue", "прочитай задачу"
   ✅ **Checkboxes**: "mark done", "complete step", "отметь пункт"
-  🔗 **Sub-issues**: "create sub-issue", "link as child", "подзадача"
-  📝 **Management**: "edit issue", "close issue", "add label"
-  🖼️ **Images**: "download images from issue", "скачать картинки"
+   **Sub-issues**: "create sub-issue", "link as child", "подзадача"
+   **Management**: "edit issue", "close issue", "add label"
+  ️ **Images**: "download images from issue", "скачать картинки"
 
   TRIGGERS:
-  📖 github.com/issues, issue #, read issue, show issue, view issue,
+   github.com/issues, issue #, read issue, show issue, view issue,
      прочитай issue, покажи issue, задача
   ✅ checkbox, mark done, complete step, check off,
      отметь пункт, закрой этап
-  🔗 sub-issue, subtask, child issue, parent issue,
+   sub-issue, subtask, child issue, parent issue,
      подзадача, создай подзадачу
-  📝 edit issue, close issue, reopen issue, issue labels,
+   edit issue, close issue, reopen issue, issue labels,
      create issue, update task
-  🖼️ download images, issue attachments, скачать картинки
+  ️ download images, issue attachments, скачать картинки
 allowed-tools: Bash, Read
 ---
 
