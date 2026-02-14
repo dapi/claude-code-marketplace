@@ -98,7 +98,10 @@ parse_issue_number() {
 ```bash
 # Полная команда
 ISSUE_NUMBER=$(parse_issue_number "$ARG")
-zellij action new-tab --name "#${ISSUE_NUMBER}" && zellij action write-chars "start-issue ${ARG}\n"
+zellij action go-to-tab-name --create "#${ISSUE_NUMBER}" && \
+zellij action new-pane -- start-issue $ARG && \
+zellij action focus-previous-pane && \
+zellij action close-pane
 ```
 
 ## Примеры использования
@@ -109,7 +112,10 @@ zellij action new-tab --name "#${ISSUE_NUMBER}" && zellij action write-chars "st
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#45" && zellij action write-chars "start-issue 45\n"
+zellij action go-to-tab-name --create "#45" && \
+zellij action new-pane -- start-issue 45 && \
+zellij action focus-previous-pane && \
+zellij action close-pane
 ```
 
 ### Пример 2: URL
@@ -118,7 +124,10 @@ zellij action new-tab --name "#45" && zellij action write-chars "start-issue 45\
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#123" && zellij action write-chars "start-issue https://github.com/dapi/project/issues/123\n"
+zellij action go-to-tab-name --create "#123" && \
+zellij action new-pane -- start-issue https://github.com/dapi/project/issues/123 && \
+zellij action focus-previous-pane && \
+zellij action close-pane
 ```
 
 ### Пример 3: С решёткой
@@ -127,7 +136,10 @@ zellij action new-tab --name "#123" && zellij action write-chars "start-issue ht
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#78" && zellij action write-chars "start-issue 78\n"
+zellij action go-to-tab-name --create "#78" && \
+zellij action new-pane -- start-issue 78 && \
+zellij action focus-previous-pane && \
+zellij action close-pane
 ```
 
 ## Зависимости

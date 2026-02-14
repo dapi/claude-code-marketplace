@@ -648,7 +648,7 @@ git commit -m "Add plugin-name: brief description"
 | task-router | 1 agent, 1 skill, 1 command |
 | zellij-workflow | 2 skills, 2 commands, hooks |
 
-**Totals**: 16 agents, 10 skills, 8 commands
+**Totals**: 16 agents, 11 skills, 9 commands
 
 ## zellij-workflow Plugin
 
