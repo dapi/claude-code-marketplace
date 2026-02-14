@@ -2,7 +2,7 @@
 
 ## Goal
 
-Plugin that takes a task URL (GitHub issue, Google Doc, any URL), classifies it without polluting main context, and routes to the optimal workflow: `feature-dev`, `writing-plans + subagent-driven-dev`, or hybrid.
+Plugin that takes a task URL (GitHub issue, Google Doc, any URL), classifies it without polluting main context, and routes to the optimal workflow: `feature-dev`, `writing-plans + subagent-driven-dev`, or advises to create a proper spec first.
 
 ## Architecture
 
@@ -73,22 +73,22 @@ task-router/
 | Complexity | needs_exploration OR architecture_unclear | Route |
 |------------|---------------------------------------------|-------|
 | S/M | any | **feature-dev** |
-| L/XL | yes | **hybrid** (feature-dev phases 1-4, then subagent-driven-dev) |
 | L/XL | no | **subagent-driven-dev** |
+| L/XL | yes | **needs-spec** (advisory + brainstorming offer) |
 
-> **Note:** Route values in JSON are `"feature-dev"`, `"subagent-driven-dev"`, `"hybrid"`. The `/route-task` command orchestrates the actual workflow: for `subagent-driven-dev` it invokes `writing-plans` first, then `subagent-driven-development`.
+> **Note:** Route values in JSON are `"feature-dev"`, `"subagent-driven-dev"`, `"needs-spec"`. The `/route-task` command orchestrates the actual workflow: for `subagent-driven-dev` it invokes `writing-plans` first, then `subagent-driven-development`.
 
 #### Route descriptions
 
 - **feature-dev**: Full workflow — exploration, questions, architecture, implementation, review
 - **subagent-driven-dev**: Command invokes writing-plans first, then fresh subagent per task with two-stage review
-- **hybrid**: feature-dev for exploration + architecture (phases 1-4), then writing-plans, then subagent-driven-dev for implementation
+- **needs-spec**: Task is too large and underspecified. Advises user to create a full spec, offers to launch brainstorming for exploration and architecture. After brainstorming, user creates a spec and re-runs `/route-task`.
 
 ### Agent Response Format
 
 ```json
 {
-  "route": "feature-dev" | "subagent-driven-dev" | "hybrid",
+  "route": "feature-dev" | "subagent-driven-dev" | "needs-spec",
   "complexity": "S" | "M" | "L" | "XL",
   "title": "Short task title",
   "summary": "1-2 sentence summary of what needs to be built",

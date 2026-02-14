@@ -177,10 +177,10 @@ Count the number of distinct entities, endpoints, components, and integrations m
 Apply the decision matrix as an if/else chain (first match wins):
 
 1. If complexity is S or M → route = `"feature-dev"`
-2. Else (L/XL) if `needs_exploration` is true OR `architecture_unclear` is true → route = `"hybrid"`
-3. Else (L/XL, no exploration needed, architecture clear) → route = `"subagent-driven-dev"`
+2. Else (L/XL) if `needs_exploration` is false AND `architecture_unclear` is false → route = `"subagent-driven-dev"`
+3. Else (L/XL, needs exploration or architecture unclear) → route = `"needs-spec"`
 
-> Note: `has_clear_tasks` is informational metadata included in the output JSON for the user's benefit. It does not affect routing — both L/XL cases without exploration/unclear_arch resolve to `subagent-driven-dev` regardless (writing-plans handles task breakdown).
+> Note: `has_clear_tasks` is informational metadata included in the output JSON for the user's benefit. It does not affect routing.
 
 ## Step 6: Return JSON
 
@@ -190,7 +190,7 @@ Template (code fences below are for readability only — your output must NOT in
 
 ```
 {
-  "route": "feature-dev" | "subagent-driven-dev" | "hybrid",
+  "route": "feature-dev" | "subagent-driven-dev" | "needs-spec",
   "complexity": "S" | "M" | "L" | "XL",
   "title": "Short task title extracted from spec",
   "summary": "1-2 sentence summary of what needs to be built",

@@ -107,17 +107,17 @@ mkdir -p /tmp/task-router
 
 ```
 S/M complexity → "feature-dev"
-L/XL + (needs_exploration OR architecture_unclear) → "hybrid"
 L/XL + NOT needs_exploration + NOT architecture_unclear → "subagent-driven-dev"
+L/XL + (needs_exploration OR architecture_unclear) → "needs-spec"
 ```
 
-> `has_clear_tasks` is captured as informational metadata but does not affect routing — both L/XL cases without exploration/unclear_arch resolve to `subagent-driven-dev` regardless (writing-plans will break down unstructured specs).
+> `has_clear_tasks` is captured as informational metadata but does not affect routing. `needs-spec` advises user to create a full spec via brainstorming before launching a workflow.
 
 **Response format (MUST return ONLY this JSON):**
 
 ```json
 {
-  "route": "feature-dev" | "subagent-driven-dev" | "hybrid",
+  "route": "feature-dev" | "subagent-driven-dev" | "needs-spec",
   "complexity": "S" | "M" | "L" | "XL",
   "title": "Short task title",
   "summary": "1-2 sentence summary",
@@ -190,7 +190,16 @@ Phase 3: Present result
   Spec saved: {spec_file}
   ───────────────────────────────────
 
-Phase 4: Confirm and route
+Phase 4: Handle needs-spec (if route = "needs-spec")
+  Show advisory: task is too large/unclear, recommend creating a proper spec
+  AskUserQuestion:
+    1. "Запустить brainstorming" → explore + design architecture
+    2. "Всё равно запустить feature-dev"
+    3. "Всё равно запустить subagent-driven-dev"
+    4. "Отмена"
+  After brainstorming → advise to create spec and re-run /route-task
+
+Phase 5: Confirm and route (if route = "feature-dev" or "subagent-driven-dev")
   AskUserQuestion:
     "Запускаю {route}?"
     Options:
@@ -199,7 +208,7 @@ Phase 4: Confirm and route
     3. "Нет, используй subagent-driven-dev" → invoke writing-plans + subagent-driven-dev
     4. "Отмена" → stop
 
-Phase 5: Invoke workflow
+Phase 6: Invoke workflow
   Based on choice:
 
   feature-dev:
@@ -209,11 +218,6 @@ Phase 5: Invoke workflow
   subagent-driven-dev:
     → First: Skill("superpowers:writing-plans") with spec from {spec_file}
     → Then: Skill("superpowers:subagent-driven-development")
-
-  hybrid:
-    → Step 1: Skill("feature-dev:feature-dev") — only phases 1-4 (architecture)
-    → Step 2: Skill("superpowers:writing-plans") — create implementation plan
-    → Step 3: Skill("superpowers:subagent-driven-development") — execute plan
 ```
 
 **Step 2: Commit**

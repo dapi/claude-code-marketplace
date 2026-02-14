@@ -6,14 +6,14 @@
 
 - **Классификация задач** — определяет сложность и сигналы маршрутизации через haiku-агента
 - **Поддержка источников** — GitHub Issues, Google Docs, произвольные URL
-- **Маршрутизация** — направляет в feature-dev, subagent-driven-dev или hybrid workflow
+- **Маршрутизация** — направляет в feature-dev, subagent-driven-dev или рекомендует создать спеку
 - **Экономия контекста** — спека сохраняется в файл, в основной контекст возвращается только компактный JSON
 
 ## Зависимости
 
 Для запуска workflow требуются плагины:
-- **feature-dev** — для workflow `feature-dev` и `hybrid`
-- **superpowers** — для workflow `subagent-driven-dev` и `hybrid` (writing-plans + subagent-driven-development)
+- **feature-dev** — для workflow `feature-dev`
+- **superpowers** — для workflow `subagent-driven-dev` (writing-plans + subagent-driven-development) и brainstorming (для needs-spec)
 
 ## Установка
 
@@ -45,8 +45,8 @@
 | Сложность | Сигналы | Маршрут |
 |-----------|---------|---------|
 | S/M | любые | feature-dev |
-| L/XL | нужно исследование ИЛИ архитектура неясна | hybrid (feature-dev фазы 1-4 → plan → subagent) |
 | L/XL | архитектура ясна, исследование не нужно | subagent-driven-dev |
+| L/XL | нужно исследование ИЛИ архитектура неясна | needs-spec (рекомендация создать спеку + brainstorming) |
 
 ## Компоненты
 
