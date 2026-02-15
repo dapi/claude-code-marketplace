@@ -1,6 +1,7 @@
 ---
 description: Start issue development in new zellij tab with start-issue
 argument-hint: <issue-number-or-url>
+version: 1.0.0
 ---
 
 # Start Issue in New Tab

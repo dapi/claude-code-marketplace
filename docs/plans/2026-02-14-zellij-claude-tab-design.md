@@ -50,7 +50,7 @@ PROJECT_DIR=$(pwd)
 
 zellij action go-to-tab-name --create "$TAB_NAME" && \
 zellij action new-pane -- bash -c \
-  "cd $PROJECT_DIR && claude \"\$(cat $PROMPT_FILE)\" ; rm $PROMPT_FILE" && \
+  "cd $PROJECT_DIR && PROMPT=\$(cat $PROMPT_FILE) && rm $PROMPT_FILE && claude \"\$PROMPT\"" && \
 zellij action focus-previous-pane && \
 zellij action close-pane
 ```
@@ -58,7 +58,8 @@ zellij action close-pane
 **Key details:**
 - `claude "prompt"` starts an **interactive** session with initial prompt (not -p print mode)
 - Session remains a working chat after the initial prompt is processed
-- Temp file is cleaned up after Claude reads it
+- Prompt is read into a variable, temp file is deleted **immediately** before claude starts
+- Zellij spawns a fresh shell -- no env var inheritance issues
 - Empty shell pane is removed (focus-previous + close-pane pattern from zellij-dev-tab)
 
 ### Step 4: Tab naming
@@ -67,6 +68,9 @@ Claude auto-generates a short tab name from context:
 - Has issue reference -> `#123`
 - Has plan file -> `plan-audit`
 - General task -> `refactor`, `fix-tests`, etc.
+- Fallback -> `claude-<HH:MM>` (e.g. `claude-14:35`)
+
+If a tab with the chosen name already exists, append a numeric suffix: `plan-audit-2`, `plan-audit-3`.
 
 ## Environment Checks
 
@@ -82,11 +86,16 @@ Before execution, verify:
 - "execute/run/launch [task] in new tab"
 - "start claude session in new tab with [instructions]"
 - "open new tab and run [plan/task]"
-- Russian: "vypolni/zapusti [zadachu] v novoj vkladke"
+- Russian: "выполни/запусти [задачу] в новой вкладке"
 
 ## Relationship with zellij-dev-tab
 
-`zellij-dev-tab` remains focused on issue development via `start-issue`. The two plugins are independent. Optionally, `zellij-dev-tab` could be refactored to use `zellij-claude-tab`'s mechanism, but this is not required for MVP.
+`zellij-dev-tab` remains focused on issue development via `start-issue`. The two plugins are independent.
+
+**Trigger conflict resolution:** When a request mentions both an issue AND "new tab", the distinguishing factor is:
+- Has explicit `start-issue` or is purely about issue development -> `zellij-dev-tab`
+- Has arbitrary instructions, plan files, or non-issue tasks -> `zellij-claude-tab`
+- `zellij-claude-tab` SKILL.md must include negative examples for issue-only requests
 
 ## Slash Command
 
@@ -98,3 +107,5 @@ Before execution, verify:
 - **Special characters**: Temp file approach avoids quoting issues
 - **Claude startup time**: Not an issue -- `claude "prompt"` passes prompt as argument, not via write-chars
 - **Project directory**: Captured from `$(pwd)` at invocation time, passed to new tab via `cd`
+- **Duplicate tab names**: Append numeric suffix if tab already exists
+- **No context for naming**: Fallback to `claude-<HH:MM>`
