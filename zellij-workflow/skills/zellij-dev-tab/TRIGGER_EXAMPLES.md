@@ -111,7 +111,16 @@
 - "best practices for development"
 - "что такое GitHub issues?"
 
-##  Key Trigger Words
+### Claude session requests (use zellij-claude-tab instead)
+
+- "execute plan in a new zellij tab"
+- "run claude with these instructions in new tab"
+- "launch plan from docs/plans/audit.md in separate tab"
+- "delegate this task to a new tab"
+- "выполни план в новой вкладке"
+- "запусти claude с инструкциями в отдельной вкладке"
+
+## Key Trigger Words
 
 ### Verbs (действия)
 

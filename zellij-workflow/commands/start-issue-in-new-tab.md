@@ -10,7 +10,7 @@ version: 1.0.0
 
 ## Входные данные
 
-- **ISSUE**: `$ARGUMENTS` — номер issue, #номер, или полный GitHub URL
+- **ISSUE**: `$ARGUMENTS` -- номер issue, #номер, или полный GitHub URL
 
 ## Шаги
 
@@ -19,19 +19,19 @@ version: 1.0.0
 ```bash
 # Проверить что мы в zellij
 if [ -z "$ZELLIJ" ]; then
-  echo "❌ Not in zellij session. Run zellij first."
+  echo "[FAIL] Not in zellij session. Run zellij first."
   exit 1
 fi
 
 # Проверить что start-issue доступен
 if ! command -v start-issue &> /dev/null; then
-  echo "❌ start-issue not found in PATH"
+  echo "[FAIL] start-issue not found in PATH"
   echo "Install: make install-scripts (from claude-code-marketplace)"
   exit 1
 fi
 ```
 
-**Если проверки не прошли** — сообщи пользователю и НЕ продолжай.
+**Если проверки не прошли** -- сообщи пользователю и НЕ продолжай.
 
 ### 2. Извлеки номер issue
 
@@ -64,9 +64,9 @@ zellij action close-pane
 ```
 
 **Как это работает:**
-1. `go-to-tab-name --create` — создаёт вкладку (или переключается если существует)
-2. `new-pane -- command` — запускает команду в новой панели
-3. `focus-previous-pane` + `close-pane` — убирает пустую shell-панель
+1. `go-to-tab-name --create` -- создаёт вкладку (или переключается если существует)
+2. `new-pane -- command` -- запускает команду в новой панели
+3. `focus-previous-pane` + `close-pane` -- убирает пустую shell-панель
 
 ## Примеры
 

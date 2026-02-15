@@ -30,8 +30,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 | [requirements](#requirements) | Requirements registry via Google Sheets | 1 command |
 | [spec-reviewer](#spec-reviewer) | Specification review and analysis | 10 agents, 1 skill, 1 command |
 | [task-router](#task-router) | Smart task classification and workflow routing | 1 agent, 1 skill, 1 command |
-| [zellij-dev-tab](#zellij-dev-tab) | GitHub issue dev in separate Zellij tab | 1 skill |
-| [zellij-tab-claude-status](#zellij-tab-claude-status) | Claude session status in Zellij tab | hooks |
+| [zellij-workflow](#zellij-workflow) | Zellij workflow: tab status, issue dev tabs, Claude session tabs | 2 skills, 2 commands, hooks |
 
 ### github-workflow
 
@@ -45,23 +44,20 @@ GitHub workflow: issues, PRs, worktrees, sub-issues.
 "create sub-issue for #123"
 ```
 
-### zellij-dev-tab
+### zellij-workflow
 
-Launch GitHub issue development in a separate Zellij tab.
+Unified Zellij workflow: tab status indicators, issue development tabs, Claude session tabs.
 
-**Components:** skill `zellij-dev-tab`
+**Components:** skills `zellij-dev-tab`, `zellij-claude-tab`, commands `/start-issue-in-new-tab`, `/run-in-new-tab`, hooks
+
+**Status icons:** `◉` Working | `○` Ready | `✋` Needs input (requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
 
 ```
+/start-issue-in-new-tab 123
+/run-in-new-tab Execute plan from docs/plans/audit-plan.md
 "start issue #45 in new tab"
-"запусти разработку в отдельной вкладке"
+"execute plan in a new zellij tab"
 ```
-
-### zellij-tab-claude-status
-
-Zellij tab status indicator — shows Claude session state via icon prefix.
-Requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin.
-
-**Icons:** `◉` Working | `○` Ready | `✋` Needs input
 
 ### bugsnag-skill
 
@@ -190,7 +186,7 @@ Some plugins require external tools:
 |------|---------|---------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
-| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-tab-claude-status | See plugin README |
+| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | See plugin README |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Scripts

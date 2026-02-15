@@ -1,6 +1,6 @@
 {
-  "name": "zellij-dev-tab",
-  "description": "Launch GitHub issue development in a separate zellij tab with start-issue",
+  "name": "zellij-workflow",
+  "description": "Zellij workflow: tab status indicators, issue development tabs, Claude session tabs",
   "version": "1.0.0",
   "author": {
     "name": "Danil Pismenny",
@@ -9,5 +9,5 @@
   "license": "MIT",
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
-  "keywords": ["zellij", "github", "issues", "development", "tabs", "workflow"]
+  "keywords": ["zellij", "tabs", "workflow", "status", "claude", "session", "development"]
 }

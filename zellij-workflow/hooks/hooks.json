@@ -1,0 +1,51 @@
+{
+  "description": "Zellij tab status indicator hooks",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt|elicitation_dialog",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u270b' || true"}]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status --clear || true"}]
+      }
+    ]
+  }
+}
