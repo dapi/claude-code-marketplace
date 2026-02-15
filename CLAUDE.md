@@ -552,55 +552,47 @@ make lint-emoji-fix       # Auto-remove emoji
 
 Используй `make` для типовых операций с плагинами и релизами.
 
+### Установка / переустановка плагинов
+
+```bash
+# Переустановить все плагины (default target, идемпотентный)
+# Работает одинаково на чистом Claude и с уже установленным marketplace
+make
+
+# То же, но для ВСЕХ Claude-профилей
+make reinstall-all
+
+# Один конкретный плагин
+make install-plugin PLUGIN=zellij-workflow
+make uninstall-plugin PLUGIN=zellij-workflow
+make reinstall-plugin PLUGIN=zellij-workflow
+```
+
+Список плагинов для установки задаётся переменной `PLUGINS` в Makefile.
+
+**`make` (= `make reinstall`) делает:**
+1. Uninstall всех `PLUGINS` (игнорирует ошибки если не установлены)
+2. Remove marketplace dapi (игнорирует если не зарегистрирован)
+3. Add marketplace dapi
+4. Install всех `PLUGINS`
+
+**Суффикс `-all`** означает "для всех Claude-аккаунтов", а не "все плагины".
+
 ### Линтинг
 
 ```bash
-# Проверить все плагины на запрещённые emoji
-make lint-emoji
-
-# Авто-удалить emoji из всех плагинов
-make lint-emoji-fix
+make lint-emoji       # Проверить на запрещённые emoji
+make lint-emoji-fix   # Авто-удалить emoji
 ```
-
-### Обновление плагинов
-
-```bash
-# Обновить marketplace + plugin (после git pull или изменений)
-make update
-
-# Только обновить установленный плагин
-make update-plugin
-
-# Только обновить marketplace metadata
-make update-marketplace
-
-# Полная переустановка (uninstall + install)
-make reinstall
-```
-
-**Когда использовать:**
-- `make update-plugin` — после `git pull` или локальных изменений в skills/agents/commands
-- `make reinstall` — если плагин сломался или нужна чистая установка
 
 ### Релизы
 
 ```bash
-# Показать текущую версию
-make version
-
-# Релиз с автоинкрементом patch (1.5.2 → 1.5.3)
-make release-patch
-
-# Релиз с автоинкрементом minor (1.5.2 → 1.6.0)
-make release-minor
-# или просто:
-make release
-
-# Релиз с автоинкрементом major (1.5.2 → 2.0.0)
-make release-major
-
-# Релиз с конкретной версией
-make release VERSION=2.0.0
+make version          # Показать текущую версию
+make release-patch    # 1.5.2 -> 1.5.3
+make release-minor    # 1.5.2 -> 1.6.0 (= make release)
+make release-major    # 1.5.2 -> 2.0.0
+make release VERSION=2.0.0  # Конкретная версия
 ```
 
 **Что делает `make release-*`:**
