@@ -37,8 +37,11 @@ reinstall:
 	@echo "   Plugins: $(PLUGINS)"
 	@echo ""
 	@for plugin in $(PLUGINS); do \
-		$(CLAUDE) plugin uninstall $$plugin@dapi 2>/dev/null || true; \
+		echo "-> Uninstalling $$plugin@dapi..."; \
+		$(CLAUDE) plugin uninstall $$plugin@dapi 2>/dev/null || echo "   (not installed, skipping)"; \
 	done
+	@echo ""
+	@echo "-> Resetting marketplace..."
 	@$(CLAUDE) plugin marketplace remove dapi 2>/dev/null || true
 	@$(CLAUDE) plugin marketplace add $(MARKETPLACE_PATH)
 	@echo ""
@@ -68,8 +71,10 @@ reinstall-all:
 		abs_dir=$$(cd "$$dir" && pwd); \
 		echo "--- Profile: $$profile_name ---"; \
 		for plugin in $(PLUGINS); do \
-			CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin uninstall $$plugin@dapi 2>/dev/null || true; \
+			echo "-> Uninstalling $$plugin@dapi..."; \
+			CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin uninstall $$plugin@dapi 2>/dev/null || echo "   (not installed, skipping)"; \
 		done; \
+		echo "-> Resetting marketplace..."; \
 		CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace remove dapi 2>/dev/null || true; \
 		CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin marketplace add $(MARKETPLACE_PATH); \
 		for plugin in $(PLUGINS); do \
