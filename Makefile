@@ -556,21 +556,5 @@ lint-emoji-fix:
 # TESTING TARGETS
 # ============================================================================
 
-HOOKS_SRC = $(MARKETPLACE_PATH)/zellij-tab-claude-status/hooks
-
-# Install zellij-tab-claude-status hooks to current project for testing
-test-hooks-install:
-	@echo "📦 Installing zellij-tab-claude-status hooks for local testing..."
-	@mkdir -p .claude/hooks
-	@cp $(HOOKS_SRC)/on-*.sh .claude/hooks/
-	@chmod +x .claude/hooks/*.sh
-	@echo '{"hooks":{"SessionStart":[{"matcher":"","hooks":[{"type":"command","command":"\"$$CLAUDE_PROJECT_DIR\"/.claude/hooks/on-session-start.sh"}]}],"UserPromptSubmit":[{"matcher":"","hooks":[{"type":"command","command":"\"$$CLAUDE_PROJECT_DIR\"/.claude/hooks/on-prompt-submit.sh"}]}],"Stop":[{"matcher":"","hooks":[{"type":"command","command":"\"$$CLAUDE_PROJECT_DIR\"/.claude/hooks/on-stop.sh"}]}],"SessionEnd":[{"matcher":"","hooks":[{"type":"command","command":"\"$$CLAUDE_PROJECT_DIR\"/.claude/hooks/on-session-end.sh"}]}]}}' | jq . > .claude/settings.local.json
-	@echo "✅ Hooks installed to .claude/hooks/ and configured in .claude/settings.local.json"
-	@echo ""
-	@echo "Restart Claude to apply. Remove with: make test-hooks-uninstall"
-
-# Remove test hooks from current project
-test-hooks-uninstall:
-	@echo "🗑️  Removing test hooks..."
-	@rm -rf .claude/hooks .claude/settings.local.json 2>/dev/null || true
-	@echo "✅ Test hooks removed. Restart Claude to apply."
+# Note: zellij-workflow hooks are now managed via hooks.json in the plugin.
+# Install the plugin with: /plugin install zellij-workflow@dapi

@@ -30,8 +30,7 @@
 | [requirements](#requirements) | Реестр требований через Google Sheets | 1 команда |
 | [spec-reviewer](#spec-reviewer) | Ревью и анализ спецификаций | 10 агентов, 1 навык, 1 команда |
 | [task-router](#task-router) | Классификация задач и маршрутизация в workflow | 1 агент, 1 навык, 1 команда |
-| [zellij-dev-tab](#zellij-dev-tab) | Разработка issue в отдельной вкладке Zellij | 1 навык |
-| [zellij-tab-claude-status](#zellij-tab-claude-status) | Статус сессии Claude во вкладке Zellij | хуки |
+| [zellij-workflow](#zellij-workflow) | Zellij workflow: статус вкладки, вкладки разработки, сессии Claude | 2 навыка, 2 команды, хуки |
 
 ### github-workflow
 
@@ -45,23 +44,20 @@
 "создай sub-issue для #123"
 ```
 
-### zellij-dev-tab
+### zellij-workflow
 
-Запуск разработки GitHub issue в отдельной вкладке Zellij.
+Единый Zellij workflow: индикаторы статуса вкладок, вкладки разработки issue, сессии Claude.
 
-**Компоненты:** навык `zellij-dev-tab`
+**Компоненты:** навыки `zellij-dev-tab`, `zellij-claude-tab`, команды `/start-issue-in-new-tab`, `/run-in-new-tab`, хуки
+
+**Иконки статуса:** `◉` Работает | `○` Готов | `✋` Ждёт ввода (требуется [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
 
 ```
-"запусти разработку issue #45 в новой вкладке"
-"start issue in new tab"
+/start-issue-in-new-tab 123
+/run-in-new-tab Выполни план из docs/plans/audit-plan.md
+"запусти issue #45 в новой вкладке"
+"выполни план в новой вкладке zellij"
 ```
-
-### zellij-tab-claude-status
-
-Индикатор статуса Claude в заголовке вкладки Zellij.
-Требуется плагин [zellij-tab-status](https://github.com/dapi/zellij-tab-status).
-
-**Иконки:** `◉` Работает | `○` Готов | `✋` Ждёт ввода
 
 ### bugsnag-skill
 
@@ -190,7 +186,7 @@ Email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP
 |------------|---------|-----------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
-| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-tab-claude-status | См. README плагина |
+| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | См. README плагина |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Скрипты
