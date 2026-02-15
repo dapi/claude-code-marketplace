@@ -68,7 +68,7 @@ load_plugins {
 
 ## Requirements
 
-- [Zellij](https://zellij.dev) >= 0.40 terminal multiplexer (`query-tab-names` support)
+- [Zellij](https://zellij.dev) terminal multiplexer
 - [zellij-tab-status](https://github.com/dapi/zellij-tab-status) (optional, for status icons)
 - `start-issue` in PATH (for issue development tabs)
 - `claude` CLI in PATH (for Claude session tabs)

@@ -36,26 +36,6 @@ allowed-tools: Bash
 
 Запуск разработки GitHub issue в отдельной вкладке zellij с автоматическим вызовом `start-issue`.
 
-## ОБЯЗАТЕЛЬНЫЕ ПРОВЕРКИ
-
-**Claude ДОЛЖЕН выполнить перед запуском команды:**
-
-```bash
-# 1. Проверить что мы внутри zellij
-if [ -z "$ZELLIJ" ]; then
-  echo "Ошибка: Не в zellij сессии. Запустите zellij и повторите."
-  # НЕ выполнять команду, предупредить пользователя
-fi
-
-# 2. Проверить что start-issue доступен
-if ! command -v start-issue &> /dev/null; then
-  echo "Ошибка: start-issue не найден в PATH"
-  # НЕ выполнять команду, предупредить пользователя
-fi
-```
-
-**Если проверки не прошли** -- сообщить пользователю и НЕ выполнять `zellij action`.
-
 ## Назначение
 
 Когда пользователь хочет начать работу над issue в изолированной вкладке терминала, этот skill:
@@ -95,13 +75,26 @@ parse_issue_number() {
 
 ## Команда выполнения
 
+**В новой вкладке:**
+
 ```bash
-# Полная команда
+# EAFP: выполняем сразу, диагностируем при ошибке
 ISSUE_NUMBER=$(parse_issue_number "$ARG")
-zellij action go-to-tab-name --create "#${ISSUE_NUMBER}" && \
-zellij action new-pane -- start-issue $ARG && \
-zellij action focus-previous-pane && \
-zellij action close-pane
+zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+zellij action write-chars "start-issue $ARG
+" || {
+  echo "Command failed. Diagnosing..."
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
+  else echo "Unknown error"
+  fi
+}
+```
+
+**В новой панели (альтернатива):**
+
+```bash
+zellij run -- start-issue $ARG
 ```
 
 ## Примеры использования
@@ -112,10 +105,9 @@ zellij action close-pane
 
 **Claude выполняет:**
 ```bash
-zellij action go-to-tab-name --create "#45" && \
-zellij action new-pane -- start-issue 45 && \
-zellij action focus-previous-pane && \
-zellij action close-pane
+zellij action new-tab --name "#45" && \
+zellij action write-chars "start-issue 45
+"
 ```
 
 ### Пример 2: URL
@@ -124,10 +116,9 @@ zellij action close-pane
 
 **Claude выполняет:**
 ```bash
-zellij action go-to-tab-name --create "#123" && \
-zellij action new-pane -- start-issue https://github.com/dapi/project/issues/123 && \
-zellij action focus-previous-pane && \
-zellij action close-pane
+zellij action new-tab --name "#123" && \
+zellij action write-chars "start-issue https://github.com/dapi/project/issues/123
+"
 ```
 
 ### Пример 3: С решёткой
@@ -136,34 +127,24 @@ zellij action close-pane
 
 **Claude выполняет:**
 ```bash
-zellij action go-to-tab-name --create "#78" && \
-zellij action new-pane -- start-issue 78 && \
-zellij action focus-previous-pane && \
-zellij action close-pane
+zellij action new-tab --name "#78" && \
+zellij action write-chars "start-issue 78
+"
+```
+
+### Пример 4: В новой панели
+
+**Пользователь:** "Запусти start-issue 45 в новой панели"
+
+**Claude выполняет:**
+```bash
+zellij run -- start-issue 45
 ```
 
 ## Зависимости
 
 - **zellij** -- терминальный мультиплексор (должен быть запущен)
 - **start-issue** -- скрипт/команда для работы с issue (должен быть в PATH)
-
-## Проверка зависимостей
-
-Перед выполнением проверь:
-
-```bash
-# Проверка что zellij запущен
-if [ -z "$ZELLIJ" ]; then
-  echo "Ошибка: zellij не запущен. Запустите zellij и повторите."
-  exit 1
-fi
-
-# Проверка start-issue в PATH
-if ! command -v start-issue &> /dev/null; then
-  echo "Ошибка: start-issue не найден в PATH"
-  exit 1
-fi
-```
 
 ## Ошибки
 

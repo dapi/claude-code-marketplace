@@ -14,26 +14,7 @@ version: 1.0.0
 
 ## Шаги
 
-### 1. Проверь окружение
-
-```bash
-# Проверить что мы в zellij
-if [ -z "$ZELLIJ" ]; then
-  echo "[FAIL] Not in zellij session. Run zellij first."
-  exit 1
-fi
-
-# Проверить что start-issue доступен
-if ! command -v start-issue &> /dev/null; then
-  echo "[FAIL] start-issue not found in PATH"
-  echo "Install: make install-scripts (from claude-code-marketplace)"
-  exit 1
-fi
-```
-
-**Если проверки не прошли** -- сообщи пользователю и НЕ продолжай.
-
-### 2. Извлеки номер issue
+### 1. Извлеки номер issue
 
 ```bash
 parse_issue_number() {
@@ -53,20 +34,24 @@ parse_issue_number() {
 ISSUE_NUMBER=$(parse_issue_number "$ARGUMENTS")
 ```
 
-### 3. Создай вкладку и запусти start-issue
+### 2. Создай вкладку и запусти start-issue
 
 ```bash
-# Создаём вкладку, запускаем команду, убираем пустую панель
-zellij action go-to-tab-name --create "#${ISSUE_NUMBER}" && \
-zellij action new-pane -- start-issue $ARGUMENTS && \
-zellij action focus-previous-pane && \
-zellij action close-pane
+# EAFP: выполняем сразу, диагностируем при ошибке
+zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+zellij action write-chars "start-issue $ARGUMENTS
+" || {
+  echo "Command failed. Diagnosing..."
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
+  else echo "Unknown error"
+  fi
+}
 ```
 
 **Как это работает:**
-1. `go-to-tab-name --create` -- создаёт вкладку (или переключается если существует)
-2. `new-pane -- command` -- запускает команду в новой панели
-3. `focus-previous-pane` + `close-pane` -- убирает пустую shell-панель
+1. `new-tab --name` -- создаёт вкладку с заданным именем
+2. `write-chars` -- вводит команду в shell новой вкладки
 
 ## Примеры
 
