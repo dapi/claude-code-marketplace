@@ -76,7 +76,7 @@ PROJECT_DIR=$(pwd)
 
 # EAFP: execute directly, diagnose on failure
 zellij action new-tab --name "$TAB_NAME" && \
-zellij action write-chars "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\"
+zellij action write-chars "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude --dangerously-skip-permissions \"\$PROMPT\"
 " || {
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
@@ -89,14 +89,14 @@ zellij action write-chars "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') &&
 **In a new pane (alternative):**
 
 ```bash
-zellij run -- bash -c "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\""
+zellij run -- bash -c "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude --dangerously-skip-permissions \"\$PROMPT\""
 ```
 
 **How it works:**
 1. `new-tab --name` -- creates tab with given name
 2. `write-chars` -- types the command into the new tab's shell
 3. Prompt is read into variable, temp file deleted immediately
-4. `claude "$PROMPT"` -- starts **interactive** session with initial prompt
+4. `claude --dangerously-skip-permissions "$PROMPT"` -- starts **interactive** session with initial prompt, skipping permission prompts
 
 ## Examples
 
@@ -117,7 +117,7 @@ cat > "$PROMPT_FILE" << 'PROMPT_EOF'
 Execute the plan from docs/plans/2026-02-14-skill-audit-plan.md for issue #20. Use superpowers:executing-plans.
 PROMPT_EOF
 zellij action new-tab --name "plan-audit" && \
-zellij action write-chars "cd '$(pwd)' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude \"\$PROMPT\"
+zellij action write-chars "cd '$(pwd)' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && claude --dangerously-skip-permissions \"\$PROMPT\"
 "
 ```
 

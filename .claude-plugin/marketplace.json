@@ -59,6 +59,11 @@
       "name": "task-router",
       "source": "./task-router",
       "description": "Smart task routing: classifies specs and routes to feature-dev or subagent-driven-dev"
+    },
+    {
+      "name": "skill-finder",
+      "source": "./skill-finder",
+      "description": "Search and install agent skills from skills.sh and other online catalogs"
     }
   ]
 }
