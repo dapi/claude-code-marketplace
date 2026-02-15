@@ -10,6 +10,7 @@ description: |
   - "найди переоцененные ресурсы"
   - "оптимизируй затраты на кластер"
   - "/cluster-efficiency --deep"
+tools: Bash, Task
 model: sonnet
 color: cyan
 ---

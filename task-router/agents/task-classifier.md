@@ -1,12 +1,12 @@
 ---
 name: task-classifier
 description: |
-  Lightweight task classifier and router (haiku).
-  DO NOT call directly — used by the /route-task command to classify tasks.
+  Легковесный классификатор и маршрутизатор задач (haiku).
+  НЕ вызывай напрямую -- используется командой /route-task для классификации.
 
-  Fetches task content from a URL (GitHub issue, Google Doc, or any URL),
-  saves the full spec to /tmp/task-router/, classifies complexity and routing
-  signals, and returns a compact JSON routing decision.
+  Получает контент задачи по URL (GitHub issue, Google Doc, или любой URL),
+  сохраняет полную спеку в /tmp/task-router/, классифицирует сложность и
+  сигналы маршрутизации, возвращает компактный JSON с решением.
 model: haiku
 tools: Bash, WebFetch, Read, Write, ToolSearch
 ---

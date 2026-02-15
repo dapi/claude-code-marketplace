@@ -10,7 +10,7 @@ description: |
   **Action Triggers (EN)**:
   - "take this task", "implement this spec", "do issue #NNN"
   - "route task", "route this", "start issue #NNN"
-  - "list what in this issue", "check this task", "display task"
+  - "check this task", "analyze task"
 
   **Triggers (RU)**:
   - "возьми задачу", "сделай задачу", "реализуй по спеке"
@@ -18,12 +18,19 @@ description: |
 
   **#NNN**: action-слово + "issue"/"задачу" обязательны. Голый #NNN -- НЕ триггер.
 
+  **Should NOT activate** (handled by other skills):
+  - "show/read/view issue #N" (github-issues)
+  - "what does issue #N say" (github-issues)
+  - "edit/close/mark done issue" (github-issues)
+  - "review spec", "check spec", "analyze requirements" (spec-review)
+  - bare GitHub issue URL without action verb (github-issues)
+
   TRIGGERS: route task, route this, возьми задачу, сделай задачу,
     take this task, implement this spec, implement this issue,
-    get task from, list task, display task,
-    retrieve spec, fetch task, check this task, analyze task,
+    get task from, list task, check this task, analyze task,
+    retrieve spec, fetch task,
     реализуй по спеке, сделай issue, do issue, start issue,
-    what in this issue, github.com/issues, docs.google.com/document
+    github.com/issues, docs.google.com/document
 allowed-tools: Skill
 ---
 
@@ -117,10 +124,14 @@ Assistant: [Вызывает Skill tool: task-router:route-task с args: "https:
 - Делает code review или обсуждает PR
 - Упоминает ссылку в контексте другой задачи
 - Использует `#NNN` без слова "issue"/"задачу" — это может быть коммит, PR, заголовок, шаг инструкции
+- Отправляет голый GitHub issue URL без action-слова — это github-issues (чтение), не task-routing
+- Запрашивает ревью/проверку спеки — "review spec", "check spec", "проверь спеку" — это spec-review
 
 **Правило для `#NNN`:** Голый `#NNN` без action-слова И без "issue"/"задачу" — НИКОГДА не триггер. Примеры НЕ-триггеров: "see #123", "fixed in #42", "PR #99", "step #3", "commit #abc123".
 
-Активируй только когда сообщение явно указывает на намерение **начать работу** над задачей (содержит action-слова: "возьми", "сделай", "реализуй", "take", "implement", "do", "start", "route").
+**Правило для bare URL:** `https://github.com/org/repo/issues/42` без action-слова — это github-issues. task-routing активируется ТОЛЬКО при наличии action-слов: "возьми", "сделай", "реализуй", "take", "implement", "do", "start", "route".
+
+**Правило для check/analyze:** Глаголы "check" и "analyze" требуют контекст "task"/"задачу". "check this task" — task-routing. "check spec"/"analyze requirements" — spec-review.
 
 ## Обработка ошибок
 

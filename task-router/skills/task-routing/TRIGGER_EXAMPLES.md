@@ -67,6 +67,23 @@
 - "check #42" (просмотр, не реализация)
 - "#123 looks interesting" (обсуждение, без action-слова)
 
+### Конфликтные запросы -- github-issues (чтение/управление)
+- "display issue #42" (отображение -- github-issues)
+- "read issue #42" (чтение -- github-issues)
+- "view issue #42" (просмотр -- github-issues)
+- "edit issue #42" (редактирование -- github-issues)
+- "close issue #42" (закрытие -- github-issues)
+- "mark step 1 done in issue #42" (checkbox -- github-issues)
+- "https://github.com/org/repo/issues/42" (голый URL без action -- github-issues)
+- "what's in issue #42?" (инспекция -- github-issues)
+
+### Конфликтные запросы -- spec-review (ревью спецификаций)
+- "review spec in issue #42" (ревью -- spec-review)
+- "check spec docs.google.com/..." (проверка спеки -- spec-review)
+- "find gaps in issue #42" (анализ гапов -- spec-review)
+- "analyze requirements" (анализ требований -- spec-review)
+- "проверь спеку в issue #42" (ревью -- spec-review)
+
 ---
 
 ## Ключевые триггерные слова

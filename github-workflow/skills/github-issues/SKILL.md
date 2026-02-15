@@ -3,6 +3,9 @@ name: github-issues
 description: |
   **UNIVERSAL TRIGGER**: Use when user mentions GitHub issue URL or asks to read/work with GitHub issues.
 
+  **Default handler**: Bare GitHub issue URL without action verb -> github-issues (read mode).
+  If user sends just a URL like "https://github.com/org/repo/issues/42" with no action word, this skill handles it.
+
   **CRITICAL RULE**: ALWAYS use `gh` CLI for GitHub issues, NEVER use WebFetch!
 
    **Reading**: "read issue #N", "show issue", "прочитай задачу"
@@ -40,7 +43,27 @@ gh issue view 123 -R owner/repo
 # WebFetch для github.com/.../issues/...
 ```
 
-### 2. Атомарные операции с checkboxes (без кеша!)
+### 2. Переименование вкладки zellij при начале работы с issue
+
+Когда пользователь **начинает работу** с issue (читает issue, изучает задачу, обсуждает реализацию), переименуй вкладку zellij:
+
+```bash
+zellij-rename-tab-to-issue-number <ISSUE_NUMBER>
+```
+
+Скрипт безопасен: если мы не внутри zellij -- ничего не произойдёт.
+
+**Когда вызывать:**
+- Пользователь просит прочитать/показать issue
+- Пользователь начинает обсуждать задачу из issue
+- Первое обращение к issue в сессии
+
+**Когда НЕ вызывать:**
+- Отметка checkbox (мелкая операция)
+- Закрытие/открытие issue
+- Работа с labels
+
+### 3. Атомарные операции с checkboxes (без кеша!)
 
 **ВАЖНО**: При отметке checkbox ВСЕГДА выполняй атомарную операцию fetch→modify→push в ОДНОЙ команде. Это предотвращает конфликты при параллельной работе нескольких агентов.
 
@@ -53,7 +76,7 @@ gh issue view 123 -R owner/repo --json body -q .body | sed 's/- \[ \] Точны
 
 **НИКОГДА** не кешируй body issue! Всегда скачивай заново перед изменением.
 
-### 3. Сначала отметить — потом продолжать
+### 4. Сначала отметить — потом продолжать
 
 После выполнения любого пункта/этапа/шага:
 1. **СНАЧАЛА** отметить как выполненный в issue
