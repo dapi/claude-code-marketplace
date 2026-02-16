@@ -2,7 +2,7 @@
         install-plugin uninstall-plugin reinstall-plugin \
         install-scripts uninstall-scripts \
         release release-patch release-minor release-major version \
-        install-zellij-tab-status install-zellij-tab-name \
+        install-zellij-tab-status \
         list-claude-profiles \
         lint lint-emoji lint-emoji-fix
 
@@ -196,9 +196,6 @@ ZELLIJ_TAB_STATUS_WASM_URL = https://github.com/dapi/zellij-tab-status/releases/
 ZELLIJ_TAB_STATUS_RAW_URL = https://raw.githubusercontent.com/dapi/zellij-tab-status/$(ZELLIJ_TAB_STATUS_VERSION)/scripts
 ZELLIJ_TAB_STATUS_SCRIPTS = zellij-tab-status
 
-ZELLIJ_TAB_NAME_VERSION = v0.4.1
-ZELLIJ_TAB_NAME_URL = https://github.com/Cynary/zellij-tab-name/releases/download/$(ZELLIJ_TAB_NAME_VERSION)/zellij-tab-name.wasm
-
 install-zellij-tab-status:
 	@echo "Installing zellij-tab-status $(ZELLIJ_TAB_STATUS_VERSION)..."
 	@mkdir -p $(ZELLIJ_PLUGINS_DIR)
@@ -222,25 +219,6 @@ install-zellij-tab-status:
 	@echo '   }'
 	@echo ""
 	@echo "Then restart Zellij."
-
-install-zellij-tab-name:
-	@echo "Installing zellij-tab-name plugin..."
-	@mkdir -p $(ZELLIJ_PLUGINS_DIR)
-	@if [ -f "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm" ]; then \
-		echo "   Already installed at $(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
-	else \
-		echo "   -> Downloading $(ZELLIJ_TAB_NAME_VERSION)..."; \
-		curl -sL "$(ZELLIJ_TAB_NAME_URL)" -o "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
-		echo "   [OK] Downloaded to $(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"; \
-	fi
-	@echo ""
-	@echo "Add to your zellij config (~/.config/zellij/config.kdl):"
-	@echo ""
-	@echo '   load_plugins {'
-	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-name.wasm"'
-	@echo '   }'
-	@echo ""
-	@echo "Then restart zellij."
 
 # ============================================================================
 # UTILITY TARGETS
