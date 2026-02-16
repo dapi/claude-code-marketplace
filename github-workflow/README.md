@@ -30,12 +30,26 @@ Start work on GitHub issue — creates worktree and branch.
 
 ### Command: /fix-pr
 
-Iterative PR review and fix cycle until no critical issues remain.
+Iterative PR fix loop -- runs parallel checks (code review + local tests + CI) and fixes issues until the PR is clean.
 
 ```
 /fix-pr
-/fix-pr --max-iterations=3
+/fix-pr --max-iterations=5
 ```
+
+**How it works:**
+1. Verifies PR exists and working tree is clean
+2. Activates a stop-hook loop (Ralph Loop pattern)
+3. Each iteration runs 3 parallel checks: code review, local tests, CI
+4. If failures found: fix subagent patches code, commits, pushes
+5. Loop continues until all checks pass or max iterations reached
+
+**Stop conditions:**
+- All three checks pass (review clean + tests green + CI green)
+- Max iterations reached (default: 10)
+- Stall detected (3 identical failure iterations)
+
+**To cancel:** `rm .claude/fix-pr.local.md`
 
 ## Usage
 
