@@ -9,8 +9,5 @@
   "license": "MIT",
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
-  "keywords": ["zellij", "tabs", "workflow", "status", "claude", "session", "development"],
-  "dependencies": {
-    "superpowers": "Skill executing-plans for run-in-new-tab and zellij-claude-tab"
-  }
+  "keywords": ["zellij", "tabs", "workflow", "status", "claude", "session", "development"]
 }

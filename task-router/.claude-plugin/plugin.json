@@ -9,9 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["routing", "task", "workflow", "feature-dev", "subagent-driven-development"],
-  "dependencies": {
-    "feature-dev": "Routing S/M tasks to feature-dev:feature-dev skill",
-    "superpowers": "Skills: brainstorming (needs-spec), writing-plans + subagent-driven-development (L/XL tasks)"
-  }
+  "keywords": ["routing", "task", "workflow", "feature-dev", "subagent-driven-development"]
 }

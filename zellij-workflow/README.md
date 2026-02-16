@@ -73,6 +73,12 @@ load_plugins {
 - `start-issue` in PATH (for issue development tabs)
 - `claude` CLI in PATH (for Claude session tabs)
 
+### Plugin Dependencies
+
+| Plugin | Used by | Purpose |
+|--------|---------|---------|
+| **superpowers** | `/run-in-new-tab`, zellij-claude-tab skill | Skill `executing-plans` for plan execution in new tabs |
+
 ## Components
 
 | Component | File | Purpose |
