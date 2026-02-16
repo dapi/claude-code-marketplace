@@ -14,6 +14,12 @@ GitHub workflow plugin for Claude Code — issues, PRs, worktrees, sub-issues.
 
 Manage GitHub issues via `gh` CLI: read, edit, checkboxes, sub-issues. Activates automatically when you mention GitHub issue URLs.
 
+### Skill: worktree-init-script
+
+Extends `superpowers:using-git-worktrees` -- runs `./init.sh` after worktree creation if the script exists in the project. Replaces standard auto-detect (npm/cargo/etc) with project-specific initialization.
+
+See [templates/init.sh](./templates/init.sh) for a ready-made template.
+
 ### Command: /start-issue
 
 Start work on GitHub issue — creates worktree and branch.
