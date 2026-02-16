@@ -38,11 +38,12 @@ ISSUE_NUMBER=$(parse_issue_number "$ARGUMENTS")
 
 ```bash
 # EAFP: выполняем сразу, диагностируем при ошибке
-zellij action new-tab --name "#${ISSUE_NUMBER}" && \
-zellij action write-chars "start-issue $ARGUMENTS
+timeout 5 zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+timeout 5 zellij action write-chars "start-issue $ARGUMENTS
 " || {
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif [ $? -eq 124 ]; then echo "Timed out -- zellij may be hanging"
   elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
   else echo "Unknown error"
   fi

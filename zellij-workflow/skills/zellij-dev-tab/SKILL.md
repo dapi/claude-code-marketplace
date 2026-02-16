@@ -80,11 +80,12 @@ parse_issue_number() {
 ```bash
 # EAFP: выполняем сразу, диагностируем при ошибке
 ISSUE_NUMBER=$(parse_issue_number "$ARG")
-zellij action new-tab --name "#${ISSUE_NUMBER}" && \
-zellij action write-chars "start-issue $ARG
+timeout 5 zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+timeout 5 zellij action write-chars "start-issue $ARG
 " || {
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif [ $? -eq 124 ]; then echo "Timed out -- zellij may be hanging"
   elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
   else echo "Unknown error"
   fi
@@ -94,7 +95,7 @@ zellij action write-chars "start-issue $ARG
 **В новой панели (альтернатива):**
 
 ```bash
-zellij run -- start-issue $ARG
+timeout 5 zellij run -- start-issue $ARG
 ```
 
 ## Примеры использования
@@ -105,8 +106,8 @@ zellij run -- start-issue $ARG
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#45" && \
-zellij action write-chars "start-issue 45
+timeout 5 zellij action new-tab --name "#45" && \
+timeout 5 zellij action write-chars "start-issue 45
 "
 ```
 
@@ -116,8 +117,8 @@ zellij action write-chars "start-issue 45
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#123" && \
-zellij action write-chars "start-issue https://github.com/dapi/project/issues/123
+timeout 5 zellij action new-tab --name "#123" && \
+timeout 5 zellij action write-chars "start-issue https://github.com/dapi/project/issues/123
 "
 ```
 
@@ -127,8 +128,8 @@ zellij action write-chars "start-issue https://github.com/dapi/project/issues/12
 
 **Claude выполняет:**
 ```bash
-zellij action new-tab --name "#78" && \
-zellij action write-chars "start-issue 78
+timeout 5 zellij action new-tab --name "#78" && \
+timeout 5 zellij action write-chars "start-issue 78
 "
 ```
 
@@ -150,6 +151,7 @@ zellij run -- start-issue 45
 
 | Ошибка | Причина | Решение |
 |--------|---------|---------|
+| `Timed out` | zellij завис (exit code 124) | Перезапустить zellij |
 | `zellij: command not found` | zellij не установлен | `cargo install zellij` |
 | `Zellij not running` | Команда запущена вне zellij | Запустить zellij |
 | `start-issue: command not found` | start-issue не в PATH | Добавить в PATH или установить |

@@ -191,7 +191,7 @@ version:
 ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
 SCRIPTS_DIR = $(HOME)/.local/bin
 
-ZELLIJ_TAB_STATUS_VERSION = v0.3.1
+ZELLIJ_TAB_STATUS_VERSION = v0.3.5
 ZELLIJ_TAB_STATUS_WASM_URL = https://github.com/dapi/zellij-tab-status/releases/download/$(ZELLIJ_TAB_STATUS_VERSION)/zellij-tab-status.wasm
 ZELLIJ_TAB_STATUS_RAW_URL = https://raw.githubusercontent.com/dapi/zellij-tab-status/$(ZELLIJ_TAB_STATUS_VERSION)/scripts
 ZELLIJ_TAB_STATUS_SCRIPTS = zellij-tab-status
