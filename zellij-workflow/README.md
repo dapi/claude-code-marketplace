@@ -85,7 +85,6 @@ load_plugins {
 | Component | File | Purpose |
 |-----------|------|---------|
 | Hooks | [hooks/hooks.json](./hooks/hooks.json) | Tab status indicators |
-| Skill | [skills/zellij-tab-pane/SKILL.md](./skills/zellij-tab-pane/SKILL.md) | General-purpose tab/pane |
-| Skill | [skills/zellij-dev-tab/SKILL.md](./skills/zellij-dev-tab/SKILL.md) | Issue development in tab/pane |
+| Skill | [skills/zellij-tab-pane/SKILL.md](./skills/zellij-tab-pane/SKILL.md) | Tab/pane: empty, command, Claude session, issue dev |
 | Command | [commands/start-issue-in-new-tab.md](./commands/start-issue-in-new-tab.md) | `/start-issue-in-new-tab` |
 | Command | [commands/run-in-new-tab.md](./commands/run-in-new-tab.md) | `/run-in-new-tab` |

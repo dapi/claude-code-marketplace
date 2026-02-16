@@ -110,6 +110,29 @@
 - "запусти задачу в новой панели"
 - "выполни это в панели zellij"
 
+### **Issue in Tab (EN)**
+
+- "start issue #123 in new tab"
+- "launch issue development in separate tab"
+- "create tab for issue #45"
+- "open https://github.com/org/repo/issues/78 in tab"
+- "start-issue 99 in a new tab"
+
+### **Issue in Pane (EN)**
+
+- "start issue #123 in a pane"
+- "launch issue in pane"
+- "open issue #45 in panel"
+- "start-issue in pane"
+
+### **Issue во вкладке/панели (RU)**
+
+- "стартани задачу в панели"
+- "запусти issue #123 в новой вкладке"
+- "создай вкладку для issue #78"
+- "запусти разработку issue 45 в панели"
+- "start-issue в отдельной вкладке"
+
 ### **Combined / Polite**
 
 - "could you run this in a new tab please?"
@@ -134,14 +157,6 @@
 - "close the tab"
 - "switch to tab 3"
 - "list zellij tabs"
-
-### Issue development (use zellij-dev-tab instead)
-
-- "start issue #123 in new tab"
-- "launch issue development in separate tab"
-- "запусти разработку issue 45 в вкладке"
-- "start-issue в отдельной вкладке"
-- "создай вкладку для issue #78"
 
 ### Run commands without tab/pane context
 
@@ -176,13 +191,11 @@
 - "delegate/offload to tab/pane"
 - "[verb] [что-то] в [новой] вкладке/панели"
 
-### Distinguishing from zellij-dev-tab
+### Mode coverage
 
-| Pattern | This skill (zellij-tab-pane) | zellij-dev-tab |
-|---------|------------------------------|----------------|
-| Core object | empty, command, plan, task, prompt | issue, #number, start-issue |
-| Action | open tab, run command, execute plan | start development, work on issue |
-| Purpose | General-purpose tab/pane | Issue-specific development |
-| Dependencies | zellij (+ claude for Mode C) | zellij + start-issue |
-
-**Rule:** If the request mentions an issue number/URL and wants to start development -- use `zellij-dev-tab`. Everything else (empty tab, command, claude session) -- use `zellij-tab-pane`.
+| Mode | Core object | Example |
+|------|-------------|---------|
+| A (empty) | nothing | "open new tab" |
+| B (command) | shell command | "run npm test in pane" |
+| C (claude) | plan, task, prompt | "execute plan in tab" |
+| D (issue) | issue #N, URL | "start issue #123 in pane" |

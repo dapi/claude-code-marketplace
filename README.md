@@ -48,7 +48,7 @@ GitHub workflow: issues, PRs, worktrees, sub-issues.
 
 Unified Zellij workflow: tab status indicators, issue development tabs, general-purpose tabs/panes.
 
-**Components:** skills `zellij-tab-pane`, `zellij-dev-tab`, commands `/start-issue-in-new-tab`, `/run-in-new-tab`, hooks
+**Components:** skill `zellij-tab-pane`, commands `/start-issue-in-new-tab`, `/run-in-new-tab`, hooks
 
 **Status icons:** `◉` Working | `○` Ready | `✋` Needs input (requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
 
