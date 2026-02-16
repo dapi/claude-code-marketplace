@@ -76,9 +76,7 @@ fi
 # Clean old state files
 mkdir -p .claude
 rm -f .claude/fix-pr-state.json
-rm -f .claude/fix-pr-check-review.json
-rm -f .claude/fix-pr-check-tests.json
-rm -f .claude/fix-pr-check-ci.json
+rm -f .claude/fix-pr-check-*.json
 
 # Detect base branch
 BASE_BRANCH=$(gh pr view --json baseRefName -q '.baseRefName' 2>/dev/null || echo "main")

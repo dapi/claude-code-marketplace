@@ -1,259 +1,183 @@
 ---
-description: Orchestrate iterative PR review and fix cycle until no critical issues remain
+description: Iterative PR fix loop until clean (review + tests + CI)
 argument-hint: [--max-iterations=N]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-fix-pr.sh:*)"]
 ---
 
 # PR Fix Orchestrator
 
-Iteratively review and fix PR until no critical/important issues remain.
+Run the setup script first:
 
-## Workflow Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR                         │
-│  (maintains minimal state, delegates to subagents)      │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────┐
-│  /pr-review-toolkit:review-pr       │
-│  (Skill - launches 4 agents)        │
-├─────────────────────────────────────┤
-│ ├─ code-reviewer        (parallel)  │
-│ ├─ pr-test-analyzer     (parallel)  │
-│ ├─ silent-failure-hunter(parallel)  │
-│ └─ comment-analyzer     (parallel)  │
-└─────────────────────────────────────┘
-         │
-         ▼ (consolidated issues)
-┌─────────────────┐
-│   Fix Agent     │ ──▶ [Loop back to review if issues remain]
-│  (subagent)     │
-└─────────────────┘
-         │
-         ▼
-   fixup commit
+```!
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-fix-pr.sh" $ARGUMENTS
 ```
 
-## Configuration
+You are a thin PR fix orchestrator. You do NOT write code yourself.
+You ONLY read state, delegate to subagents, and evaluate results.
 
-- **Max iterations:** $ARGUMENTS or default 5
-- **Stop condition:** No `critical` or `important` severity issues
+## Step 1: Read State
 
-## Execution Steps
+Read `.claude/fix-pr-state.json` to get:
+- `iteration` (current), `max_iterations`
+- `pr_number`, `pr_url`, `base_branch`
+- `history` (previous iterations)
 
-### Step 0: Initialize
-
-1. Parse arguments for `--max-iterations=N` (default: 5)
-2. Set `iteration = 0`
-3. Create state file: `.pr-fix-state.json`
-   ```json
-   {
-     "iteration": 0,
-     "max_iterations": 5,
-     "status": "in_progress",
-     "history": []
-   }
-   ```
-
-### Step 1: Run Review (Skill)
-
-**IMPORTANT:** Use Skill tool to invoke `/pr-review-toolkit:review-pr` — this runs 4 specialized agents in parallel:
-- code-reviewer
-- pr-test-analyzer
-- silent-failure-hunter
-- comment-analyzer
-
-```
-Skill tool invocation:
-  skill: "pr-review-toolkit:review-pr"
+Remove stale check files if they exist from previous iteration:
+```bash
+rm -f .claude/fix-pr-check-review.json .claude/fix-pr-check-tests.json .claude/fix-pr-check-ci.json
 ```
 
-Wait for all 4 agents to complete and collect their results.
+## Step 2: Run 3 Parallel Check Subagents
 
-After review completes, consolidate results into JSON:
-```json
+Launch ALL THREE as parallel Task subagents (subagent_type: "general-purpose").
+Each subagent writes results to its own JSON file.
+
+**Subagent 1 -- Code Review:**
+
+```
+Run a comprehensive code review of the current PR.
+
+Use the Skill tool to invoke: pr-review-toolkit:review-pr
+
+After the review completes, extract all issues and write results to .claude/fix-pr-check-review.json:
 {
+  "status": "pass" or "fail",
+  "critical": <count>,
+  "important": <count>,
   "issues": [
-    {
-      "severity": "critical|important|suggestion|nitpick",
-      "file": "path/to/file.ts",
-      "line": 42,
-      "description": "Brief description of the issue",
-      "fix_hint": "How to fix it",
-      "source": "code-reviewer|test-analyzer|silent-failure|comment-analyzer"
-    }
-  ],
-  "summary": {
-    "critical": 0,
-    "important": 0,
-    "suggestion": 0,
-    "nitpick": 0
-  }
+    {"severity": "critical|important", "file": "path", "line": N, "description": "...", "fix_hint": "..."}
+  ]
 }
+
+If status is "pass", critical and important must both be 0.
+Only include critical and important issues (ignore suggestions/nitpicks).
+If any error occurs, write: {"status": "error", "error": "description"}
 ```
 
-Extract only `critical` and `important` issues for fixing.
-
-### Step 2: Parse Review Results
-
-After subagent returns:
-
-1. Parse JSON from response
-2. Extract `critical` and `important` counts
-3. Update state file:
-   ```json
-   {
-     "iteration": 1,
-     "history": [
-       {"iteration": 1, "critical": 2, "important": 3, "action": "review"}
-     ]
-   }
-   ```
-
-### Step 3: Check Stop Condition
-
-**IF** `critical == 0 AND important == 0`:
-- Set `status: "success"`
-- Output: "PR review complete. No critical or important issues remaining."
-- **STOP**
-
-**IF** `iteration >= max_iterations`:
-- Set `status: "max_iterations_reached"`
-- Output: "Max iterations reached. Remaining issues: {critical} critical, {important} important"
-- **STOP**
-
-**ELSE**: Continue to Step 4
-
-### Step 4: Run Fix (Subagent)
-
-Launch Task tool with `subagent_type: "general-purpose"`:
+**Subagent 2 -- Local Tests:**
 
 ```
-Prompt for subagent:
----
-Fix the following PR issues. Apply fixes directly to the files.
+Run the project's test suite.
 
-ISSUES TO FIX:
-{JSON array of critical and important issues from Step 2}
-
-RULES:
-1. Fix ONLY the issues listed above
-2. Do NOT refactor unrelated code
-3. Do NOT add comments explaining fixes
-4. After fixing, stage changes: git add -A
-5. Create fixup commit: git commit -m "fix: address review feedback (iteration N)"
-
-Output a brief summary of what was fixed.
----
-```
-
-### Step 5: Update State and Loop
-
-1. Increment `iteration`
-2. Add to history:
-   ```json
-   {"iteration": N, "action": "fix", "fixes_applied": X}
-   ```
-3. **GOTO Step 1**
-
-## State File Schema
-
-File: `.pr-fix-state.json` (in project root)
-
-```json
+1. Read CLAUDE.md in the project root to find the test command
+2. If no test command in CLAUDE.md, try common commands: make test, npm test, cargo test, pytest
+3. Run the test command
+4. Write results to .claude/fix-pr-check-tests.json:
 {
-  "iteration": 2,
-  "max_iterations": 5,
-  "status": "in_progress|success|max_iterations_reached|error",
-  "started_at": "2024-01-15T10:30:00Z",
-  "history": [
-    {"iteration": 1, "critical": 2, "important": 3, "action": "review"},
-    {"iteration": 1, "fixes_applied": 5, "action": "fix"},
-    {"iteration": 2, "critical": 0, "important": 1, "action": "review"},
-    {"iteration": 2, "fixes_applied": 1, "action": "fix"},
-    {"iteration": 3, "critical": 0, "important": 0, "action": "review"}
-  ],
-  "final_result": {
-    "total_iterations": 3,
-    "total_fixes": 6,
-    "remaining_issues": 0
-  }
+  "status": "pass" or "fail",
+  "command": "the command you ran",
+  "output_tail": "last 50 lines of output",
+  "failed_tests": ["list", "of", "failed", "test", "names"]
 }
+
+If all tests pass, status is "pass" and failed_tests is [].
+If any error occurs, write: {"status": "error", "error": "description"}
 ```
 
-## Orchestrator Pseudocode
+**Subagent 3 -- CI Status:**
 
-```python
-def fix_pr(max_iterations=5):
-    state = initialize_state(max_iterations)
+Read `pr_number` from `.claude/fix-pr-state.json`, then:
 
-    for iteration in range(1, max_iterations + 1):
-        state.iteration = iteration
+```
+Check CI status for the current PR.
 
-        # Review phase - invoke skill (runs 4 agents in parallel)
-        review_result = invoke_skill("pr-review-toolkit:review-pr")
-        # This launches: code-reviewer, pr-test-analyzer,
-        #                silent-failure-hunter, comment-analyzer
+1. Read .claude/fix-pr-state.json to get pr_number
+2. Run: gh pr checks
+3. Parse the output into structured data
+4. Write results to .claude/fix-pr-check-ci.json:
+{
+  "status": "pass" or "fail" or "pending",
+  "checks": [
+    {"name": "check-name", "status": "pass|fail|pending", "url": "..."}
+  ]
+}
 
-        issues = consolidate_issues(review_result)
-        state.history.append({"iteration": iteration, "action": "review", **issues.summary})
-
-        # Check stop condition
-        if issues.critical == 0 and issues.important == 0:
-            state.status = "success"
-            save_state(state)
-            return "Success: No critical/important issues"
-
-        # Fix phase (subagent)
-        fix_result = run_subagent(
-            type="general-purpose",
-            prompt=FIX_PROMPT.format(issues=issues.critical_and_important())
-        )
-        state.history.append({"iteration": iteration, "action": "fix"})
-        save_state(state)
-
-    state.status = "max_iterations_reached"
-    save_state(state)
-    return f"Max iterations reached. Remaining: {issues.summary}"
+If ALL checks passed: status is "pass".
+If ANY check failed: status is "fail".
+If ANY check is still running/pending and none failed: status is "pending".
+If CI has not started yet or no checks exist: status is "pending".
+If any error occurs (gh auth, network): write {"status": "error", "error": "description"}
 ```
 
-## Output Format
+Wait for ALL THREE subagents to complete before proceeding.
 
-### On Success
+## Step 3: Merge Results and Evaluate
+
+Read the three result files:
+- `.claude/fix-pr-check-review.json`
+- `.claude/fix-pr-check-tests.json`
+- `.claude/fix-pr-check-ci.json`
+
+Merge them into `.claude/fix-pr-state.json` under `check_results`.
+Add a history entry: `{"iteration": N, "action": "check", "review": STATUS, "tests": STATUS, "ci": STATUS}`
+
+**Decision matrix:**
+
+| review | tests | ci      | Action                                              |
+|--------|-------|---------|-----------------------------------------------------|
+| pass   | pass  | pass    | Output `<promise>PR CLEAN</promise>` and STOP       |
+| pass   | pass  | pending | Run `sleep 30` then exit (re-check next iteration)  |
+| *      | *     | *       | Continue to Step 4 (at least one failure)            |
+| error  | error | error   | If 2+ consecutive all-error iterations: output `<promise>STALLED</promise>` and STOP. Otherwise exit to retry. |
+
+## Step 4: Fix (only if failures exist)
+
+Collect ALL failures from the three check results. Build a fix prompt with priority order:
+1. Test failures (highest priority)
+2. CI failures
+3. Review issues (critical + important only)
+
+Launch ONE Task subagent (subagent_type: "general-purpose") with this prompt:
+
 ```
-✅ PR Fix Complete
+You are fixing issues in a PR.
 
-Iterations: 3
-Total fixes applied: 6
-Final status: No critical or important issues
+## Context
+1. Read CLAUDE.md in project root for coding conventions
+2. Read the git diff to understand what this PR changes:
+   git diff BASE_BRANCH...HEAD
+   (replace BASE_BRANCH with actual base branch from state)
 
-History:
-  [1] Review: 2 critical, 3 important → Fix: 5 issues
-  [2] Review: 0 critical, 1 important → Fix: 1 issue
-  [3] Review: 0 critical, 0 important → Done
-```
+## Issues to fix (by priority)
 
-### On Max Iterations
-```
-⚠️ PR Fix Incomplete
+### Test failures (fix first)
+TEST_FAILURES_JSON
 
-Iterations: 5 (max reached)
-Remaining: 1 critical, 2 important
+### CI failures
+CI_FAILURES_JSON
 
-History:
-  [1] Review: 5 critical, 8 important → Fix: 10 issues
-  ...
-  [5] Review: 1 critical, 2 important → Stopped
-
-Run `/fix-pr` again to continue, or review remaining issues manually.
-```
+### Review issues (critical + important only)
+REVIEW_ISSUES_JSON
 
 ## Rules
+1. Fix ONLY the listed issues. Do NOT refactor unrelated code.
+2. Do NOT add comments explaining fixes.
+3. Stage only specific changed files:
+   git add file1.ts file2.ts
+   (NEVER use git add -A or git add .)
+4. Create fixup commit:
+   git commit -m "fix: BRIEF_DESCRIPTION (iteration N)"
+5. Push: git push
+6. Write a JSON summary to .claude/fix-pr-check-fix.json:
+   {"status": "done", "fixes_applied": N, "skipped": [...], "commit_sha": "...", "summary": "..."}
 
-- Each review/fix runs in isolated subagent context
-- Orchestrator maintains only minimal state (JSON file)
-- Never pass full file contents between iterations
-- Subagents work with current git state, not cached data
-- Commits are created after each fix iteration for easy rollback
+## Anti-patterns (do NOT do these)
+- Do not "fix" issues by deleting tests
+- Do not suppress linter warnings with ignore comments
+- Do not change test expectations to match buggy behavior
+- If an issue is unclear, skip it rather than guess
+```
+
+Replace TEST_FAILURES_JSON, CI_FAILURES_JSON, REVIEW_ISSUES_JSON with actual data from check results.
+Replace BASE_BRANCH with value from state file.
+Replace N with current iteration number.
+
+## Step 5: Update State and Exit
+
+After fix subagent completes:
+1. Read `.claude/fix-pr-check-fix.json` if it exists
+2. Add history entry: `{"iteration": N, "action": "fix", "fixes": COUNT, "commit": "SHA"}`
+3. Save updated `.claude/fix-pr-state.json`
+4. Exit normally (stop hook will catch and re-feed this prompt for next iteration)
+
+Do NOT output `<promise>PR CLEAN</promise>` after a fix -- always let the next iteration verify.

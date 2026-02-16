@@ -1,0 +1,15 @@
+{
+  "description": "github-workflow hooks for PR fix loop",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/fix-pr-stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -54,6 +54,7 @@ if [[ -f "$TRANSCRIPT_PATH" ]]; then
     if echo "$LAST_OUTPUT" | grep -q '<promise>STALLED</promise>'; then
       echo "fix-pr: Stall detected. Loop stopped." >&2
       rm -f "$STATE_FILE"
+      rm -f .claude/fix-pr-check-*.json
       exit 0
     fi
   fi
@@ -62,10 +63,10 @@ fi
 # Stall detection: check if last 3 iterations had identical check results
 STALL_JSON=".claude/fix-pr-state.json"
 if [[ -f "$STALL_JSON" ]]; then
-  HISTORY_LEN=$(jq '.history | length' "$STALL_JSON" 2>/dev/null || echo 0)
-  if [[ "$HISTORY_LEN" -ge 6 ]]; then
-    # Compare last 3 check actions' review+tests+ci status
-    LAST3=$(jq '[.history | map(select(.action == "check")) | .[-3:][].review + .[-3:][].tests + .[-3:][].ci] | unique | length' "$STALL_JSON" 2>/dev/null || echo 0)
+  CHECK_COUNT=$(jq '[.history[] | select(.action == "check")] | length' "$STALL_JSON" 2>/dev/null || echo 0)
+  if [[ "$CHECK_COUNT" -ge 3 ]]; then
+    # Compare last 3 check actions' review+tests+ci status (per-element concat)
+    LAST3=$(jq '[.history | map(select(.action == "check")) | .[-3:][] | (.review + .tests + .ci)] | unique | length' "$STALL_JSON" 2>/dev/null || echo 0)
     if [[ "$LAST3" == "1" ]]; then
       echo "fix-pr: 3 identical iterations detected (stall). Stopping." >&2
       rm -f "$STATE_FILE"
