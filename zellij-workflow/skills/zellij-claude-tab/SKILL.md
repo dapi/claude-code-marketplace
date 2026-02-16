@@ -1,36 +1,39 @@
 ---
 name: zellij-claude-tab
 description: |
-  **UNIVERSAL TRIGGER**: EXECUTE/RUN/LAUNCH Claude session with instructions IN separate zellij TAB.
+  **UNIVERSAL TRIGGER**: EXECUTE/RUN/LAUNCH Claude session with instructions IN separate zellij TAB or PANE.
 
   Common patterns:
-  - "execute/run/launch [task/plan] in new tab"
-  - "start claude session in new tab with [instructions]"
-  - "выполни/запусти [задачу] в новой вкладке zellij"
+  - "execute/run/launch [task/plan] in new tab/pane"
+  - "start claude session in new tab/panel with [instructions]"
+  - "выполни/запусти [задачу] в новой вкладке/панели zellij"
 
   **Execute Plan/Task**:
   - "run this plan in a new zellij tab"
   - "execute plan from docs/plans/... in separate tab"
-  - "launch this task in new tab", "start in parallel tab"
-  - "выполни план в отдельной вкладке"
+  - "launch this task in new tab/pane", "start in parallel tab"
+  - "выполни план в отдельной вкладке/панели"
 
   **Start Session**:
-  - "open claude session in new tab"
+  - "open claude session in new tab/pane"
   - "start new claude in zellij tab with these instructions"
   - "create tab and run claude with prompt"
-  - "открой сессию claude в новой вкладке"
+  - "открой сессию claude в новой вкладке/панели"
 
   **Delegate Work**:
-  - "delegate this to a new tab"
+  - "delegate this to a new tab/pane"
   - "run this in background tab", "parallel session for this"
-  - "send to new tab", "offload to separate tab"
-  - "запусти в параллельной вкладке"
+  - "send to new tab", "offload to separate tab/pane"
+  - "запусти в параллельной вкладке/панели"
 
   TRIGGERS: run in new tab, execute in tab, launch in tab, new tab claude,
   claude session tab, zellij claude tab, parallel tab, delegate to tab,
   start session tab, run plan tab, execute plan tab, separate session,
+  run in pane, execute in pane, launch in pane, new pane claude,
+  claude session pane, parallel pane, delegate to pane, run in panel,
   выполни в вкладке, запусти в вкладке, новая вкладка, сессия в вкладке,
-  параллельная сессия, отдельная вкладка, делегируй в вкладку
+  параллельная сессия, отдельная вкладка, делегируй в вкладку,
+  выполни в панели, запусти в панели, новая панель, сессия в панели
 allowed-tools: Bash
 ---
 
@@ -101,6 +104,14 @@ timeout 5 zellij action write-chars "bash '$SCRIPT'
 2. `sleep 0.3` -- wait for shell to initialize in new tab
 3. `write-chars "bash '$SCRIPT'\n"` -- types `bash /tmp/script.sh` + Enter into new tab
 4. The script clears screen, shows prompt message, then `exec claude` starts **interactive** session
+
+**In a new pane (alternative):**
+
+```bash
+timeout 5 zellij run -- bash '$SCRIPT'
+```
+
+Use when the user asks for a **panel/pane** instead of a tab. `zellij run` creates a pane in the current tab and runs the command directly -- no `sleep` or `write-chars` needed.
 
 ## Examples
 

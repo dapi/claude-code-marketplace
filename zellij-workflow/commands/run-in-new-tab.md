@@ -50,6 +50,12 @@ timeout 5 zellij action write-chars "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT
 }
 ```
 
+**In a new pane (alternative):**
+
+```bash
+timeout 5 zellij run -- bash -c "cd '$PROJECT_DIR' && PROMPT=\$(cat '$PROMPT_FILE') && rm '$PROMPT_FILE' && exec claude --dangerously-skip-permissions \"\$PROMPT\""
+```
+
 ## Examples
 
 ```bash

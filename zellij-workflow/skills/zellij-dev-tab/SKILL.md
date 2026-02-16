@@ -1,34 +1,38 @@
 ---
 name: zellij-dev-tab
 description: |
-  **UNIVERSAL TRIGGER**: START/OPEN/LAUNCH issue development IN separate zellij TAB.
+  **UNIVERSAL TRIGGER**: START/OPEN/LAUNCH issue development IN separate zellij TAB or PANE.
 
   Common patterns:
-  - "start/open/launch [issue] in new tab"
-  - "get/show/display issue in zellij tab"
-  - "запусти/открой/создай [issue] в вкладке"
+  - "start/open/launch [issue] in new tab/pane"
+  - "get/show/display issue in zellij tab/panel"
+  - "запусти/открой/создай [issue] в вкладке/панели"
 
   **Start Development**:
-  - "start development in separate tab"
+  - "start development in separate tab/pane"
   - "launch issue #123 in new zellij tab"
-  - "check out issue in new tab", "fetch issue to tab"
-  - "запусти разработку в отдельной вкладке"
+  - "check out issue in new tab/pane", "fetch issue to tab"
+  - "запусти разработку в отдельной вкладке/панели"
 
   **Create/Open Tab**:
   - "create tab for issue #45"
-  - "open new tab for issue", "list and start issue in tab"
-  - "создай вкладку для задачи"
+  - "open new tab/pane for issue", "list and start issue in tab"
+  - "создай вкладку/панель для задачи"
 
   **Retrieve & Run**:
-  - "retrieve issue #N and start in tab"
+  - "retrieve issue #N and start in tab/pane"
   - "run start-issue in new tab", "analyze issue in tab"
-  - "start-issue в отдельной вкладке"
+  - "start-issue в отдельной вкладке/панели"
 
   TRIGGERS: start issue tab, open issue tab, launch issue tab, create tab issue,
   run start-issue tab, zellij new tab issue, separate tab development, new tab issue,
   development in tab, issue development tab, work on issue in tab, begin issue tab,
+  start issue pane, open issue pane, launch issue pane, create pane issue,
+  run start-issue pane, issue development pane, work on issue in pane,
   запусти в вкладке, открой в вкладке, создай вкладку issue, новая вкладка задача,
-  разработка в вкладке, вкладка для issue, отдельная вкладка issue, zellij вкладка
+  разработка в вкладке, вкладка для issue, отдельная вкладка issue, zellij вкладка,
+  запусти в панели, открой в панели, создай панель issue, новая панель задача,
+  разработка в панели, панель для issue, отдельная панель issue, zellij панель
 allowed-tools: Bash
 ---
 
