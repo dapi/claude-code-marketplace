@@ -46,9 +46,9 @@
 
 ### zellij-workflow
 
-Единый Zellij workflow: индикаторы статуса вкладок, вкладки разработки issue, сессии Claude.
+Единый Zellij workflow: индикаторы статуса вкладок, вкладки разработки issue, вкладки/панели общего назначения.
 
-**Компоненты:** навыки `zellij-dev-tab`, `zellij-claude-tab`, команды `/start-issue-in-new-tab`, `/run-in-new-tab`, хуки
+**Компоненты:** навыки `zellij-tab-pane`, `zellij-dev-tab`, команды `/start-issue-in-new-tab`, `/run-in-new-tab`, хуки
 
 **Иконки статуса:** `◉` Работает | `○` Готов | `✋` Ждёт ввода (требуется [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
 

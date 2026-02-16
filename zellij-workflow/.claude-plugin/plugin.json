@@ -1,6 +1,6 @@
 {
   "name": "zellij-workflow",
-  "description": "Zellij workflow: tab status indicators, issue development tabs, Claude session tabs",
+  "description": "Zellij workflow: tab status indicators, issue development tabs, general-purpose tabs/panes",
   "version": "1.0.0",
   "author": {
     "name": "Danil Pismenny",

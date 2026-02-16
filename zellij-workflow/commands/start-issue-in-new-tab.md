@@ -6,15 +6,15 @@ version: 1.0.0
 
 # Start Issue in New Tab
 
-Запусти разработку issue в новой вкладке zellij.
+Launch issue development in a new zellij tab or pane.
 
-## Входные данные
+## Input
 
-- **ISSUE**: `$ARGUMENTS` -- номер issue, #номер, или полный GitHub URL
+- **ISSUE**: `$ARGUMENTS` -- issue number, #number, or full GitHub URL
 
-## Шаги
+## Steps
 
-### 1. Извлеки номер issue
+### 1. Parse issue number
 
 ```bash
 parse_issue_number() {
@@ -23,7 +23,7 @@ parse_issue_number() {
   # URL: https://github.com/.../issues/123
   if [[ "$arg" =~ github\.com/.*/issues/([0-9]+) ]]; then
     echo "${BASH_REMATCH[1]}"
-  # #123 или 123
+  # #123 or 123
   elif [[ "$arg" =~ ^#?([0-9]+)$ ]]; then
     echo "${BASH_REMATCH[1]}"
   else
@@ -34,27 +34,42 @@ parse_issue_number() {
 ISSUE_NUMBER=$(parse_issue_number "$ARGUMENTS")
 ```
 
-### 2. Создай вкладку и запусти start-issue
+### 2. Create tab and launch start-issue
+
+**In a new tab (default):**
 
 ```bash
-# EAFP: выполняем сразу, диагностируем при ошибке
 timeout 5 zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+sleep 0.3 && \
 timeout 5 zellij action write-chars "start-issue $ARGUMENTS
 " || {
+  _rc=$?
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
-  elif [ $? -eq 124 ]; then echo "Timed out -- zellij may be hanging"
+  elif [ $_rc -eq 124 ]; then echo "Timed out -- zellij may be hanging"
   elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
-  else echo "Unknown error"
+  else echo "Unknown error (exit code: $_rc)"
   fi
+  exit $_rc
 }
 ```
 
-**Как это работает:**
-1. `new-tab --name` -- создаёт вкладку с заданным именем
-2. `write-chars` -- вводит команду в shell новой вкладки
+**In a new pane:**
 
-## Примеры
+```bash
+timeout 5 zellij run -- start-issue $ARGUMENTS || {
+  _rc=$?
+  echo "Command failed. Diagnosing..."
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif [ $_rc -eq 124 ]; then echo "Timed out -- zellij may be hanging"
+  elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
+  else echo "Unknown error (exit code: $_rc)"
+  fi
+  exit $_rc
+}
+```
+
+## Examples
 
 ```bash
 /start-issue-in-new-tab 123
@@ -62,10 +77,10 @@ timeout 5 zellij action write-chars "start-issue $ARGUMENTS
 /start-issue-in-new-tab https://github.com/owner/repo/issues/78
 ```
 
-## Результат
+## Result
 
-- Создаётся новая вкладка zellij с именем `#123`
-- В ней запускается `start-issue` который:
-  - Создаёт git worktree
-  - Переименовывает вкладку
-  - Запускает Claude Code сессию
+- New zellij tab created with name `#123`
+- `start-issue` runs and:
+  - Creates git worktree
+  - Renames tab
+  - Launches Claude Code session

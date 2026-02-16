@@ -38,37 +38,23 @@ allowed-tools: Bash
 
 # Zellij Dev Tab Skill
 
-Запуск разработки GitHub issue в отдельной вкладке zellij с автоматическим вызовом `start-issue`.
+Launch `start-issue` for a GitHub issue in a separate zellij tab or pane.
 
-## Назначение
+## Issue Argument Format
 
-Когда пользователь хочет начать работу над issue в изолированной вкладке терминала, этот skill:
-
-1. Парсит номер issue из аргумента
-2. Создаёт новую вкладку zellij с именем `#ISSUE_NUMBER`
-3. Запускает `start-issue` с переданным аргументом
-
-## Формат аргумента
-
-Skill принимает номер issue в любом из форматов:
-
-| Формат | Пример | Результат |
-|--------|--------|-----------|
-| Число | `123` | Issue #123 |
-| С решёткой | `#123` | Issue #123 |
+| Format | Example | Result |
+|--------|---------|--------|
+| Number | `123` | Issue #123 |
+| With hash | `#123` | Issue #123 |
 | URL | `https://github.com/owner/repo/issues/123` | Issue #123 |
 
-## Алгоритм парсинга
+## Issue Number Parsing
 
 ```bash
-# Извлечение номера issue из аргумента
 parse_issue_number() {
   local arg="$1"
-
-  # URL формат
   if [[ "$arg" =~ github\.com/.*/issues/([0-9]+) ]]; then
     echo "${BASH_REMATCH[1]}"
-  # #число формат
   elif [[ "$arg" =~ ^#?([0-9]+)$ ]]; then
     echo "${BASH_REMATCH[1]}"
   else
@@ -77,92 +63,110 @@ parse_issue_number() {
 }
 ```
 
-## Команда выполнения
+## Decision: Tab or Pane
 
-**В новой вкладке:**
+```
+"pane"/"panel"/"панель" -> PANE
+"tab"/"вкладка"/default  -> TAB
+```
+
+Follows the same container selection pattern as `zellij-tab-pane` skill.
+
+## TAB Flow
 
 ```bash
-# EAFP: выполняем сразу, диагностируем при ошибке
 ISSUE_NUMBER=$(parse_issue_number "$ARG")
+
 timeout 5 zellij action new-tab --name "#${ISSUE_NUMBER}" && \
+sleep 0.3 && \
 timeout 5 zellij action write-chars "start-issue $ARG
 " || {
+  _rc=$?
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
-  elif [ $? -eq 124 ]; then echo "Timed out -- zellij may be hanging"
+  elif [ $_rc -eq 124 ]; then echo "Timed out -- zellij may be hanging"
   elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
-  else echo "Unknown error"
+  else echo "Unknown error (exit code: $_rc)"
   fi
+  exit $_rc
 }
 ```
 
-**В новой панели (альтернатива):**
+## PANE Flow
 
 ```bash
-timeout 5 zellij run -- start-issue $ARG
+timeout 5 zellij run -- start-issue $ARG || {
+  _rc=$?
+  echo "Command failed. Diagnosing..."
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif [ $_rc -eq 124 ]; then echo "Timed out -- zellij may be hanging"
+  elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
+  else echo "Unknown error (exit code: $_rc)"
+  fi
+  exit $_rc
+}
 ```
 
-## Примеры использования
+## Examples
 
-### Пример 1: Номер issue
+### Example 1: Issue number in tab
 
-**Пользователь:** "Запусти разработку issue 45 в отдельной вкладке"
+**User:** "Start issue 45 in a new tab"
 
-**Claude выполняет:**
 ```bash
 timeout 5 zellij action new-tab --name "#45" && \
+sleep 0.3 && \
 timeout 5 zellij action write-chars "start-issue 45
 "
 ```
 
-### Пример 2: URL
+### Example 2: URL in tab
 
-**Пользователь:** "Открой https://github.com/dapi/project/issues/123 в новой вкладке zellij"
+**User:** "Open https://github.com/dapi/project/issues/123 in new tab"
 
-**Claude выполняет:**
 ```bash
 timeout 5 zellij action new-tab --name "#123" && \
+sleep 0.3 && \
 timeout 5 zellij action write-chars "start-issue https://github.com/dapi/project/issues/123
 "
 ```
 
-### Пример 3: С решёткой
+### Example 3: Issue in pane
 
-**Пользователь:** "Создай вкладку для #78"
+**User:** "Start issue #78 in a pane"
 
-**Claude выполняет:**
 ```bash
-timeout 5 zellij action new-tab --name "#78" && \
-timeout 5 zellij action write-chars "start-issue 78
+timeout 5 zellij run -- start-issue 78
+```
+
+### Example 4: Hash format in tab
+
+**User:** "Create tab for #99"
+
+```bash
+timeout 5 zellij action new-tab --name "#99" && \
+sleep 0.3 && \
+timeout 5 zellij action write-chars "start-issue 99
 "
 ```
 
-### Пример 4: В новой панели
+## Dependencies
 
-**Пользователь:** "Запусти start-issue 45 в новой панели"
+- **zellij** -- terminal multiplexer (must be running)
+- **start-issue** -- script/command for issue development (must be in PATH)
 
-**Claude выполняет:**
-```bash
-zellij run -- start-issue 45
-```
+## Errors
 
-## Зависимости
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Timed out` | zellij hanging (exit code 124) | Restart zellij |
+| `Not in zellij session` | Running outside zellij | Start zellij first |
+| `start-issue not found` | start-issue not in PATH | Install or add to PATH |
+| `Invalid issue format` | Bad argument | Use number, #number, or URL |
 
-- **zellij** -- терминальный мультиплексор (должен быть запущен)
-- **start-issue** -- скрипт/команда для работы с issue (должен быть в PATH)
+## Important
 
-## Ошибки
-
-| Ошибка | Причина | Решение |
-|--------|---------|---------|
-| `Timed out` | zellij завис (exit code 124) | Перезапустить zellij |
-| `zellij: command not found` | zellij не установлен | `cargo install zellij` |
-| `Zellij not running` | Команда запущена вне zellij | Запустить zellij |
-| `start-issue: command not found` | start-issue не в PATH | Добавить в PATH или установить |
-| `Invalid issue format` | Неверный формат аргумента | Использовать число, #число или URL |
-
-## Важно
-
-- Skill работает **только внутри zellij сессии**
-- `start-issue` должен быть доступен в новой вкладке (наследует PATH)
-- Имя вкладки всегда в формате `#NUMBER` для единообразия
+- Skill works **only inside zellij session**
+- `sleep 0.3` is required between `new-tab` and `write-chars` (race condition)
+- Tab name is always `#NUMBER` for consistency
+- For general-purpose tabs/panes (empty, command, Claude session) use `zellij-tab-pane` skill

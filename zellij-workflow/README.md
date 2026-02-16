@@ -1,6 +1,6 @@
 # zellij-workflow
 
-Unified Zellij workflow plugin: tab status indicators, issue development tabs, and Claude session tabs.
+Unified Zellij workflow plugin: tab status indicators, issue development tabs, and general-purpose tabs/panes.
 
 ## Features
 
@@ -18,7 +18,7 @@ Requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin.
 
 ### Issue Development Tabs
 
-Launch `start-issue` in a new zellij tab:
+Launch `start-issue` in a new zellij tab or pane:
 
 ```
 /start-issue-in-new-tab 123
@@ -26,11 +26,11 @@ Launch `start-issue` in a new zellij tab:
 /start-issue-in-new-tab https://github.com/owner/repo/issues/78
 ```
 
-Or say: "Start issue #123 in a new tab"
+Or say: "Start issue #123 in a new tab" or "Start issue #45 in a pane"
 
-### Claude Session Tabs
+### General-Purpose Tabs/Panes
 
-Launch interactive Claude Code session with arbitrary instructions:
+Open tabs and panes for any purpose -- empty, with a shell command, or with a Claude session:
 
 ```
 /run-in-new-tab Execute plan from docs/plans/audit-plan.md. Use executing-plans.
@@ -38,9 +38,10 @@ Launch interactive Claude Code session with arbitrary instructions:
 ```
 
 Or say:
+- "Open a new tab" / "Create a pane"
+- "Run npm test in a pane"
 - "Execute the plan in a new zellij tab"
-- "Выполни план в новой вкладке"
-- "Delegate this to a new tab"
+- "Delegate this to a pane"
 
 ## Installation
 
@@ -77,14 +78,14 @@ load_plugins {
 
 | Plugin | Used by | Purpose |
 |--------|---------|---------|
-| **superpowers** | `/run-in-new-tab`, zellij-claude-tab skill | Skill `executing-plans` for plan execution in new tabs |
+| **superpowers** | `/run-in-new-tab`, zellij-tab-pane skill | Skill `executing-plans` for plan execution in new tabs |
 
 ## Components
 
 | Component | File | Purpose |
 |-----------|------|---------|
 | Hooks | [hooks/hooks.json](./hooks/hooks.json) | Tab status indicators |
-| Skill | [skills/zellij-dev-tab/SKILL.md](./skills/zellij-dev-tab/SKILL.md) | Issue development in tab |
-| Skill | [skills/zellij-claude-tab/SKILL.md](./skills/zellij-claude-tab/SKILL.md) | Claude session in tab |
+| Skill | [skills/zellij-tab-pane/SKILL.md](./skills/zellij-tab-pane/SKILL.md) | General-purpose tab/pane |
+| Skill | [skills/zellij-dev-tab/SKILL.md](./skills/zellij-dev-tab/SKILL.md) | Issue development in tab/pane |
 | Command | [commands/start-issue-in-new-tab.md](./commands/start-issue-in-new-tab.md) | `/start-issue-in-new-tab` |
 | Command | [commands/run-in-new-tab.md](./commands/run-in-new-tab.md) | `/run-in-new-tab` |

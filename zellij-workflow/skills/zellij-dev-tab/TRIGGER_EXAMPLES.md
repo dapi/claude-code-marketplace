@@ -1,8 +1,8 @@
 # Zellij Dev Tab Trigger Examples
 
-## ✅ Should Activate (положительные примеры)
+## [YES] Should Activate
 
-###  Запуск разработки (RU)
+### **Start Development (RU)**
 
 - "запусти разработку в отдельной вкладке"
 - "начни работу над issue в новой вкладке"
@@ -13,7 +13,7 @@
 - "работа над issue 78 в отдельной вкладке"
 - "запусти работу над #99 в вкладке"
 
-###  Start Development (EN)
+### **Start Development (EN)**
 
 - "start development in separate tab"
 - "open issue in new zellij tab"
@@ -24,7 +24,7 @@
 - "work on issue in new tab"
 - "start issue development in tab"
 
-###  Создание вкладки (RU)
+### **Create Tab (RU)**
 
 - "создай вкладку для issue #123"
 - "новая вкладка для задачи 45"
@@ -34,7 +34,7 @@
 - "новая вкладка zellij для задачи"
 - "вкладка для работы над issue 56"
 
-###  Create Tab (EN)
+### **Create Tab (EN)**
 
 - "new tab for issue"
 - "create tab for issue #123"
@@ -44,7 +44,23 @@
 - "tab for issue development"
 - "open new tab for #99"
 
-###  start-issue команды (RU)
+### **Pane (RU)**
+
+- "запусти issue 45 в панели"
+- "начни разработку в новой панели"
+- "создай панель для issue #123"
+- "работа над issue в панели zellij"
+- "start-issue в панели"
+
+### **Pane (EN)**
+
+- "start issue #45 in a pane"
+- "launch issue development in pane"
+- "create pane for issue 78"
+- "work on issue in new panel"
+- "run start-issue in pane"
+
+### **start-issue Commands (RU)**
 
 - "start-issue в отдельной вкладке"
 - "запусти start-issue в новой вкладке"
@@ -52,7 +68,7 @@
 - "запусти start-issue в zellij"
 - "start-issue для #123 в новой вкладке"
 
-###  start-issue Commands (EN)
+### **start-issue Commands (EN)**
 
 - "run start-issue in new tab"
 - "start-issue in separate tab"
@@ -60,88 +76,81 @@
 - "run start-issue 45 in new tab"
 - "start-issue #123 in zellij"
 
-###  С URL
+### **With URL**
 
-- "открой https://github.com/owner/repo/issues/123 в новой вкладке"
-- "запусти https://github.com/dapi/project/issues/45 в вкладке zellij"
+- "open https://github.com/owner/repo/issues/123 in new tab"
+- "start https://github.com/dapi/project/issues/45 in zellij tab"
 - "start https://github.com/org/repo/issues/78 in new tab"
 - "open github issue URL in zellij tab"
 
-###  Комбинированные запросы
+### **Combined / Polite**
 
-- "можешь запустить issue 45 в отдельной вкладке?"
-- "пожалуйста открой #123 в новой вкладке zellij"
-- "хочу работать над issue в отдельной вкладке"
+- "can you start issue 45 in a separate tab?"
+- "please open #123 in a new zellij tab"
 - "need to start issue #78 in separate zellij tab"
 - "please open issue development in new tab"
+- "could you launch issue #99 in a pane?"
 
-## ❌ Should NOT Activate (отрицательные примеры)
+## [NO] Should NOT Activate
 
-### Общие вопросы о zellij
+### General zellij questions
 
-- "что такое zellij?"
+- "what is zellij?"
 - "how to install zellij?"
-- "как настроить zellij?"
 - "zellij documentation"
 
-### Общие вопросы о start-issue
+### General start-issue questions
 
-- "что делает start-issue?"
+- "what does start-issue do?"
 - "how does start-issue work?"
-- "где взять start-issue?"
+- "where to get start-issue?"
 
-### Работа с issue без вкладок
+### Issue without tab/pane context
 
-- "покажи issue #123"
+- "show issue #123"
 - "read issue 45"
-- "закрой issue"
+- "close issue"
 - "create new issue"
-- "прочитай задачу"
 
-### Другие операции с вкладками
+### Tab management without issues
 
-- "переименуй вкладку"
-- "закрой вкладку"
+- "rename tab"
+- "close tab"
 - "switch to tab"
-- "список вкладок zellij"
+- "list zellij tabs"
 
-### Общие вопросы о разработке
-
-- "как начать разработку?"
-- "best practices for development"
-- "что такое GitHub issues?"
-
-### Claude session requests (use zellij-claude-tab instead)
+### General-purpose tab/pane requests (use zellij-tab-pane instead)
 
 - "execute plan in a new zellij tab"
-- "run claude with these instructions in new tab"
-- "launch plan from docs/plans/audit.md in separate tab"
+- "run claude with instructions in new tab"
 - "delegate this task to a new tab"
-- "выполни план в новой вкладке"
-- "запусти claude с инструкциями в отдельной вкладке"
+- "open empty tab"
+- "run npm test in pane"
+- "create a new pane"
+- "open new tab"
 
 ## Key Trigger Words
 
-### Verbs (действия)
+### Verbs
 
 **RU:** запусти, начни, открой, создай, работа, разработка
 **EN:** start, open, create, launch, begin, run, work
 
-### Nouns (объекты)
+### Nouns
 
-**RU:** вкладка, tab, issue, задача, разработка
-**EN:** tab, issue, development, zellij
+**RU:** вкладка, панель, tab, pane, issue, задача, разработка
+**EN:** tab, pane, panel, issue, development, zellij
 
 ### Context Patterns
 
-- "[verb] [issue] в [отдельной/новой] вкладке"
-- "[verb] [issue] in [new/separate] tab"
-- "start-issue в вкладке"
-- "zellij tab for [issue]"
+- "[verb] [issue] in [new] tab/pane"
+- "[verb] [issue] in [new] panel"
+- "start-issue in tab/pane"
+- "zellij tab/pane for [issue]"
 
 ### Required Combinations
 
-Для активации нужно сочетание:
-1. **Issue** (номер, #номер, URL, "issue", "задача")
-2. **Tab/Вкладка** ("вкладка", "tab", "zellij tab")
-3. **Action** (запустить, открыть, создать, start, open, create)
+For activation, a combination is needed:
+1. **Issue** (number, #number, URL, "issue", "task"/"zadacha")
+2. **Tab/Pane** ("tab", "pane", "panel", "vkladka"/"panelj")
+3. **Action** (start, open, create, launch, begin, run)
