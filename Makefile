@@ -32,7 +32,7 @@ CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": 
 # DEFAULT TARGET: reinstall all plugins (idempotent)
 # ============================================================================
 
-all: reinstall install-scripts install-zellij-tab-status
+all: reinstall-all install-scripts install-zellij-tab-status
 
 # Default: clean reinstall of all PLUGINS for current profile
 # Works identically on clean Claude and on Claude with existing marketplace
