@@ -9,5 +9,10 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues", "plan"]
+  "keywords": ["github", "issues", "pull-request", "workflow", "worktrees", "sub-issues", "plan"],
+  "dependencies": {
+    "pr-review-toolkit": "PR review agents for /fix-pr command",
+    "commit-commands": "Skill commit-push-pr for /start-issue command",
+    "superpowers": "Skill executing-plans for plan-to-issue workflow"
+  }
 }
