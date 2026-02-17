@@ -180,14 +180,17 @@ detect_base_branch() {
         return
     fi
 
-    # Try main first, then master
-    if git show-ref --verify --quiet refs/heads/main 2>/dev/null; then
-        BASE_BRANCH="main"
-    elif git show-ref --verify --quiet refs/heads/master 2>/dev/null; then
-        BASE_BRANCH="master"
-    else
-        die "Cannot detect base branch. Neither 'main' nor 'master' exists. Use --base flag."
+    # Try origin/HEAD (set automatically by git clone)
+    local remote_head
+    remote_head=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')
+    if [[ -n "$remote_head" ]]; then
+        BASE_BRANCH="$remote_head"
+        return
     fi
+
+    # Fallback: current branch
+    BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
+    log_info "Could not detect default branch, using current: $BASE_BRANCH"
 }
 
 # ============================================================================
