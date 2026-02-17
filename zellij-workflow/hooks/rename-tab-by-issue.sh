@@ -7,7 +7,7 @@
 #   3. Bare #number:      "#42"
 
 input=$(cat)
-prompt=$(echo "$input" | jq -r '.user_prompt // empty' 2>/dev/null)
+prompt=$(echo "$input" | jq -r '.prompt // empty' 2>/dev/null)
 
 [ -z "$prompt" ] && exit 0
 
@@ -24,5 +24,5 @@ elif [[ "$prompt" =~ \#([0-9]+) ]]; then
 fi
 
 if [ -n "$issue" ]; then
-  zellij-tab-status --set-name "#${issue}" || true
+  zellij-rename-tab-to-issue-number "${issue}" || true
 fi
