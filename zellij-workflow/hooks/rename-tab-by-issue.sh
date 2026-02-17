@@ -24,5 +24,5 @@ elif [[ "$prompt" =~ \#([0-9]+) ]]; then
 fi
 
 if [ -n "$issue" ]; then
-  timeout 5 zellij action rename-tab "#${issue}" 2>/dev/null || true
+  zellij-tab-status --set-name "#${issue}" || true
 fi
