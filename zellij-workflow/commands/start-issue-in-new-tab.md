@@ -41,7 +41,7 @@ ISSUE_NUMBER=$(parse_issue_number "$ARGUMENTS")
 ```bash
 timeout 5 zellij action new-tab --name "#${ISSUE_NUMBER}" && \
 sleep 0.3 && \
-timeout 5 zellij action write-chars "start-issue $ARGUMENTS
+timeout 5 zellij action write-chars "start-issue $ISSUE_NUMBER
 " || {
   _rc=$?
   echo "Command failed. Diagnosing..."
@@ -57,7 +57,7 @@ timeout 5 zellij action write-chars "start-issue $ARGUMENTS
 **In a new pane:**
 
 ```bash
-timeout 5 zellij run -- start-issue $ARGUMENTS || {
+timeout 5 zellij run -- start-issue $ISSUE_NUMBER || {
   _rc=$?
   echo "Command failed. Diagnosing..."
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"

@@ -32,7 +32,7 @@ CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": 
 # DEFAULT TARGET: reinstall all plugins (idempotent)
 # ============================================================================
 
-all: reinstall-all install-scripts install-zellij-tab-status
+all: reinstall-all install-scripts
 
 # Default: clean reinstall of all PLUGINS for current profile
 # Works identically on clean Claude and on Claude with existing marketplace
@@ -213,14 +213,6 @@ install-zellij-tab-status:
 	@echo "Installed:"
 	@echo "   Plugin: $(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
 	@echo "   Script: $(SCRIPTS_DIR)/zellij-tab-status"
-	@echo ""
-	@echo "Add to ~/.config/zellij/config.kdl:"
-	@echo ""
-	@echo '   load_plugins {'
-	@echo '       "file:$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"'
-	@echo '   }'
-	@echo ""
-	@echo "Then restart Zellij."
 
 # ============================================================================
 # UTILITY TARGETS
