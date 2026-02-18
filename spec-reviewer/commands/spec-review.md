@@ -470,6 +470,9 @@ ELSE (verdict == "fits"):
 **Опционально (только по запросу):**
 - spec-scoper — детальный breakdown (если quick_scope != "fits")
 
+**Условный standard+ (не зависит от classifier):**
+- spec-axes -- проверка покрытия по трём осям (standard, deep, exhaustive)
+
 ---
 
 ## Фаза 2: Параллельный анализ
@@ -480,6 +483,7 @@ ELSE (verdict == "fits"):
 
 **Запускать на основе результатов Фазы 1.5:**
 - 2 обязательных агента (всегда)
+- 0-1 условных standard+ (spec-axes, если depth_level != "quick")
 - 0-5 условных агентов (по результатам classifier)
 - spec-scoper (только если quick_scope != "fits")
 
@@ -507,6 +511,27 @@ Task: spec-test (ОБЯЗАТЕЛЬНЫЙ)
     Проанализируй спецификацию с точки зрения тестируемости:
     можно ли написать тесты, какие test cases очевидны,
     что сложно протестировать, где неоднозначности.
+    Верни результат в формате JSON.
+
+    === СПЕЦИФИКАЦИЯ ===
+    {полный текст спецификации}
+    === КОНЕЦ СПЕЦИФИКАЦИИ ===
+```
+
+---
+
+#### Условный standard+ агент (запускать если depth_level >= standard):
+
+```
+Task: spec-axes (если depth_level != "quick")
+  subagent_type: "spec-reviewer:spec-axes"
+  description: "Проверка покрытия по трём осям"
+  prompt: |
+    Проанализируй спецификацию и для каждой фичи/функции
+    проверь покрытие по трём осям:
+    1. Что строим (User Story, AC, бизнес-контекст)
+    2. Как строим (ERD, API, архитектура, C4)
+    3. Как проверяем (Test Plan, test cases, AC с метриками)
     Верни результат в формате JSON.
 
     === СПЕЦИФИКАЦИЯ ===
@@ -640,6 +665,7 @@ test_result = JSON.parse(test_output)       # TST-TYPE-XXX issues
 risk_result = JSON.parse(risk_output)       # RSK-TYPE-XXX issues
 ux_result = JSON.parse(ux_output)           # UX-TYPE-XXX issues (если запускался)
 ai_result = JSON.parse(ai_output)           # AI-TYPE-XXX issues (если запускался)
+axes_result = JSON.parse(axes_output)     # AXS-TYPE-XXX issues (если запускался)
 ```
 
 ### 3.2 Объединение issues (качество)
@@ -653,6 +679,7 @@ all_issues = data_result.issues
            + risk_result.issues
            + (ux_result.issues если запускался spec-ux)
            + (ai_result.issues если запускался spec-ai-readiness)
+           + (axes_result.issues если запускался spec-axes)
 ```
 
 ### 3.3 Сортировка по severity
@@ -802,7 +829,7 @@ EOF
 **Уровень:** ⚡ Quick |  Standard |  Deep |  Exhaustive
 **Показаны проблемы:** severity ≥ {min_severity}
 **Итерация:** {iteration} из {max_iterations}
-**Агентов запущено:** {agents_count} из 9
+**Агентов запущено:** {agents_count} из 10
 **Статус:** ⏳ Требует доработки / ✅ Готова к аппруву
 
 ---
@@ -814,6 +841,18 @@ EOF
 | ✅ Влезает / ⚠️ На грани / ❌ Слишком большая | S/M/L/XL | N | N | N |
 
 **План реализации:** [Фаза 1: X, Фаза 2: Y] | [Sub-issues: #N, #M]
+
+---
+
+### Покрытие по трём осям (если запускался spec-axes)
+
+| Фича | Что (PRD/US/AC) | Как (ERD/API/C4) | Проверка (Tests/AC) |
+|------|-----------------|-------------------|---------------------|
+| {feature.name} | {[OK]/[!]} {artifacts} | {[OK]/[!]} {artifacts} | {[OK]/[!]} {artifacts} |
+
+**Полностью покрыты:** {fully_covered}/{total_features} ({percent}%)
+**Частично:** {partially_covered}/{total_features}
+**Без покрытия:** {not_covered}/{total_features}
 
 ---
 
@@ -829,9 +868,11 @@ EOF
 | ⚠️ Risk (RSK-*) | N | N | N | N |
 |  UX (UX-*) | N | N | N | N |
 |  AI-Readiness (AI-*) | N | N | N | N |
+| Axes (AXS-*) | N | N | N | N |
 | **Итого** | **N** | **N** | **N** | **N** |
 
 *UX и AI-Readiness показываются только если соответствующие агенты были запущены*
+*Axes показывается только если depth_level >= standard*
 
 ###  Критичные проблемы
 [список]
@@ -1120,6 +1161,7 @@ ELIF has_blocking_issues:
 | spec-risk | `RSK-` | Риски |
 | spec-ux | `UX-` | UX/UI (опционально) |
 | spec-ai-readiness | `AI-` | Готовность для AI-агентов (опционально) |
+| spec-axes | `AXS-` | Покрытие по осям |
 
 ### Префиксы типов проблем
 
@@ -1174,6 +1216,14 @@ ELIF has_blocking_issues:
 | no_error_recovery | `-REC-` | Нет стратегии восстановления |
 | context_overflow | `-OVF-` | Информация не влезет в контекст |
 
+**spec-axes специфичные:**
+
+| Тип | Prefix | Описание |
+|-----|--------|----------|
+| axis_gap_what | `-WHAT-` | Нет описания "что строим" |
+| axis_gap_how | `-HOW-` | Нет описания "как строим" |
+| axis_gap_verify | `-VRF-` | Нет описания "как проверяем" |
+
 ### Примеры ID
 
 ```
@@ -1192,6 +1242,9 @@ AI-EXM-001    # AI: нет примеров для few-shot
 AI-BND-001    # AI: не определены границы автономности
 AI-ESC-001    # AI: нет точек эскалации
 AI-SUC-001    # AI: неясны критерии успеха
+AXS-WHAT-001  # Axes: нет User Story/требований для фичи
+AXS-HOW-001   # Axes: нет архитектуры/ERD/API для фичи
+AXS-VRF-001   # Axes: нет тестов/AC для фичи
 ```
 
 ## Символы для типов проблем
@@ -1356,6 +1409,7 @@ mcp__google_workspace__modify_doc_text
 - [ ] Если depth_level == "quick" → только 2 агента (spec-analyst, spec-test)
 - [ ] Если depth_level == "exhaustive" → все 9 агентов
 - [ ] Иначе → 2 обязательных + условные по classifier
+- [ ] Если depth_level >= standard -> spec-axes запущен параллельно с остальными
 - [ ] Все агенты запущены ПАРАЛЛЕЛЬНО в одном сообщении
 - [ ] Результаты получены и распарсены
 - [ ] Если ошибка агента → продолжить с остальными + warning (EH-3)
@@ -1385,6 +1439,7 @@ mcp__google_workspace__modify_doc_text
 
 ### Финализация
 - [ ] Все critical/high устранены ИЛИ пользователь принял как есть
+- [ ] Матрица покрытия по осям показана (если spec-axes запускался)
 - [ ] Статистика ревью показана
 - [ ] Спецификация помечена [APPROVED] (если применимо)
 - [ ] Указано количество итераций и исправленных проблем
