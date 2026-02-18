@@ -22,7 +22,7 @@ claude-code-marketplace/
 ├── long-running-harness/          # Multi-session project management
 ├── media-upload/                  # S3 media upload
 ├── requirements/                  # Requirements in Google Sheets
-├── spec-reviewer/                 # Specification review (10 agents)
+├── spec-reviewer/                 # Specification review (11 agents)
 ├── zellij-workflow/                # Zellij workflow: status, dev tabs, claude tabs
 └── [standard repo files]
 
@@ -637,11 +637,11 @@ git commit -m "Add plugin-name: brief description"
 | media-upload | 1 skill |
 | requirements | 1 command |
 | skill-finder | 1 command |
-| spec-reviewer | 10 agents, 1 skill, 1 command |
+| spec-reviewer | 11 agents, 1 skill, 1 command |
 | task-router | 1 agent, 1 skill, 1 command |
 | zellij-workflow | 1 skill, 2 commands, hooks |
 
-**Totals**: 16 agents, 10 skills, 10 commands
+**Totals**: 17 agents, 10 skills, 10 commands
 
 ## zellij-workflow Plugin
 

@@ -1,6 +1,6 @@
 # spec-reviewer
 
-Specification review plugin for Claude Code — analyze specs for gaps, inconsistencies, and scope estimation with 10 specialized agents.
+Specification review plugin for Claude Code — analyze specs for gaps, inconsistencies, and scope estimation with 11 specialized agents.
 
 ## Installation
 
@@ -36,6 +36,7 @@ Activates automatically when you ask to review specifications or requirements.
 | `spec-scoper` | Scope estimation |
 | `spec-risk` | Risk analysis |
 | `spec-ai-readiness` | AI agent readiness |
+| `spec-axes` | Three-axes coverage check |
 
 ## Usage
 
