@@ -40,6 +40,17 @@
 
 ---
 
+## [YES] Локальные файлы (ДОЛЖНЫ СРАБОТАТЬ)
+
+- "реализуй /home/danil/code/project/docs/plans/2026-02-19-fix.md"
+- "выполни ./docs/plans/refactor-auth.md"
+- "take /tmp/my-plan.md"
+- "implement /home/user/plans/feature.md"
+- "возьми задачу из /code/project/plans/spec.md"
+- "сделай по плану ~/code/project/docs/plans/2026-01-15-api.md"
+
+---
+
 ## [YES] Команды маршрутизации (ДОЛЖНЫ СРАБОТАТЬ)
 
 - "route task https://github.com/org/repo/issues/42"
@@ -57,6 +68,8 @@
 - "what does issue #123 say?" (чтение, не работа над задачей)
 - "create a new GitHub issue" (создание issue, не реализация)
 - "I found a bug described in https://github.com/..." (упоминание, без action-слова)
+- "/path/to/some/file.py без action-слова" (нет action-слова)
+- "посмотри /docs/plans/fix.md" (просмотр, не реализация)
 
 ### #NNN без контекста (НЕ должны активировать)
 - "see #123" (нет action-слова и нет "issue")
@@ -100,6 +113,9 @@
 - `github.com/.../issues/N`
 - `docs.google.com/document/d/...`
 - `#NNN` (ТОЛЬКО с action-словом + "issue"/"задачу": "сделай issue #123", "take issue #42")
+- `/path/to/plan.md` (локальный абсолютный путь)
+- `~/path/to/plan.md` (локальный путь с ~)
+- `./path/to/plan.md` (локальный относительный путь)
 
 ---
 
@@ -110,3 +126,5 @@
 3. **Issue по номеру**: "сделай issue #123"
 4. **Английский**: "take this task https://github.com/org/repo/issues/99"
 5. **Произвольный URL**: "implement spec https://notion.so/task-123"
+6. **Локальный файл**: "реализуй /home/danil/code/project/docs/plans/2026-02-19-fix.md"
+7. **Относительный путь**: "выполни ./docs/plans/refactor-auth.md"

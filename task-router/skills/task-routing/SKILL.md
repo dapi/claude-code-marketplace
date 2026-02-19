@@ -7,6 +7,10 @@ description: |
   - "get task from github.com/.../issues/N", "fetch spec from docs.google.com/..."
   - "retrieve task from https://..."
 
+  **Local File Paths**:
+  - "реализуй /path/to/plan.md", "выполни ./docs/plans/fix.md"
+  - "take /home/user/plan.md", "implement /abs/path/to/plan.md"
+
   **Action Triggers (EN)**:
   - "take this task", "implement this spec", "do issue #NNN"
   - "route task", "route this", "start issue #NNN"
@@ -30,7 +34,8 @@ description: |
     get task from, list task, check this task, analyze task,
     retrieve spec, fetch task,
     реализуй по спеке, сделай issue, do issue, start issue,
-    github.com/issues, docs.google.com/document
+    github.com/issues, docs.google.com/document,
+    /docs/plans, ./docs/plans, /tmp/plan, local file, локальный файл
 allowed-tools: Skill
 ---
 
@@ -91,6 +96,16 @@ allowed-tools: Skill
 -> Вызвать: Skill tool -> skill: "task-router:route-task", args: "{URL}"
 ```
 
+### 5. Локальный файл
+
+**Паттерн:** абсолютный путь (`/...`) или относительный (`~/...`, `./...`) к файлу плана
+
+```
+Если в сообщении есть путь к файлу (начинается с / или ~/ или ./):
+-> Извлечь полный путь
+-> Вызвать: Skill tool -> skill: "task-router:route-task", args: "{path}"
+```
+
 ## Примеры активации
 
 ### Пример 1: GitHub Issue
@@ -117,6 +132,18 @@ User: Take this task https://github.com/org/repo/issues/99
 Assistant: [Вызывает Skill tool: task-router:route-task с args: "https://github.com/org/repo/issues/99"]
 ```
 
+### Пример 5: Локальный файл плана
+```
+User: реализуй /home/danil/code/project/docs/plans/2026-02-19-fix.md
+Assistant: [Вызывает Skill tool: task-router:route-task с args: "/home/danil/code/project/docs/plans/2026-02-19-fix.md"]
+```
+
+### Пример 6: Относительный путь
+```
+User: выполни ./docs/plans/refactor-auth.md
+Assistant: [Вызывает Skill tool: task-router:route-task с args: "./docs/plans/refactor-auth.md"]
+```
+
 ## Когда НЕ активировать
 
 Не активируй автоматически если пользователь:
@@ -126,6 +153,7 @@ Assistant: [Вызывает Skill tool: task-router:route-task с args: "https:
 - Использует `#NNN` без слова "issue"/"задачу" — это может быть коммит, PR, заголовок, шаг инструкции
 - Отправляет голый GitHub issue URL без action-слова — это github-issues (чтение), не task-routing
 - Запрашивает ревью/проверку спеки — "review spec", "check spec", "проверь спеку" — это spec-review
+- Путь к файлу без action-слова ("посмотри /docs/plans/fix.md", "что в ./plans/spec.md") — просмотр, не реализация
 
 **Правило для `#NNN`:** Голый `#NNN` без action-слова И без "issue"/"задачу" — НИКОГДА не триггер. Примеры НЕ-триггеров: "see #123", "fixed in #42", "PR #99", "step #3", "commit #abc123".
 
