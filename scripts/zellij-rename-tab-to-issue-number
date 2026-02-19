@@ -18,6 +18,8 @@ if ! command -v zellij &> /dev/null || [[ -z "${ZELLIJ:-}" ]]; then
     exit 0
 fi
 
+zellij-tab-status "▷"
+
 detect_issue_number() {
     # 1. From git branch: feature/issue-123-description
     local branch
@@ -53,5 +55,5 @@ else
 fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
-    zellij-tab-status --set-name "▷ #${ISSUE_NUMBER}"
+    zellij-tab-status --set-name "#${ISSUE_NUMBER}"
 fi
