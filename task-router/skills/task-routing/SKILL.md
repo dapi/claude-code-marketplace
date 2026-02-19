@@ -31,7 +31,7 @@ description: |
 
   TRIGGERS: route task, route this, возьми задачу, сделай задачу,
     take this task, implement this spec, implement this issue,
-    get task from, list task, check this task, analyze task,
+    get task from, check this task, analyze task,
     retrieve spec, fetch task,
     реализуй по спеке, сделай issue, do issue, start issue,
     github.com/issues, docs.google.com/document,
@@ -104,6 +104,9 @@ allowed-tools: Skill
 Если в сообщении есть путь к файлу (начинается с / или ~/ или ./):
 -> Извлечь полный путь
 -> Вызвать: Skill tool -> skill: "task-router:route-task", args: "{path}"
+
+Примеры ДА: "реализуй /home/user/plan.md", "выполни ./docs/plans/fix.md"
+Примеры НЕТ: "посмотри /docs/plans/fix.md", "что в ./plans/spec.md"
 ```
 
 ## Примеры активации
