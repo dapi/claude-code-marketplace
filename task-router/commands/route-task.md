@@ -94,7 +94,7 @@ Task:
 
 **Reasoning:** {reasoning}
 
-**Signals:** exploration={needs_exploration}, clear_tasks={has_clear_tasks}, unclear_arch={architecture_unclear}
+**Signals:** exploration={needs_exploration}, clear_tasks={has_clear_tasks}, unclear_arch={architecture_unclear}, structured_plan={is_structured_plan}
 **Spec saved:** {spec_file}
 ```
 
@@ -132,7 +132,7 @@ Task:
 
 **Reasoning:** {reasoning}
 
-**Signals:** exploration={needs_exploration}, clear_tasks={has_clear_tasks}, unclear_arch={architecture_unclear}
+**Signals:** exploration={needs_exploration}, clear_tasks={has_clear_tasks}, unclear_arch={architecture_unclear}, structured_plan={is_structured_plan}
 **Spec saved:** {spec_file}
 
 ---
