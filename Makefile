@@ -11,9 +11,9 @@
 # ============================================================================
 
 # Plugins to install (override: make PLUGINS="a b c")
-PLUGINS = github-workflow zellij-workflow bugsnag-skill spec-reviewer \
-          cluster-efficiency doc-validate media-upload long-running-harness \
-          himalaya requirements task-router skill-finder
+PLUGINS = github-workflow zellij-workflow spec-reviewer \
+          cluster-efficiency doc-validate media-upload \
+          himalaya task-router skill-finder
 
 PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
