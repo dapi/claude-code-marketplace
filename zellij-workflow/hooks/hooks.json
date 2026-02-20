@@ -23,8 +23,7 @@
       {
         "matcher": "",
         "hooks": [
-          {"type": "command", "command": "zellij-tab-status '\u25c9' || true"},
-          {"type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/hooks/rename-tab-by-issue.sh\" || true"}
+          {"type": "command", "command": "zellij-tab-status '\u25c9' || true"}
         ]
       }
     ],
