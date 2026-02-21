@@ -57,3 +57,6 @@ htmlcov/
 .worktrees/
 
 docs/plans
+
+# Claude Code ctags index
+.claude/tags
