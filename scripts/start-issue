@@ -182,7 +182,7 @@ detect_base_branch() {
 
     # Try origin/HEAD (set automatically by git clone)
     local remote_head
-    remote_head=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')
+    remote_head=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || true)
     if [[ -n "$remote_head" ]]; then
         BASE_BRANCH="$remote_head"
         return
