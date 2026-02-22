@@ -132,9 +132,9 @@ version: 1.0.0
 
    Вызови Skill tool:
    - skill: "task-router:route-task"
-   - args: "<ISSUE_URL>"
+   - args: "<ISSUE_URL> --new-session"
 
-   Task router автоматически классифицирует задачу и запустит подходящий workflow (feature-dev или subagent-driven-dev).
+   Флаг `--new-session` сообщает task router, что мы уже в выделенной сессии (новая вкладка). Task router автоматически классифицирует задачу и запустит подходящий workflow (feature-dev или subagent-driven-dev).
 
 ---
 
