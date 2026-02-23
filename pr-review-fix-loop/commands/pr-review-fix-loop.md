@@ -1,6 +1,7 @@
 ---
-description: "Iterative PR review + autofix loop (Ralph + pr-review-toolkit)"
+description: "Iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit)"
 argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [--auto-commit] [--rubocop] [--codex] [--base BRANCH]"
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 ---
 
 # PR Review Fix Loop
@@ -10,7 +11,7 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 ## Парсинг аргументов
 
 Разобрать `$ARGUMENTS`:
-- `--max-iterations N` — максимум итераций Ralph Loop (по умолчанию 10)
+- `--max-iterations N` — максимум итераций (по умолчанию 10)
 - `--aspects ASPECTS` — аспекты ревью (по умолчанию `code errors tests`)
 - `--min-criticality N` — минимальный уровень criticality для исправления, 1-10 (по умолчанию 5)
 - `--auto-commit` — автоматически коммитить после чистого ревью (по умолчанию выключен)
@@ -51,6 +52,9 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 Параметры: aspects={aspects}, min-criticality={min_criticality}, rubocop={yes/no}, codex={yes/no}
 
 ---
+
+ИТЕРАЦИЯ 1 НАЧАЛО
+
 ```
 
 Ожидаемая структура секций для каждой итерации:
@@ -60,9 +64,9 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 - **Исправления** — для TDD-issues: spec-файл, red/green статусы; для остальных: краткое описание фикса
 - **RuboCop** (если включен) — количество авто-исправленных файлов
 
-## Запуск Ralph Loop
+## Запуск iteration loop
 
-Собрать однострочный промпт и вызвать skill `ralph-loop:ralph-loop` (ОБЯЗАТЕЛЬНО с полным namespace).
+Собрать однострочный промпт и запустить setup-loop.sh для инициализации цикла.
 
 ### Построение промпта
 
@@ -71,7 +75,7 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 Условные шаги включать только если соответствующий флаг указан. Если флаг не указан — убрать шаг полностью, без placeholder.
 
 ```
-/ralph-loop:ralph-loop КАЖДУЮ итерацию ВСЕГДА выполняй ВСЕ шаги по порядку. НЕ пропускай шаги, даже если в прошлой итерации ты уже исправил issues. ШАГИ -- В НАЧАЛЕ каждой итерации ПЕРВЫМ ДЕЛОМ дописать в .pr-review-loop-report.md маркер ИТЕРАЦИЯ N НАЧАЛО. {codex_bg_step}Шаг 1: Запустить /pr-review-toolkit:review-pr {aspects} и дождаться результата. {codex_collect_step}Шаг 2: Собрать все issues. Из review-pr взять issues с пометкой review-pr. {codex_report_note}Отфильтровать только issues с criticality от {min_criticality} из 10 и выше. Issues с criticality ниже {min_criticality} игнорировать. Добавить в файл .pr-review-loop-report.md секцию текущей итерации - номер итерации, количество найденных issues выше порога, для каждого issue его источник и criticality и краткое описание с указанием файла. Шаг 3a: Если найдены issues выше порога - сгруппировать их по затронутому файлу или области кода. Для каждой уникальной группы запустить агент feature-dev:code-explorer через Task tool с задачей проанализировать архитектуру этой области кода, найти похожие реализации и паттерны, вернуть список ключевых файлов. Запускать explorer-агентов параллельно. Дождаться завершения всех. Шаг 3b: Прочитать ключевые файлы возвращённые каждым explorer-агентом для понимания контекста и паттернов. Дописать в .pr-review-loop-report.md секцию EXPLORATION с результатами - область, найденные паттерны, ключевые файлы. Шаг 3c: Для каждого issue с criticality от 7 и выше применить TDD подход - ПЕРЕД исправлением написать фокусный spec в соответствующем spec-файле который воспроизводит проблему, запустить его через direnv exec . bundle exec rspec путь_к_spec чтобы подтвердить что он ПАДАЕТ, затем исправить код минимально и точечно используя контекст из exploration, затем запустить spec снова чтобы подтвердить что он ПРОХОДИТ. Шаг 3d: Для каждого issue с criticality ниже 7 но выше порога - прочитать файл и строку, понять причину используя контекст из exploration, исправить минимально и точечно. НЕ рефакторить окружающий код, НЕ добавлять комментарии и docstrings, НЕ делать косметических правок. Шаг 3e: После всех исправлений дописать в .pr-review-loop-report.md что было исправлено - для TDD-issues указать имя spec-файла и результаты red-green, для остальных краткое описание фикса. {rubocop_step}Шаг 4: Если были исправления - запустить тесты direnv exec . bundle exec rspec для затронутых spec-файлов. Если падают - исправить. Шаг 5 - РЕШЕНИЕ И СТАТУС: Дописать в .pr-review-loop-report.md маркер ИТЕРАЦИЯ N ЗАВЕРШЕНА. Если в шаге 2 ТЕКУЩЕЙ итерации были найдены issues выше порога - дописать статус ПРОДОЛЖИТЬ с количеством исправленных issues и завершить итерацию БЕЗ promise, loop продолжится. Если в шаге 2 ТЕКУЩЕЙ итерации review вернул НОЛЬ issues выше порога - дописать статус ЧИСТО, добавить финальную секцию ИТОГО с общим количеством итераций и исправленных issues, и ТОЛЬКО тогда вывести promise. Все команды через direnv exec . --completion-promise "REVIEW CLEAN" --max-iterations {max_iterations}
+КАЖДУЮ итерацию ВСЕГДА выполняй ВСЕ шаги по порядку. НЕ пропускай шаги, даже если в прошлой итерации ты уже исправил issues. ШАГИ -- {codex_bg_step}Шаг 1: Запустить /pr-review-toolkit:review-pr {aspects} и дождаться результата. {codex_collect_step}Шаг 2: Собрать все issues. Из review-pr взять issues с пометкой review-pr. {codex_report_note}Отфильтровать только issues с criticality от {min_criticality} из 10 и выше. Issues с criticality ниже {min_criticality} игнорировать. Добавить в файл .pr-review-loop-report.md секцию текущей итерации - номер итерации, количество найденных issues выше порога, для каждого issue его источник и criticality и краткое описание с указанием файла. Шаг 3a: Если найдены issues выше порога - сгруппировать их по затронутому файлу или области кода. Для каждой уникальной группы запустить агент feature-dev:code-explorer через Task tool с задачей проанализировать архитектуру этой области кода, найти похожие реализации и паттерны, вернуть список ключевых файлов. Запускать explorer-агентов параллельно. Дождаться завершения всех. Шаг 3b: Прочитать ключевые файлы возвращённые каждым explorer-агентом для понимания контекста и паттернов. Дописать в .pr-review-loop-report.md секцию EXPLORATION с результатами - область, найденные паттерны, ключевые файлы. Шаг 3c: Для каждого issue с criticality от 7 и выше применить TDD подход - ПЕРЕД исправлением написать фокусный spec в соответствующем spec-файле который воспроизводит проблему, запустить его через direnv exec . bundle exec rspec путь_к_spec чтобы подтвердить что он ПАДАЕТ, затем исправить код минимально и точечно используя контекст из exploration, затем запустить spec снова чтобы подтвердить что он ПРОХОДИТ. Шаг 3d: Для каждого issue с criticality ниже 7 но выше порога - прочитать файл и строку, понять причину используя контекст из exploration, исправить минимально и точечно. НЕ рефакторить окружающий код, НЕ добавлять комментарии и docstrings, НЕ делать косметических правок. Шаг 3e: После всех исправлений дописать в .pr-review-loop-report.md что было исправлено - для TDD-issues указать имя spec-файла и результаты red-green, для остальных краткое описание фикса. {rubocop_step}Шаг 4: Если были исправления - запустить тесты direnv exec . bundle exec rspec для затронутых spec-файлов. Если падают - исправить. Шаг 5 - РЕШЕНИЕ И СТАТУС: Дописать в .pr-review-loop-report.md маркер ИТЕРАЦИЯ N ЗАВЕРШЕНА. Если в шаге 2 ТЕКУЩЕЙ итерации были найдены issues выше порога - дописать статус ПРОДОЛЖИТЬ с количеством исправленных issues и завершить итерацию БЕЗ promise, loop продолжится. Если в шаге 2 ТЕКУЩЕЙ итерации review вернул НОЛЬ issues выше порога - дописать статус ЧИСТО, добавить финальную секцию ИТОГО с общим количеством итераций и исправленных issues, и ТОЛЬКО тогда вывести promise. Все команды через direnv exec .
 ```
 
 ### Подстановка условных шагов
@@ -94,13 +98,25 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 
 **ВАЖНО**: Итоговый промпт должен быть ровно одной строкой, без переносов. После подстановки всех переменных в итоговом промпте НЕ должно быть фигурных скобок, квадратных скобок, знаков больше-меньше или кавычек.
 
+### Запуск setup-loop.sh
+
+Передать собранный промпт в setup-loop.sh через heredoc:
+
+```!
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations {max_iterations} --completion-promise "REVIEW CLEAN" <<'LOOP_PROMPT'
+{собранный промпт}
+LOOP_PROMPT
+```
+
+После запуска setup-loop.sh выполнить шаги из промпта. Stop hook автоматически подаст тот же промпт при завершении каждой итерации.
+
 ## Связь с /codex-pr-review
 
 Команда `/codex-pr-review` существует как самостоятельный инструмент для запуска Codex-ревью вне loop. Внутри loop codex запускается напрямую через Bash (а не через `/codex-pr-review`), потому что Skill-вызовы синхронные и не могут выполняться параллельно с review-pr. В обоих случаях используется одна и та же команда `codex review --base`, но `/codex-pr-review` выводит результат в stdout, а loop перенаправляет его в файл `.codex-review.md`.
 
-## После завершения Ralph Loop
+## После завершения loop
 
-Когда ralph-loop завершился:
+Когда loop завершился:
 
 ### 0. Диагностика завершения
 
@@ -160,7 +176,7 @@ argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [
 ## Значения по умолчанию
 
 | Параметр | По умолчанию |
-|----------|-------------|
+|-|-|
 | max-iterations | 10 |
 | aspects | code errors tests |
 | min-criticality | 5 |

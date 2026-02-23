@@ -8,7 +8,7 @@ Iterative PR review + autofix loop for Ruby/Rails projects.
 
 Iterative cycle: run PR review, fix critical issues, repeat until clean report.
 
-Uses Ralph Loop as the iteration engine, pr-review-toolkit for code review, and optionally OpenAI Codex CLI for additional review.
+Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for code review, and optionally OpenAI Codex CLI for additional review.
 
 **Features:**
 - TDD approach for high-criticality issues (writes spec first, then fixes)
@@ -32,8 +32,8 @@ Uses Ralph Loop as the iteration engine, pr-review-toolkit for code review, and 
 
 **Arguments:**
 | Argument | Default | Description |
-|----------|---------|-------------|
-| --max-iterations N | 10 | Max Ralph Loop iterations |
+|-|-|-|
+| --max-iterations N | 10 | Max loop iterations |
 | --aspects ASPECTS | code errors tests | Review aspects |
 | --min-criticality N | 5 | Min criticality level (1-10) |
 | --auto-commit | off | Auto-commit after clean review |
@@ -56,7 +56,6 @@ Standalone code review via OpenAI Codex CLI.
 
 **Required plugins:**
 ```
-/plugin install ralph-loop
 /plugin install pr-review-toolkit
 /plugin install feature-dev
 ```
