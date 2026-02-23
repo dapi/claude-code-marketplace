@@ -4,7 +4,8 @@
         release release-patch release-minor release-major version \
         install-zellij-tab-status \
         list-claude-profiles \
-        lint lint-emoji lint-emoji-fix
+        lint lint-emoji lint-emoji-fix \
+        remote-update
 
 # ============================================================================
 # CONFIGURATION
@@ -227,6 +228,43 @@ list-claude-profiles:
 		plugins=$$(CLAUDE_CONFIG_DIR="$$abs_dir" $(CLAUDE) plugin list 2>/dev/null | grep "@dapi" | sed 's/.*❯ //' | tr '\n' ' '); \
 		echo "   $$profile_name: $$plugins"; \
 	done
+
+# ============================================================================
+# LINT TARGETS
+# ============================================================================
+
+# ============================================================================
+# REMOTE UPDATE
+# ============================================================================
+
+REMOTE_DIR = /home/danil/code/claude-code-marketplace
+
+remote-update:
+ifndef REMOTE_SERVERS
+	$(error REMOTE_SERVERS is not set. Usage: make remote-update REMOTE_SERVERS="server1 server2")
+endif
+	@echo "Updating remote servers..."
+	@echo "   Servers: $(REMOTE_SERVERS)"
+	@echo ""
+	@failed=""; \
+	total=0; ok=0; \
+	for server in $(REMOTE_SERVERS); do \
+		total=$$((total + 1)); \
+		echo "--- Updating: $$server ---"; \
+		if ssh -o ConnectTimeout=10 $$server "cd $(REMOTE_DIR) && git pull && make" ; then \
+			ok=$$((ok + 1)); \
+		else \
+			failed="$$failed $$server"; \
+		fi; \
+		echo ""; \
+	done; \
+	echo "Results: $$ok/$$total succeeded"; \
+	if [ -n "$$failed" ]; then \
+		echo "[FAIL] Failed servers:$$failed"; \
+		exit 1; \
+	else \
+		echo "[OK] All servers updated."; \
+	fi
 
 # ============================================================================
 # LINT TARGETS
