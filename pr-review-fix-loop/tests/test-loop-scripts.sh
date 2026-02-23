@@ -170,13 +170,13 @@ teardown
 # Test 8: max_iterations reached -> exit 0, writes to report, deletes state
 setup
 create_state_file 5 5 "null"
-touch .pr-review-loop-report.md
+touch .claude/pr-review-loop-report.local.md
 OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
 ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 [[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
-grep -q "LOOP ЗАВЕРШЕН" .pr-review-loop-report.md 2>/dev/null || ok=false
+grep -q "LOOP ЗАВЕРШЕН" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 if $ok; then
   pass "max iterations reached -> cleanup and report"
 else
@@ -202,7 +202,7 @@ teardown
 setup
 create_state_file 1 10 "null" "Fix the bugs"
 create_transcript "I fixed some issues but more remain"
-touch .pr-review-loop-report.md
+touch .claude/pr-review-loop-report.local.md
 INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
 OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
@@ -210,7 +210,7 @@ ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
 echo "$OUTPUT" | jq -e '.reason | contains("Fix the bugs")' >/dev/null 2>&1 || ok=false
-grep -q "ИТЕРАЦИЯ 2 НАЧАЛО" .pr-review-loop-report.md 2>/dev/null || ok=false
+grep -q "ИТЕРАЦИЯ 2 НАЧАЛО" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 grep -q '^iteration: 2$' .claude/pr-review-fix-loop.local.md 2>/dev/null || ok=false
 if $ok; then
   pass "normal iteration -> block, increment, marker"
@@ -256,7 +256,7 @@ setup
 create_state_file 1 10 "null" "Do review"
 create_transcript "Working on it"
 INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
-# Intentionally do NOT create .pr-review-loop-report.md
+# Intentionally do NOT create .claude/pr-review-loop-report.local.md
 OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
 if [[ $EXIT_CODE -eq 0 ]] && echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1; then

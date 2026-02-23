@@ -9,7 +9,7 @@ set -euo pipefail
 HOOK_INPUT=$(cat)
 
 STATE_FILE=".claude/pr-review-fix-loop.local.md"
-REPORT_FILE=".pr-review-loop-report.md"
+REPORT_FILE=".claude/pr-review-loop-report.local.md"
 
 if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
