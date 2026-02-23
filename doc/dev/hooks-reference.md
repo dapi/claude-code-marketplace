@@ -181,10 +181,8 @@ PostToolUse(*) ────────────────> ◉ (working, c
 PostToolUseFailure(*) ─────────> ◉ (still working)
 SubagentStop ──────────────────> ◉ (main agent continues)
 PermissionRequest ─────────────> ✋ (waiting for user)
-Notification(elicitation_dialog) > ✋ (waiting for user)
 PreCompact ────────────────────> ◌ (compacting)
 Stop ──────────────────────────> ○ (done)
-Notification(idle_prompt) ─────> ○ (idle)
 SessionEnd(clear) ─────────────> ○ (cleared)
 SessionEnd(logout|...) ────────> --clear (remove status)
 ```

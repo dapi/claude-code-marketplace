@@ -47,16 +47,6 @@
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
       }
     ],
-    "Notification": [
-      {
-        "matcher": "elicitation_dialog",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u270b' || true"}]
-      },
-      {
-        "matcher": "idle_prompt",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
-      }
-    ],
     "PreCompact": [
       {
         "matcher": "",
