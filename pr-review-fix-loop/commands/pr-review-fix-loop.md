@@ -102,7 +102,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 
 Передать собранный промпт в setup-loop.sh через heredoc:
 
-```!
+```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations {max_iterations} --completion-promise "REVIEW CLEAN" <<'LOOP_PROMPT'
 {собранный промпт}
 LOOP_PROMPT
