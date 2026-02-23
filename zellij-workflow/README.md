@@ -9,10 +9,11 @@ Unified Zellij workflow plugin: tab status indicators, issue development tabs, a
 Automatically shows Claude session state via icon prefix in tab name:
 
 | Icon | State | Description |
-|------|-------|-------------|
+|-|-|-|
 | `○` | Ready | Waiting for input |
 | `◉` | Working | Processing request |
 | `✋` | Needs input | Permission prompt waiting |
+| `◌` | Compacting | Context compaction in progress |
 
 Requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin.
 

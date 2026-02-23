@@ -1,0 +1,17 @@
+{
+  "description": "TEMPORARY: test which fires first - PermissionRequest or Notification(permission_prompt). Install in ~/.claude/settings.json, trigger any tool requiring permission, check /tmp/hook-events.log",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "echo \"$(date +%s%N) PermissionRequest\" >> /tmp/hook-events.log"}]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [{"type": "command", "command": "echo \"$(date +%s%N) Notification:permission_prompt\" >> /tmp/hook-events.log"}]
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "description": "Zellij tab status indicator hooks",
+  "description": "Zellij tab status indicator hooks. See doc/dev/hooks-reference.md for all events.",
   "hooks": {
     "SessionStart": [
       {
@@ -23,6 +23,12 @@
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
       }
     ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
     "PermissionRequest": [
       {
         "matcher": "",
@@ -31,7 +37,13 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "AskUserQuestion",
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "",
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
       }
     ],
