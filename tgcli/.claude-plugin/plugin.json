@@ -2,7 +2,10 @@
   "name": "tgcli",
   "version": "1.0.0",
   "description": "Telegram integration via tgcli CLI: read, search, send, analyze chat history with FTS and SQLite archive",
-  "author": "Danil Pismenny",
+  "author": {
+    "name": "Danil Pismenny",
+    "email": "danilpismenny@gmail.com"
+  },
   "license": "MIT",
   "keywords": ["telegram", "tgcli", "messaging", "chat", "search", "archive"]
 }
