@@ -69,6 +69,11 @@
       "name": "pr-review-fix-loop",
       "source": "./pr-review-fix-loop",
       "description": "Iterative PR review + autofix loop (Ralph Loop + pr-review-toolkit + optional Codex)"
+    },
+    {
+      "name": "tgcli",
+      "source": "./tgcli",
+      "description": "Telegram integration via tgcli CLI: read, search, send, analyze with FTS and SQLite archive"
     }
   ]
 }
