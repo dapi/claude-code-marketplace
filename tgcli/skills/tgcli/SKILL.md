@@ -151,14 +151,19 @@ tgcli messages search --regex "Данил|Danil|@username" --chat <id> --json --
 tgcli messages list --chat <id> --limit 500 --json --timeout 90s
 ```
 
-## Список отслеживаемых каналов
+## Подписки vs отслеживание (sync)
 
-Для "за какими каналами следим?", "список синкаемых каналов", "что мониторим":
+Это РАЗНЫЕ вещи:
 
-```bash
-tgcli sync status --json --timeout 10s
-tgcli sync jobs list --json --timeout 10s
-```
+| | Подписки | Отслеживание (sync) |
+|-|-|-|
+| Что | Все каналы/чаты где пользователь участник | Каналы с `sync_enabled=true` |
+| Сколько | Сотни | Единицы (вручную включённые) |
+| Команда | `tgcli channels list` / `tgcli groups list` | `tgcli sync status` |
+| Данные | Только live из Telegram API | Архив в локальном SQLite |
+
+**"За какими каналами следим?"** = `tgcli sync status --json --timeout 10s`
+**"Список моих каналов/подписок"** = `tgcli channels list --json --timeout 30s`
 
 ## Source selection
 

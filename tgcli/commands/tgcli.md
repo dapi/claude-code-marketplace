@@ -262,6 +262,17 @@ tgcli service start 2>&1 || { tgcli service install 2>&1 && tgcli service start 
 
 Сервис сам обработает jobs, flood wait, rate limits в фоне.
 
+### Подписки vs отслеживание (sync) — ВАЖНОЕ различие
+
+| | Подписки | Отслеживание (sync) |
+|-|-|-|
+| Что | Все каналы/чаты где пользователь участник | Каналы с `sync_enabled=true` |
+| Сколько | Сотни | Единицы (вручную включённые) |
+| Команда | `tgcli channels list` / `tgcli groups list` | `tgcli sync status` |
+| Данные | Только live из Telegram API | Архив в локальном SQLite |
+
+**"За какими каналами следим?"** = sync status, **"Мои каналы"** = channels list.
+
 ### Статус синхронизации
 
 ```bash
