@@ -54,12 +54,20 @@ Standalone code review via OpenAI Codex CLI.
 
 ## Dependencies
 
-- **ralph-loop** plugin (iteration engine)
-- **pr-review-toolkit** plugin (code review)
-- **feature-dev** agents (code-explorer, code-reviewer)
-- **codex** CLI (optional, for --codex flag)
-- **direnv** (project environment)
-- **Ruby/Rails** stack (rspec, rubocop)
+**Required plugins:**
+```
+/plugin install ralph-loop
+/plugin install pr-review-toolkit
+/plugin install feature-dev
+```
+
+**Required tools:**
+- **direnv** -- project environment wrapper
+- **Ruby/Rails** stack -- `bundle exec rspec`, `bundle exec rubocop`
+- **gh** CLI -- for auto-detecting base branch from PR
+
+**Optional:**
+- **codex** CLI -- OpenAI Codex, for `--codex` flag (`npm install -g @openai/codex`)
 
 ## Install
 
