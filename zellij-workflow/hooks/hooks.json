@@ -1,40 +1,54 @@
 {
   "description": "Zellij tab status indicator hooks",
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "AskUserQuestion",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
-      }
-    ],
     "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "resume|compact",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      },
+      {
+        "matcher": "startup|clear",
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [
-          {"type": "command", "command": "zellij-tab-status '\u25c9' || true"}
-        ]
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u270b' || true"}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
       }
     ],
     "Notification": [
       {
-        "matcher": "permission_prompt|elicitation_dialog",
+        "matcher": "elicitation_dialog",
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u270b' || true"}]
       },
       {
         "matcher": "idle_prompt",
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cc' || true"}]
       }
     ],
     "Stop": [
@@ -45,7 +59,11 @@
     ],
     "SessionEnd": [
       {
-        "matcher": "",
+        "matcher": "clear",
+        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+      },
+      {
+        "matcher": "logout|prompt_input_exit|bypass_permissions_disabled|other",
         "hooks": [{"type": "command", "command": "zellij-tab-status --clear || true"}]
       }
     ]
