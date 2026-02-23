@@ -26,6 +26,11 @@ description: >
   - "найди сообщения от [имя]", "messages from [user]"
   - "что писал [имя] в [канале]?"
 
+  Monitoring & sync:
+  - "за какими каналами следим?", "list monitored channels"
+  - "список синкаемых каналов", "what channels are synced?"
+  - "покажи отслеживаемые каналы", "sync status"
+
   For reply/edit/delete/reactions/inline buttons/admin — use telegram-mcp tools instead.
 
   TRIGGERS: telegram, tgcli, messages, channel, chat, group, send, search, read,
@@ -144,6 +149,15 @@ tgcli messages search --regex "Данил|Danil|@username" --chat <id> --json --
 Загрузить сообщения и отфильтровать по `fromDisplayName` в JSON:
 ```bash
 tgcli messages list --chat <id> --limit 500 --json --timeout 90s
+```
+
+## Список отслеживаемых каналов
+
+Для "за какими каналами следим?", "список синкаемых каналов", "что мониторим":
+
+```bash
+tgcli sync status --json --timeout 10s
+tgcli sync jobs list --json --timeout 10s
 ```
 
 ## Source selection

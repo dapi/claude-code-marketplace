@@ -63,10 +63,15 @@
 - "add tag to telegram contact"
 - "set alias for telegram user"
 
-### **Sync & Archive**
+### **Monitoring & Sync**
+- "за какими каналами следим?"
+- "список синкаемых каналов"
+- "покажи отслеживаемые каналы"
+- "what channels are synced?"
+- "list monitored channels"
+- "sync status for telegram"
 - "sync telegram channel history"
 - "enable archive for channel"
-- "sync status for telegram"
 
 ## [NO] Should NOT Activate
 
