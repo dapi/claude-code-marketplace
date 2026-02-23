@@ -1,6 +1,7 @@
 ---
 description: Run Claude session in new zellij tab with given instructions
 argument-hint: <instructions or plan-file-path>
+version: 1.0.0
 ---
 
 # Run in New Tab

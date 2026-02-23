@@ -81,6 +81,18 @@ load_plugins {
 |--------|---------|---------|
 | **superpowers** | `/run-in-new-tab`, zellij-tab-pane skill | Skill `executing-plans` for plan execution in new tabs |
 
+## Troubleshooting
+
+| Problem | Cause | Fix |
+|-|-|-|
+| No status icons on tabs | zellij-tab-status not installed or not loaded | Install plugin, add `load_plugins` to config.kdl, restart zellij |
+| `zellij-tab-status` command not found | Script not in PATH | Download from [releases](https://github.com/dapi/zellij-tab-status), place in PATH |
+| Status stuck on `✋` | Rare: PostToolUse didn't fire after permission grant | Switch to tab — any next action will reset to `◉` |
+| Status stays `◉` after Claude stops | Stop hook didn't fire | Check plugin is installed: `/plugin list` |
+| Icons show on wrong tab | Multiple Claude sessions, stale WASM plugin | Update zellij-tab-status to v0.3.5+ |
+| `Not in zellij session` error | Running Claude outside zellij | Start zellij first, then run Claude inside it |
+| `Timed out` on tab/pane creation | Zellij is hanging or overloaded | Restart zellij session |
+
 ## Components
 
 | Component | File | Purpose |

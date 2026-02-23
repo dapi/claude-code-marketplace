@@ -1,5 +1,5 @@
 {
-  "description": "Zellij tab status indicator hooks. See doc/dev/hooks-reference.md for all events.",
+  "description": "Zellij tab status indicator hooks. States: ready, working, needs-input, compacting.",
   "hooks": {
     "SessionStart": [
       {
