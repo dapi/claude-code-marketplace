@@ -22,15 +22,6 @@
 /start-issue https://github.com/owner/repo/issues/123
 ```
 
-### Команда: /fix-pr
-
-Итеративный цикл ревью и исправления PR до устранения критических проблем.
-
-```
-/fix-pr
-/fix-pr --max-iterations=3
-```
-
 ## Использование
 
 ```
@@ -45,7 +36,6 @@
 
 - [gh CLI](https://cli.github.com)
 - [gh-sub-issue](https://github.com/yahsan2/gh-sub-issue) расширение (опционально)
-- Плагин [pr-review-toolkit](https://github.com/anthropics/claude-code-plugins) (для `/fix-pr`)
 
 ## Документация
 

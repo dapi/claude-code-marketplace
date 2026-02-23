@@ -36,7 +36,7 @@
 
 Рабочий процесс GitHub: issues, PR, worktrees, sub-issues.
 
-**Компоненты:** навык `github-issues`, команды `/start-issue`, `/fix-pr`
+**Компоненты:** навык `github-issues`, команда `/start-issue`
 
 ```
 /start-issue https://github.com/owner/repo/issues/123
@@ -71,6 +71,20 @@
 "показать bugsnag ошибки"
 "bugsnag детали для error_123"
 "show bugsnag errors"
+```
+
+### pr-review-fix-loop
+
+Итеративный цикл ревью + автофикс PR для Ruby/Rails проектов.
+
+**Компоненты:** команды `/pr-review-fix-loop`, `/codex-pr-review`
+
+**Требуются:** плагины `ralph-loop`, `pr-review-toolkit`, `feature-dev`; `codex` CLI (опционально)
+
+```
+/pr-review-fix-loop
+/pr-review-fix-loop --codex --rubocop --auto-commit
+/codex-pr-review
 ```
 
 ### spec-reviewer

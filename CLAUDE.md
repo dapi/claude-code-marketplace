@@ -624,24 +624,25 @@ git commit -m "Add plugin-name: brief description"
 
 ## Current State
 
-**Plugins**: 12 active plugins in marketplace
+**Plugins**: 13 active plugins in marketplace
 
 | Plugin | Components |
 |--------|------------|
 | bugsnag-skill | 1 skill |
 | cluster-efficiency | 5 agents, 1 skill, 1 command |
 | doc-validate | 1 skill, 1 command |
-| github-workflow | 1 skill, 2 commands |
+| github-workflow | 1 skill, 1 command |
 | himalaya | 1 skill |
 | long-running-harness | 1 skill |
 | media-upload | 1 skill |
+| pr-review-fix-loop | 2 commands |
 | requirements | 1 command |
 | skill-finder | 1 command |
 | spec-reviewer | 11 agents, 1 skill, 1 command |
 | task-router | 1 agent, 1 skill, 1 command |
 | zellij-workflow | 1 skill, 2 commands, hooks |
 
-**Totals**: 17 agents, 10 skills, 10 commands
+**Totals**: 17 agents, 10 skills, 11 commands
 
 ## zellij-workflow Plugin
 

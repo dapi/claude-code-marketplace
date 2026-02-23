@@ -36,7 +36,7 @@ Personal marketplace of Claude Code plugins for development workflows.
 
 GitHub workflow: issues, PRs, worktrees, sub-issues.
 
-**Components:** skill `github-issues`, commands `/start-issue`, `/fix-pr`
+**Components:** skill `github-issues`, command `/start-issue`
 
 ```
 /start-issue https://github.com/owner/repo/issues/123
@@ -71,6 +71,20 @@ Bugsnag API integration: view and manage errors, organizations, projects.
 "show bugsnag errors"
 "bugsnag details for error_123"
 "ошибки bugsnag"
+```
+
+### pr-review-fix-loop
+
+Iterative PR review + autofix loop for Ruby/Rails projects.
+
+**Components:** commands `/pr-review-fix-loop`, `/codex-pr-review`
+
+**Requires:** plugins `ralph-loop`, `pr-review-toolkit`, `feature-dev`; `codex` CLI (optional)
+
+```
+/pr-review-fix-loop
+/pr-review-fix-loop --codex --rubocop --auto-commit
+/codex-pr-review
 ```
 
 ### spec-reviewer
