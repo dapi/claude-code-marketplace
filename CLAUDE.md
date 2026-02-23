@@ -511,6 +511,25 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 - **Skills**: `skill-name` (lowercase with hyphens)
 - **Commands**: `command-name` (lowercase with hyphens)
 
+### Plugin Versioning (MANDATORY)
+
+**ALWAYS bump plugin version in `plugin.json` when changing a plugin.** This is non-negotiable.
+
+**When to bump:**
+- **patch** (1.0.0 -> 1.0.1): bug fixes, typo fixes, minor doc updates
+- **minor** (1.0.0 -> 1.1.0): new commands/agents/skills added, non-breaking changes
+- **major** (1.0.0 -> 2.0.0): commands/agents/skills removed or renamed, breaking changes
+
+**Checklist after ANY plugin modification:**
+1. Open `plugin-name/.claude-plugin/plugin.json`
+2. Bump `version` according to semver rules above
+3. Include version bump in the same commit as the changes
+
+**Common mistakes to avoid:**
+- Adding a new plugin but forgetting to bump marketplace version (`make release-*`)
+- Removing a command from plugin without major version bump
+- Moving components between plugins without bumping BOTH source and target plugins
+
 ### Documentation Requirements
 - All plugins must have README.md
 - Agent descriptions must be clear and trigger-focused
