@@ -208,20 +208,18 @@ tgcli tags auto --chat <id> --json        # авто-теги на основе 
 2. `tgcli groups list --query "имя" --json` — поиск среди групп
 3. Если передан `@username` или числовой ID — использовать напрямую
 
-### Шаг 2: Убедиться что архив синхронизирован
+### Шаг 2: Включить sync и обеспечить сервис
 
 ```bash
-# Проверить статус
-tgcli sync status --json --timeout 10s
-
-# Если чат не синхронизирован — включить sync и запустить backfill
+# Включить sync для канала и добавить backfill job
 tgcli channels sync --chat <id> --enable
 tgcli sync jobs add --chat <id> --depth 500
-tgcli sync --once --timeout 120s
 
-# При FloodWait ("A wait of N seconds is required") — fallback на live:
-tgcli messages list --chat <id> --source live --limit 500 --json --timeout 90s
+# Обеспечить что systemd-сервис запущен (EAFP: try start, if fails — install + start)
+tgcli service start 2>&1 || { tgcli service install 2>&1 && tgcli service start 2>&1; }
 ```
+
+Сервис в фоне обрабатывает jobs, flood wait, rate limits. НЕ использовать `sync --once` — он зависнет при flood wait.
 
 ### Шаг 3: Читать из архива
 
@@ -249,18 +247,20 @@ tgcli messages search --query "Claude" --chat <id> --source archive --json --tim
 
 ## Команды: Архив и синхронизация
 
-### Включить sync для канала (ВАЖНО!)
+### Включить sync для канала
 
-Перед использованием `--source archive` нужно **включить sync** для каждого канала:
+Перед использованием `--source archive` нужно **включить sync** и **запустить сервис**:
 
 ```bash
-# Включить sync для канала
+# Включить sync для канала + добавить backfill job
 tgcli channels sync --chat <id> --enable
-
-# Запустить backfill (загрузить историю в SQLite)
 tgcli sync jobs add --chat <id> --depth 1000
-tgcli sync --once --timeout 120s
+
+# Обеспечить что сервис запущен (EAFP)
+tgcli service start 2>&1 || { tgcli service install 2>&1 && tgcli service start 2>&1; }
 ```
+
+Сервис сам обработает jobs, flood wait, rate limits в фоне.
 
 ### Статус синхронизации
 
@@ -269,17 +269,35 @@ tgcli sync status --json
 tgcli sync jobs list --json
 ```
 
-### Запуск фоновой синхронизации
+### Управление сервисом (systemd user scope)
 
 ```bash
-tgcli sync --once              # один раз и выйти
-tgcli sync --follow            # realtime-синхронизация (foreground)
-tgcli service install && tgcli service start   # как systemd-сервис (background)
+# Обеспечить запуск (идемпотентно, EAFP)
+tgcli service start 2>&1 || { tgcli service install 2>&1 && tgcli service start 2>&1; }
+
+# Проверить статус
+tgcli service status
+
+# Логи
+tgcli service logs
+
+# Остановить (только по явному запросу пользователя)
+tgcli service stop
+
+# Переустановить (если unit-файл повреждён)
+tgcli service stop 2>/dev/null; tgcli service install 2>&1 && tgcli service start 2>&1
 ```
 
-### Fallback при FloodWait
+**Когда запускать сервис:**
+- При `channels sync --enable` + `sync jobs add` (всегда)
+- При "следи за каналом", "синкай", "выгрузи историю"
+- При явном "запусти tgcli сервис"
 
-Если `tgcli sync` падает с "A wait of N seconds is required", использовать `--source live` с большим `--limit` как fallback:
+**Когда останавливать:** только по явному запросу пользователя.
+
+### Fallback при пустом архиве
+
+Если архив ещё не наполнился (сервис только запущен), использовать `--source live`:
 
 ```bash
 tgcli messages list --chat <id> --source live --limit 500 --json --timeout 90s

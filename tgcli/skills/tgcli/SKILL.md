@@ -93,15 +93,21 @@ tgcli groups list --query "..." --json --timeout 30s
 Для "проанализируй чат", "о чём говорили за неделю", "выгрузи историю":
 
 1. **Резолвинг чата**: `tgcli channels list --query`
-2. **Синхронизация** (если нужен архив):
+2. **Включить sync + обеспечить сервис**:
    ```bash
    tgcli channels sync --chat <id> --enable
    tgcli sync jobs add --chat <id> --depth 500
-   tgcli sync --once --timeout 120s
+   # Обеспечить что systemd-сервис запущен (обрабатывает jobs, flood wait, rate limits)
+   tgcli service start 2>&1 || { tgcli service install 2>&1 && tgcli service start 2>&1; }
    ```
-3. **Чтение**: `tgcli messages list --chat <id> --source archive --limit 500 --json`
-4. **Fallback при FloodWait**: `tgcli messages list --chat <id> --source live --limit 500 --json --timeout 90s`
-5. **Анализ**: обработать JSON, сгруппировать по дням/авторам/темам
+3. **Чтение**: сначала попробовать `--source archive`, если пусто — `--source live` как fallback
+   ```bash
+   tgcli messages list --chat <id> --source archive --limit 500 --json --timeout 30s
+   # Если archive пуст (сервис ещё не успел синкнуть) — fallback:
+   tgcli messages list --chat <id> --source live --limit 500 --json --timeout 90s
+   ```
+4. **Анализ**: обработать JSON, сгруппировать по дням/авторам/темам
+5. Сервис продолжит синхронизацию в фоне — при следующем запросе архив будет полнее
 
 ## Новости и события канала
 
