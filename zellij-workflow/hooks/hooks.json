@@ -23,12 +23,6 @@
         "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
       }
     ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
-      }
-    ],
     "PermissionRequest": [
       {
         "matcher": "",
