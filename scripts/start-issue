@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-VERSION="1.7.1"
+VERSION="1.8.0"
 
 # Colors
 RED='\033[0;31m'
@@ -25,7 +25,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Defaults
-WORKTREE_DIR="$HOME/.worktrees"
+WORKTREE_DIR="${CLAUDE_WORKTREE_DIR:-$HOME/worktrees}"
 BASE_BRANCH=""
 REPO=""
 NO_INIT=false
@@ -80,7 +80,7 @@ Arguments:
 Options:
   --repo, -r <owner/repo>    Repository (default: detected from git remote)
   --base, -b <branch>        Base branch (default: main or master)
-  --worktree-dir, -w <dir>   Directory for worktrees (default: ~/.worktrees)
+  --worktree-dir, -w <dir>   Directory for worktrees (default: CLAUDE_WORKTREE_DIR or ~/.worktrees)
   --flat                     Use flat worktree structure (replace / with - in path)
   --no-init                  Skip init.sh execution
   --no-claude                Only create worktree, don't start Claude session
@@ -124,6 +124,11 @@ check_dependencies() {
 
     if ! command -v jq &> /dev/null; then
         die "jq not found. Please install jq."
+    fi
+
+    # Show worktree configuration
+    if [[ -n "${CLAUDE_WORKTREE_DIR:-}" ]]; then
+        log_info "Worktree directory: $WORKTREE_DIR (from CLAUDE_WORKTREE_DIR)"
     fi
 }
 
