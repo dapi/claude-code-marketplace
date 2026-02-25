@@ -994,9 +994,22 @@ else:
 ### Условия для повторной итерации
 
 ```python
-# Подсчитай оставшиеся critical/high
-remaining_critical = count(issues where severity == "critical" AND status != "fixed")
-remaining_high = count(issues where severity == "high" AND status != "fixed")
+# Подсчитай оставшиеся BLOCKING проблемы
+# resolved_statuses не блокируют gate check
+resolved_statuses = ["fixed", "deferred", "rejected"]
+
+# ВАЖНО:
+# - deferred/rejected считаются обработанными (не блокируют итерацию)
+# - reclassified не блокирует только если severity реально понижен до medium/low
+#   (при reclassified severity issue должен быть обновлён)
+remaining_critical = count(
+    issues where severity == "critical"
+    AND status not in resolved_statuses
+)
+remaining_high = count(
+    issues where severity == "high"
+    AND status not in resolved_statuses
+)
 
 has_blocking_issues = (remaining_critical > 0) OR (remaining_high > 0)
 can_iterate = iteration < max_iterations
@@ -1078,6 +1091,7 @@ ELIF has_blocking_issues:
 
 3. **⬇️ Понизить severity**
    → Запросить новый уровень (medium/low)
+   → Обновить `issue.severity` на новый уровень
    → Добавить обоснование в комментарий
    → Пометить как reclassified
 
@@ -1443,7 +1457,7 @@ mcp__google_workspace__modify_doc_text
 
 ### Gate Check (после каждой итерации, пропускается для quick)
 - [ ] Если depth_level == "quick" → пропустить к Фазе 7
-- [ ] Подсчитаны оставшиеся critical/high (в пределах min_severity)
+- [ ] Подсчитаны оставшиеся critical/high BLOCKING (исключая fixed/deferred/rejected)
 - [ ] Если есть — показана таблица оставшихся проблем
 - [ ] Пользователь выбрал действие:
   - [ ]  Индивидуальная обработка → Фаза 6 для каждой → Gate Check

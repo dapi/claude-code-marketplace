@@ -123,6 +123,7 @@ Each issue gets a decision path:
 
 3. `reclassified`
 - severity is lowered (with rationale), e.g. from `high` to `medium`.
+  The issue severity value must be updated to the new level.
 
 4. `rejected`
 - explicitly declined (with rationale), documented in review artifacts.
@@ -135,6 +136,7 @@ Each issue gets a decision path:
 
 - `reclassified` means the issue is still valid, but no longer treated as a blocker at the current gate level. It can appear in deeper reports and remains visible in history.
 - `rejected` means the team decides not to act on this issue. It should not block gate checks anymore, but the rejection reason must stay documented.
+- Gate-check blockers are unresolved `critical/high` issues only. `fixed`, `deferred`, and `rejected` do not block.
 
 Rule for NFR:
 - if an NFR is release-critical (security/compliance/SLO contract), do **not** use `reclassified`; use `fixed` (or explicitly `deferred` with release blocked).
