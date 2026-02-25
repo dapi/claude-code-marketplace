@@ -29,6 +29,48 @@ Use `spec-reviewer` when you want to:
 /spec-review --standard https://docs.company.com/p/<PAGE_ID>
 ```
 
+## Command Arguments Explained
+
+Command shape:
+
+```text
+/spec-reviewer:spec-review [depth flag] [--no-ask] [source]
+```
+
+Depth resolution priority:
+1. explicit depth flag (`--quick/--standard/--deep/--exhaustive`);
+2. depth keywords in your message;
+3. interactive depth question;
+4. fallback to `standard`.
+
+### Flags
+
+| Flag | Meaning | Typical use |
+|---|---|---|
+| `--quick`, `-q` | Fast blocker check. Shows only `critical`, skips classifier and gate-check, runs only `spec-analyst` + `spec-test`. | Quick pre-check before coding starts. |
+| `--standard`, `-s` | Default balanced review. Shows `critical` + `high`, uses classifier and gate-check. | Daily product/spec review workflow. |
+| `--deep`, `-d` | Wider review window. Same agent strategy as Standard, but also includes `medium` issues. | Pre-release hardening or risky changes. |
+| `--exhaustive`, `-e` | Full audit. Includes `low`, forces all domain agents, keeps classifier only for scope estimation. | Major architecture/integration checkpoints. |
+| `--no-ask` | Do not ask the interactive "which level?" question. If no explicit depth flag is provided, run `standard` directly. | CI/non-interactive runs, scripted calls. |
+
+Notes about `--no-ask`:
+- It only affects depth selection UX (skips the question).
+- It does not enable autopilot and does not auto-edit the spec.
+- If you pass an explicit depth flag (for example `--deep --no-ask`), that explicit depth is used.
+
+### Source Argument
+
+`[source]` is one optional positional argument:
+
+| Source | Accepted form | Example |
+|---|---|---|
+| Google Doc | full Google Docs URL | `https://docs.google.com/document/d/<DOC_ID>/edit` |
+| GitHub Issue | full issue URL or short `#number` | `https://github.com/org/repo/issues/42`, `#42` |
+| Docmost page | Docmost page URL | `https://docs.company.com/p/<PAGE_ID>` |
+| Local file | relative or absolute path | `docs/spec.md` |
+
+If no `[source]` is passed, you can paste spec text directly in chat and run review on that text.
+
 ## Inputs Supported
 
 - Google Docs URL
@@ -46,9 +88,7 @@ Use `spec-reviewer` when you want to:
 | Deep | `--deep`, `-d` | `critical`, `high`, `medium` | yes | same as Standard, but wider reporting window | yes | 3 |
 | Exhaustive | `--exhaustive`, `-e` | all, incl. `low` | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | yes | 3 |
 
-Extra flag:
-- `--no-ask` — skip the depth-selection question and run `standard` directly.
-  This is not an autopilot mode: it does not auto-edit the spec.
+`--no-ask` behavior is described in detail in **Command Arguments Explained** above.
 
 ### What Changes By Level
 
