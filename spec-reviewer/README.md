@@ -58,6 +58,36 @@ Notes about `--no-ask`:
 - It does not enable autopilot and does not auto-edit the spec.
 - If you pass an explicit depth flag (for example `--deep --no-ask`), that explicit depth is used.
 
+## Autopilot (Self-Loop) Recipe
+
+There is no dedicated `--autopilot` flag. Use this recipe for near-autonomous review loops:
+
+1. Start with maximum coverage and no depth prompt:
+
+```bash
+/spec-reviewer:spec-review --exhaustive --no-ask <source>
+```
+
+2. In approval/gate dialogs, choose custom handling strategy (`custom`) and set a policy like:
+
+```text
+Autopilot policy:
+- Process all issues automatically.
+- Prefer fixed when safe to apply.
+- If not safe to auto-fix, use deferred and create a tracking issue.
+- Keep rationale for every deferred/reclassified/rejected decision.
+- After processing, run full re-analysis.
+- Repeat until no blocking critical/high issues remain.
+```
+
+3. For strict self-loop to "zero issues":
+- Add: "continue until critical/high/medium/low are all zero".
+- If max iterations are reached in one run, start another run with the same policy.
+
+Autopilot scope:
+- automatic handling + re-analysis loop;
+- still policy-driven (not blind auto-merge of all changes).
+
 ### Source Argument
 
 `[source]` is one optional positional argument:
