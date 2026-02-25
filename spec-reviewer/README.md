@@ -352,6 +352,15 @@ This allows safe delivery instead of forcing a single oversized implementation b
 - Require rationale for `reclassified` and `rejected` decisions.
 - Prefer phased delivery for `borderline`/`too_large` scope.
 
+## FAQ
+
+**Does this skill check for consistency/contradictions?**
+
+Yes. Consistency checks are a core part of the review:
+- `spec-analyst` checks business-level contradictions (`stories ↔ AC`, rules, scope vs goals).
+- `spec-data`, `spec-api`, and `spec-infra` check technical consistency across data contracts, APIs, and NFR/security assumptions.
+- `spec-test` and `spec-axes` surface ambiguous or mismatched requirements that create conflicting interpretations in implementation/testing.
+
 ## Documentation
 
 - [Command workflow](./commands/spec-review.md)
