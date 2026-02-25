@@ -8,7 +8,7 @@ description: |
   - "check/analyze/fetch spec review", "review spec"
   - "проверь спецификацию/ТЗ", "ревью спеки", "проанализируй ТЗ"
   - "найди гапы в требованиях", "найди нестыковки/противоречия"
-  - пользователь дал ссылку на Google Doc или GitHub issue со спецификацией
+  - пользователь дал ссылку на Google Doc, GitHub issue или Docmost-документ со спецификацией
   - пользователь вставил текст спецификации и просит проверить
 
   ️ **Уровни глубины**:
@@ -27,6 +27,10 @@ description: |
   - "проверь спеку docs.google.com/document/d/XXX"
   - "ревью этого ТЗ [ссылка на Google Doc]"
 
+   **Docmost**:
+  - "проверь спеку https://docs.company.com/p/XXXXXXXX"
+  - "ревью этого ТЗ в Docmost [ссылка]"
+
    **GitHub Issue** (ТОЛЬКО с ревью-контекстом!):
   - "проанализируй issue #123" (ревью-слово: "проанализируй")
   - "проверь спецификацию github.com/.../issues/456" (ревью-слово: "проверь")
@@ -43,7 +47,7 @@ description: |
   TRIGGERS: спецификация, ТЗ, spec, specification, requirements,
   проверь спеку, ревью спеки, review spec, analyze spec,
   найди гапы, найди противоречия, найди нестыковки,
-  docs.google.com/document, github.com/issues,
+  docs.google.com/document, github.com/issues, docmost, /p/,
   техническое задание, требования, acceptance criteria,
   проанализируй требования, check requirements,
   --quick, -q, --deep, -d, --exhaustive, -e, --no-ask,
@@ -139,7 +143,20 @@ args += source  # URL, #number, или path
 → Вызвать: Skill tool → skill: "spec-review", args: "{URL или #number}"
 ```
 
-### 3. Текст спецификации
+### 3. Docmost документ
+
+**Паттерны (эвристика):**
+- URL на домене, известном как Docmost workspace
+- `https://{docmost-domain}/p/{pageId}`
+- `https://{docmost-domain}/pages/{pageId}`
+
+```
+Если в сообщении есть ссылка на Docmost:
+→ Предпочесть чтение через MCP Docmost (get_page / search)
+→ Вызвать: Skill tool → skill: "spec-review", args: "{URL}"
+```
+
+### 4. Текст спецификации
 
 **Признаки:**
 - Большой блок текста (>500 символов)
@@ -153,7 +170,7 @@ args += source  # URL, #number, или path
 → В следующем сообщении передать текст спецификации
 ```
 
-### 4. Локальный файл
+### 5. Локальный файл
 
 **Паттерны:**
 - Путь к файлу: `docs/spec.md`, `./requirements.txt`
@@ -178,31 +195,37 @@ User: Сделай быстрое ревью issue #42
 Assistant: [Вызывает Skill tool: spec-review с args: "--quick #42"]
 ```
 
-### Пример 3: Явный флаг
+### Пример 3: Docmost документ
+```
+User: Проверь спеку https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11
+Assistant: [Вызывает Skill tool: spec-review с args: "https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11"]
+```
+
+### Пример 4: Явный флаг
 ```
 User: /spec-review --deep https://github.com/owner/repo/issues/123
 Assistant: [Вызывает Skill tool: spec-review с args: "--deep https://github.com/owner/repo/issues/123"]
 ```
 
-### Пример 4: Ключевое слово в промпте
+### Пример 5: Ключевое слово в промпте
 ```
 User: Тщательно проанализируй спеку в docs/spec.md
 Assistant: [Вызывает Skill tool: spec-review с args: "--deep docs/spec.md"]
 ```
 
-### Пример 5: Флаг --no-ask для CI/CD
+### Пример 6: Флаг --no-ask для CI/CD
 ```
 User: /spec-review --no-ask #42
 Assistant: [Вызывает Skill tool: spec-review с args: "--no-ask #42"]
 ```
 
-### Пример 6: Полный аудит
+### Пример 7: Полный аудит
 ```
 User: Сделай полный аудит этой спецификации https://docs.google.com/document/d/xxx
 Assistant: [Вызывает Skill tool: spec-review с args: "--exhaustive https://docs.google.com/document/d/xxx"]
 ```
 
-### Пример 7: Текст спецификации
+### Пример 8: Текст спецификации
 ```
 User: Проверь это ТЗ:
 ## Функционал

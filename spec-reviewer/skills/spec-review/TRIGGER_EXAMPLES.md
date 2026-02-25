@@ -16,6 +16,11 @@
 - "найди гапы в issue #100"
 - "check requirements in this issue"
 
+### Docmost спецификации
+- "проверь спеку https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11"
+- "review spec in docmost https://wiki.company.com/pages/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+- "ревью ТЗ из docmost"
+
 ### Локальные файлы
 - "проверь спеку в docs/spec.md"
 - "review specification in requirements.txt"
@@ -34,6 +39,7 @@
 - "/spec-review --deep docs.google.com/document/d/xxx"
 - "/spec-review --exhaustive #100"
 - "/spec-review -q github.com/owner/repo/issues/1"
+- "/spec-review --standard https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11"
 - "/spec-review --no-ask #42"
 
 ### Ключевые слова глубины
@@ -110,6 +116,7 @@
 ### Sources (источники)
 - Google Doc: `docs.google.com/document/d/`
 - GitHub Issue: `github.com/.../issues/`, `#123`, `issue #`
+- Docmost: `<docmost-domain>/p/{pageId}`, `<docmost-domain>/pages/{pageId}`, `docmost`
 - Files: `.md`, `.txt`, `docs/`, `spec`
 
 ### Depth flags (глубина)

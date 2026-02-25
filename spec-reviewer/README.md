@@ -23,12 +23,14 @@ Use `spec-reviewer` when you want to:
 /spec-review docs/spec.md
 /spec-review --quick #42
 /spec-review --deep https://docs.google.com/document/d/<DOC_ID>/edit
+/spec-review --standard https://docs.company.com/p/<PAGE_ID>
 ```
 
 ## Inputs Supported
 
 - Google Docs URL
 - GitHub Issue URL or `#number`
+- Docmost page URL (read via Docmost MCP)
 - local file path
 - large spec text pasted into chat
 
@@ -43,6 +45,51 @@ Use `spec-reviewer` when you want to:
 
 Extra flag:
 - `--no-ask` — skip depth selection question and run `standard`.
+
+### What Actually Changes Between Levels
+
+`spec-reviewer` changes four things by level:
+1. issue visibility threshold (`critical/high/medium/low`),
+2. max iteration count,
+3. whether classifier/gate-check/scope analysis are used,
+4. which subskills are run.
+
+| Level | Classifier | Agent Strategy | Visible Severity | Gate Check | Max Iterations |
+|---|---|---|---|---|---|
+| Quick | skipped | only `spec-analyst` + `spec-test` | `critical` | no | 1 |
+| Standard | yes | base + `spec-axes` + classifier-selected domain agents (+`spec-scoper` if needed) | `critical`, `high` | yes | 2 |
+| Deep | yes | same as Standard, but deeper reporting window | `critical`, `high`, `medium` | yes | 3 |
+| Exhaustive | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | all, incl. `low` | yes | 3 |
+
+### Subskill Combination Logic
+
+Base set (always in non-classifier phase):
+- `spec-analyst`
+- `spec-test`
+
+Added in `standard/deep/exhaustive`:
+- `spec-axes` (What/How/Verify coverage check)
+
+Domain agents:
+- `standard/deep`: selected by `spec-classifier` based on spec content
+- `exhaustive`: all domain agents forced on (`spec-data`, `spec-api`, `spec-infra`, `spec-risk`, `spec-ux`, `spec-ai-readiness`)
+
+Scope agent:
+- `spec-scoper` runs when quick scope is `borderline` or `too_large`.
+
+### Practical Difference (Examples)
+
+1. Quick on UI-heavy spec:
+- runs only `spec-analyst` + `spec-test` for blockers.
+- fastest, but skips dedicated UX/infra/API deep checks.
+
+2. Standard on typical product spec:
+- usually runs `analyst + test + axes`, then only relevant domain agents.
+- best default tradeoff for sprint planning.
+
+3. Exhaustive before high-risk release:
+- forces full domain coverage regardless of classifier routing.
+- best before architecture freeze or major integration launch.
 
 ## Components
 
