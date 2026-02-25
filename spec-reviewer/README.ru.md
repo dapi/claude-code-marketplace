@@ -75,37 +75,41 @@
 flowchart TD
     A["/spec-review"] --> B["Выбор глубины<br/>(flags -> keywords -> ask -> default)"]
 
-    B -->|"quick"| C["Пропустить classifier"]
+    B -->|"quick"| C["Subagents для quick:<br/>spec-analyst + spec-test"]
     B -->|"standard / deep / exhaustive"| D["Запустить spec-classifier<br/>+ quick scope"]
 
     D --> E{"Вердикт scope"}
-    E -->|"fits"| F["Собрать набор агентов"]
+    E -->|"fits"| F{"Режим глубины"}
     E -->|"borderline / too_large"| G["Спросить стратегию декомпозиции<br/>+ запустить spec-scoper"]
     G --> F
 
-    C --> H["Параллельный запуск агентов анализа"]
-    F --> H
+    F -->|"standard / deep"| H["Subagents:<br/>база: spec-analyst + spec-test + spec-axes<br/>доменные (по classifier): spec-data/spec-api/spec-infra/spec-risk/spec-ux/spec-ai-readiness"]
+    F -->|"exhaustive"| I["Subagents:<br/>база: spec-analyst + spec-test + spec-axes<br/>все доменные: spec-data + spec-api + spec-infra + spec-risk + spec-ux + spec-ai-readiness"]
 
-    H --> I["Агрегация замечаний<br/>+ фильтр по уровню глубины"]
-    I --> J["Решение по каждому замечанию:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
-    J --> K["Gate check"]
+    C --> J["Параллельный запуск выбранных subagents"]
+    H --> J
+    I --> J
 
-    K -->|"Нет blocking critical/high"| L["Финализация / аппрув"]
-    K -->|"Остались blocking + iter < max"| M["Следующая итерация"]
-    M --> H
-    K -->|"Принять как есть или отменить"| N["Завершение с warning/отменой"]
+    J --> K["Агрегация замечаний<br/>+ фильтр по уровню глубины"]
+    K --> L["Решение по каждому замечанию:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
+    L --> M["Gate check"]
+
+    M -->|"Нет blocking critical/high"| N["Финализация / аппрув"]
+    M -->|"Остались blocking + iter < max"| O["Следующая итерация"]
+    O --> J
+    M -->|"Принять как есть или отменить"| P["Завершение с warning/отменой"]
 ```
 
 ## Короткая диаграмма жизненного цикла замечания
 
 ```mermaid
 flowchart LR
-    A["Найдено замечание"] --> B{"Решение"}
+    A["Замечание найдено subagent-ом<br/>(spec-analyst/spec-test/spec-axes/<br/>spec-data/spec-api/spec-infra/spec-risk/spec-ux/spec-ai-readiness)"] --> B{"Решение"}
 
     B -->|"fixed"| C["Внести правку в спецификацию"]
     B -->|"deferred"| D["Создать GitHub issue"]
-    B -->|"reclassified"| E["Понизить severity и оставить в истории"]
-    B -->|"rejected"| F["Зафиксировать причину отклонения"]
+    B -->|"reclassified"| E["Понизить severity и оставить tracked item"]
+    B -->|"rejected"| F["Пометить rejected + зафиксировать причину"]
     B -->|"custom"| G["Смаппить в fixed/deferred/reclassified/rejected"]
 
     G --> C

@@ -97,37 +97,41 @@ Scope agent:
 flowchart TD
     A["/spec-review"] --> B["Depth selection<br/>(flags -> keywords -> ask -> default)"]
 
-    B -->|"quick"| C["Skip classifier"]
+    B -->|"quick"| C["Quick subagents:<br/>spec-analyst + spec-test"]
     B -->|"standard / deep / exhaustive"| D["Run spec-classifier<br/>+ quick scope"]
 
     D --> E{"Scope verdict"}
-    E -->|"fits"| F["Build agent set"]
+    E -->|"fits"| F{"Depth mode"}
     E -->|"borderline / too_large"| G["Ask split strategy<br/>+ run spec-scoper"]
     G --> F
 
-    C --> H["Run analysis agents in parallel"]
-    F --> H
+    F -->|"standard / deep"| H["Subagents:<br/>core: spec-analyst + spec-test + spec-axes<br/>domain(by classifier): spec-data/spec-api/spec-infra/spec-risk/spec-ux/spec-ai-readiness"]
+    F -->|"exhaustive"| I["Subagents:<br/>core: spec-analyst + spec-test + spec-axes<br/>all domain: spec-data + spec-api + spec-infra + spec-risk + spec-ux + spec-ai-readiness"]
 
-    H --> I["Aggregate issues<br/>+ filter by depth level"]
-    I --> J["Per-issue decisions:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
-    J --> K["Gate check"]
+    C --> J["Run selected subagents in parallel"]
+    H --> J
+    I --> J
 
-    K -->|"No blocking critical/high"| L["Finalize / approve"]
-    K -->|"Blocking remains + iter < max"| M["Next iteration"]
-    M --> H
-    K -->|"Accept as-is or cancel"| N["Finish with warning/cancel"]
+    J --> K["Aggregate issues<br/>+ filter by depth level"]
+    K --> L["Per-issue decisions:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
+    L --> M["Gate check"]
+
+    M -->|"No blocking critical/high"| N["Finalize / approve"]
+    M -->|"Blocking remains + iter < max"| O["Next iteration"]
+    O --> J
+    M -->|"Accept as-is or cancel"| P["Finish with warning/cancel"]
 ```
 
 ## Issue Lifecycle Diagram (Short)
 
 ```mermaid
 flowchart LR
-    A["Issue found"] --> B{"Decision"}
+    A["Issue found by subagent<br/>(spec-analyst/spec-test/spec-axes/<br/>spec-data/spec-api/spec-infra/spec-risk/spec-ux/spec-ai-readiness)"] --> B{"Decision"}
 
     B -->|"fixed"| C["Apply change in spec"]
     B -->|"deferred"| D["Create GitHub issue"]
-    B -->|"reclassified"| E["Lower severity + keep issue"]
-    B -->|"rejected"| F["Document rationale"]
+    B -->|"reclassified"| E["Lower severity + keep tracked item"]
+    B -->|"rejected"| F["Mark rejected + document rationale"]
     B -->|"custom"| G["Map to fixed/deferred/reclassified/rejected"]
 
     G --> C
