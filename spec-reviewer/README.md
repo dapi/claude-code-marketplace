@@ -91,6 +91,60 @@ Scope agent:
 - forces full domain coverage regardless of classifier routing.
 - best before architecture freeze or major integration launch.
 
+## Review Flow Diagram
+
+```mermaid
+flowchart TD
+    A["/spec-review"] --> B["Depth selection<br/>(flags -> keywords -> ask -> default)"]
+
+    B -->|"quick"| C["Skip classifier"]
+    B -->|"standard / deep / exhaustive"| D["Run spec-classifier<br/>+ quick scope"]
+
+    D --> E{"Scope verdict"}
+    E -->|"fits"| F["Build agent set"]
+    E -->|"borderline / too_large"| G["Ask split strategy<br/>+ run spec-scoper"]
+    G --> F
+
+    C --> H["Run analysis agents in parallel"]
+    F --> H
+
+    H --> I["Aggregate issues<br/>+ filter by depth level"]
+    I --> J["Per-issue decisions:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
+    J --> K["Gate check"]
+
+    K -->|"No blocking critical/high"| L["Finalize / approve"]
+    K -->|"Blocking remains + iter < max"| M["Next iteration"]
+    M --> H
+    K -->|"Accept as-is or cancel"| N["Finish with warning/cancel"]
+```
+
+## Issue Lifecycle Diagram (Short)
+
+```mermaid
+flowchart LR
+    A["Issue found"] --> B{"Decision"}
+
+    B -->|"fixed"| C["Apply change in spec"]
+    B -->|"deferred"| D["Create GitHub issue"]
+    B -->|"reclassified"| E["Lower severity + keep issue"]
+    B -->|"rejected"| F["Document rationale"]
+    B -->|"custom"| G["Map to fixed/deferred/reclassified/rejected"]
+
+    G --> C
+    G --> D
+    G --> E
+    G --> F
+
+    C --> H["Gate check"]
+    D --> H
+    E --> H
+    F --> H
+
+    H --> I{"Blocking unresolved<br/>critical/high?"}
+    I -->|"yes"| J["Rework / next iteration"]
+    I -->|"no"| K["Finalize"]
+```
+
 ## Components
 
 ### Command: `/spec-review`

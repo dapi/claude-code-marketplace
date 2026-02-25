@@ -69,6 +69,60 @@
 `spec-scoper`:
 - включается при `borderline` или `too_large`.
 
+## Диаграмма процесса ревью
+
+```mermaid
+flowchart TD
+    A["/spec-review"] --> B["Выбор глубины<br/>(flags -> keywords -> ask -> default)"]
+
+    B -->|"quick"| C["Пропустить classifier"]
+    B -->|"standard / deep / exhaustive"| D["Запустить spec-classifier<br/>+ quick scope"]
+
+    D --> E{"Вердикт scope"}
+    E -->|"fits"| F["Собрать набор агентов"]
+    E -->|"borderline / too_large"| G["Спросить стратегию декомпозиции<br/>+ запустить spec-scoper"]
+    G --> F
+
+    C --> H["Параллельный запуск агентов анализа"]
+    F --> H
+
+    H --> I["Агрегация замечаний<br/>+ фильтр по уровню глубины"]
+    I --> J["Решение по каждому замечанию:<br/>fixed / deferred / reclassified / rejected / custom->mapped"]
+    J --> K["Gate check"]
+
+    K -->|"Нет blocking critical/high"| L["Финализация / аппрув"]
+    K -->|"Остались blocking + iter < max"| M["Следующая итерация"]
+    M --> H
+    K -->|"Принять как есть или отменить"| N["Завершение с warning/отменой"]
+```
+
+## Короткая диаграмма жизненного цикла замечания
+
+```mermaid
+flowchart LR
+    A["Найдено замечание"] --> B{"Решение"}
+
+    B -->|"fixed"| C["Внести правку в спецификацию"]
+    B -->|"deferred"| D["Создать GitHub issue"]
+    B -->|"reclassified"| E["Понизить severity и оставить в истории"]
+    B -->|"rejected"| F["Зафиксировать причину отклонения"]
+    B -->|"custom"| G["Смаппить в fixed/deferred/reclassified/rejected"]
+
+    G --> C
+    G --> D
+    G --> E
+    G --> F
+
+    C --> H["Gate check"]
+    D --> H
+    E --> H
+    F --> H
+
+    H --> I{"Есть blocking<br/>critical/high?"}
+    I -->|"да"| J["Доработка / новая итерация"]
+    I -->|"нет"| K["Финализация"]
+```
+
 ## Агенты
 
 | Агент | Назначение |
