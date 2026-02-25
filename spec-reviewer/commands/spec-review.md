@@ -1,7 +1,7 @@
 ---
 description: Ревью спецификации или ТЗ на гапы, нестыковки, противоречия и оценку объёма
 argument-hint: [--quick|-q|--standard|-s|--deep|-d|--exhaustive|-e|--no-ask] [Google Doc URL | GitHub Issue URL | Docmost URL | file path]
-version: "1.9.0"
+version: "1.10.0"
 ---
 
 # Spec Review Command
@@ -148,7 +148,7 @@ version: "1.9.0"
 ## Переменные состояния
 
 ```
-VERSION = "1.9.0"                # Версия команды (синхронизирована с frontmatter)
+VERSION = "1.10.0"                # Версия команды (синхронизирована с frontmatter)
 iteration = 1                    # Текущая итерация (начинаем с 1)
 spec_content = ""                # Текст спецификации
 issues_history = []              # История проблем по итерациям
