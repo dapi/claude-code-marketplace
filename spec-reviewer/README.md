@@ -3,6 +3,8 @@
 Specification review plugin for Claude Code.
 It helps you find gaps, contradictions, ambiguity, testability problems, and scope risks before implementation.
 
+Russian version: [README.ru.md](./README.ru.md)
+
 ## Why Use It
 
 Use `spec-reviewer` when you want to:
