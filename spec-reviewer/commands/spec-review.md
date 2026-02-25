@@ -1,6 +1,6 @@
 ---
 description: Ревью спецификации или ТЗ на гапы, нестыковки, противоречия и оценку объёма
-argument-hint: [--quick|-q|--deep|-d|--exhaustive|-e|--no-ask] [Google Doc URL | GitHub Issue URL | file path]
+argument-hint: [--quick|-q|--standard|-s|--deep|-d|--exhaustive|-e|--no-ask] [Google Doc URL | GitHub Issue URL | file path]
 version: "1.9.0"
 ---
 
@@ -12,7 +12,7 @@ version: "1.9.0"
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                              /spec-review                                  │
-│                    [--quick|-q|--deep|-d|--exhaustive|-e|--no-ask]         │
+│             [--quick|-q|--standard|-s|--deep|-d|--exhaustive|-e|--no-ask]  │
 └─────────────────────────────────┬─────────────────────────────────────────┘
                                   │
                                   ▼
@@ -66,7 +66,7 @@ version: "1.9.0"
 │ усл.  ││ усл.  ││ усл.  ││ВСЕГДА ││ВСЕГДА ││ВСЕГДА ││ усл.  ││  усл.   │
 └───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└────┬────┘
     │        │        │        │        │        │        │         │
-    │        │   ПАРАЛЛЕЛЬНО (3 обязат. + 0-5 условных)   │         │
+    │        │   ПАРАЛЛЕЛЬНО (2 обязат. + 0-8 условных)   │         │
     └────────┴────────┴────────┴────────┴────────┴────────┴─────────┘
                                      │
                                      ▼
@@ -360,7 +360,7 @@ else:  # standard или deep
 
 ```
 Task:
-  subagent_type: "dev-tools:spec-classifier"
+  subagent_type: "spec-reviewer:spec-classifier"
   model: "haiku"
   description: "Классификация спецификации"
   prompt: |
@@ -484,7 +484,7 @@ ELSE (verdict == "fits"):
 **Запускать на основе результатов Фазы 1.5:**
 - 2 обязательных агента (всегда)
 - 0-1 условных standard+ (spec-axes, если depth_level != "quick")
-- 0-5 условных агентов (по результатам classifier)
+- 0-6 условных агентов (по результатам classifier)
 - spec-scoper (только если quick_scope != "fits")
 
 ---
@@ -493,7 +493,7 @@ ELSE (verdict == "fits"):
 
 ```
 Task: spec-analyst (ОБЯЗАТЕЛЬНЫЙ)
-  subagent_type: "dev-tools:spec-analyst"
+  subagent_type: "spec-reviewer:spec-analyst"
   description: "Бизнес-анализ спецификации"
   prompt: |
     Проанализируй спецификацию с бизнес точки зрения:
@@ -505,7 +505,7 @@ Task: spec-analyst (ОБЯЗАТЕЛЬНЫЙ)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-test (ОБЯЗАТЕЛЬНЫЙ)
-  subagent_type: "dev-tools:spec-test"
+  subagent_type: "spec-reviewer:spec-test"
   description: "Анализ тестируемости спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения тестируемости:
@@ -545,7 +545,7 @@ Task: spec-axes (если depth_level != "quick")
 
 ```
 Task: spec-data (если has_data_model == true)
-  subagent_type: "dev-tools:spec-data"
+  subagent_type: "spec-reviewer:spec-data"
   description: "Анализ данных спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения данных:
@@ -557,7 +557,7 @@ Task: spec-data (если has_data_model == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-api (если has_api == true)
-  subagent_type: "dev-tools:spec-api"
+  subagent_type: "spec-reviewer:spec-api"
   description: "Анализ API спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения API:
@@ -569,7 +569,7 @@ Task: spec-api (если has_api == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-infra (если has_infra_requirements == true)
-  subagent_type: "dev-tools:spec-infra"
+  subagent_type: "spec-reviewer:spec-infra"
   description: "Анализ инфраструктуры спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения инфраструктуры:
@@ -581,7 +581,7 @@ Task: spec-infra (если has_infra_requirements == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-risk (если has_risks == true)
-  subagent_type: "dev-tools:spec-risk"
+  subagent_type: "spec-reviewer:spec-risk"
   description: "Анализ рисков спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения рисков:
@@ -594,7 +594,7 @@ Task: spec-risk (если has_risks == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-ux (если has_ui == true)
-  subagent_type: "dev-tools:spec-ux"
+  subagent_type: "spec-reviewer:spec-ux"
   description: "UX/UI анализ спецификации"
   prompt: |
     Проанализируй спецификацию с точки зрения UX/UI:
@@ -607,7 +607,7 @@ Task: spec-ux (если has_ui == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-ai-readiness (если has_ai_execution == true)
-  subagent_type: "dev-tools:spec-ai-readiness"
+  subagent_type: "spec-reviewer:spec-ai-readiness"
   description: "Анализ готовности спецификации для AI-агентов"
   prompt: |
     Проанализируй спецификацию с точки зрения готовности
@@ -621,7 +621,7 @@ Task: spec-ai-readiness (если has_ai_execution == true)
     === КОНЕЦ СПЕЦИФИКАЦИИ ===
 
 Task: spec-scoper (если quick_scope.verdict != "fits")
-  subagent_type: "dev-tools:spec-scoper"
+  subagent_type: "spec-reviewer:spec-scoper"
   description: "Детальный breakdown спецификации"
   prompt: |
     Оцени объём работы по спецификации.
@@ -634,7 +634,7 @@ Task: spec-scoper (если quick_scope.verdict != "fits")
 ```
 
 **Все Task вызовы должны быть в ОДНОМ сообщении для параллельного выполнения!**
-**Минимум 2 агента (обязательные), максимум 9 (все).**
+**Минимум 2 агента (обязательные), максимум 10 (все).**
 
 ### Пример: какие агенты запускать
 
@@ -644,14 +644,14 @@ Task: spec-scoper (если quick_scope.verdict != "fits")
 | fits, has_api=true | - | analyst, test, api | 3 |
 | fits, has_data+api | - | analyst, test, data, api | 4 |
 | fits, has_ai_execution | - | analyst, test, ai-readiness | 3 |
-| borderline, всё true | нужен breakdown | analyst, test, data, api, infra, risk, ux, ai-readiness, **scoper** | 9 |
-| too_large, всё true | нужен breakdown | analyst, test, data, api, infra, risk, ux, ai-readiness, **scoper** | 9 |
+| borderline, всё true | нужен breakdown | analyst, test, **axes**, data, api, infra, risk, ux, ai-readiness, **scoper** | 10 |
+| too_large, всё true | нужен breakdown | analyst, test, **axes**, data, api, infra, risk, ux, ai-readiness, **scoper** | 10 |
 
 ---
 
 ## Фаза 3: Объединение результатов
 
-После получения JSON от всех запущенных субагентов (3-8):
+После получения JSON от всех запущенных субагентов (2-10):
 
 ### 3.1 Парсинг результатов
 
@@ -1032,7 +1032,7 @@ ELIF has_blocking_issues:
 
 2. ** Полный ре-анализ спецификации**
    → Перечитать спецификацию (могла измениться)
-   → Перейти к Фазе 2 (запуск всех 5 субагентов)
+   → Перейти к Фазе 2 (запуск всех выбранных субагентов текущего уровня)
    → iteration += 1
    → ⚠️ Доступно только если iteration < max_iterations
 

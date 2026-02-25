@@ -1,5 +1,5 @@
 ---
-name: spec-review-router
+name: spec-review
 description: |
   **UNIVERSAL TRIGGER**: Ревью спецификаций и ТЗ на гапы, нестыковки и противоречия.
 
