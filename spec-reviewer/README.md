@@ -3,7 +3,7 @@
 Specification review plugin for Claude Code.
 It helps you find gaps, contradictions, ambiguity, testability problems, and scope risks before implementation.
 
-Russian version: [README.ru.md](./README.ru.md)
+[Русская версия](./README.ru.md)
 
 ## Why Use It
 
@@ -47,10 +47,10 @@ Depth resolution priority:
 
 | Flag | Meaning | Typical use |
 |---|---|---|
-| `--quick`, `-q` | Fast blocker check. Shows only `critical`, skips classifier and gate-check, runs only `spec-analyst` + `spec-test`. | Quick pre-check before coding starts. |
-| `--standard`, `-s` | Default balanced review. Shows `critical` + `high`, uses classifier and gate-check. | Daily product/spec review workflow. |
-| `--deep`, `-d` | Wider review window. Same agent strategy as Standard, but also includes `medium` issues. | Pre-release hardening or risky changes. |
-| `--exhaustive`, `-e` | Full audit. Includes `low`, forces all domain agents, keeps classifier only for scope estimation. | Major architecture/integration checkpoints. |
+| `--quick`<br/>`-q` | Fast blocker check. Shows only `critical`, skips classifier and gate-check, runs only `spec-analyst` + `spec-test`. | Quick pre-check before coding starts. |
+| `--standard`<br/>`-s` | Default balanced review. Shows `critical` + `high`, uses classifier and gate-check. | Daily product/spec review workflow. |
+| `--deep`<br/>`-d` | Wider review window. Same agent strategy as Standard, but also includes `medium` issues. | Pre-release hardening or risky changes. |
+| `--exhaustive`<br/>`-e` | Full audit. Includes `low`, forces all domain agents, keeps classifier only for scope estimation. | Major architecture/integration checkpoints. |
 | `--no-ask` | Do not ask the interactive "which level?" question. If no explicit depth flag is provided, run `standard` directly. | CI/non-interactive runs, scripted calls. |
 
 Notes about `--no-ask`:
@@ -113,10 +113,10 @@ If no `[source]` is passed, you can paste spec text directly in chat and run rev
 
 | Level | Flags | Visible Severity (Focus) | Classifier | Agent Strategy | Gate Check | Max Iterations |
 |---|---|---|---|---|---|---|
-| Quick | `--quick`, `-q` | `critical` only (blockers) | skipped | only `spec-analyst` + `spec-test` | no | 1 |
-| Standard (default) | `--standard`, `-s` | `critical`, `high` | yes | base + `spec-axes` + classifier-selected domain agents (+`spec-scoper` if needed) | yes | 2 |
-| Deep | `--deep`, `-d` | `critical`, `high`, `medium` | yes | same as Standard, but wider reporting window | yes | 3 |
-| Exhaustive | `--exhaustive`, `-e` | all, incl. `low` | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | yes | 3 |
+| Quick | `--quick`<br/>`-q` | `critical` only (blockers) | skipped | only `spec-analyst` + `spec-test` | no | 1 |
+| Standard (default) | `--standard`<br/>`-s` | `critical`, `high` | yes | base + `spec-axes` + classifier-selected domain agents (+`spec-scoper` if needed) | yes | 2 |
+| Deep | `--deep`<br/>`-d` | `critical`, `high`, `medium` | yes | same as Standard, but wider reporting window | yes | 3 |
+| Exhaustive | `--exhaustive`<br/>`-e` | all, incl. `low` | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | yes | 3 |
 
 `--no-ask` behavior is described in detail in **Command Arguments Explained** above.
 

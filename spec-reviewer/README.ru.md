@@ -47,10 +47,10 @@ English version: [README.md](./README.md)
 
 | Флаг | Что делает | Когда использовать |
 |---|---|---|
-| `--quick`, `-q` | Быстрая проверка блокеров. Показывает только `critical`, пропускает classifier и gate-check, запускает только `spec-analyst` + `spec-test`. | Быстрый pre-check перед стартом разработки. |
-| `--standard`, `-s` | Сбалансированный режим по умолчанию. Показывает `critical` + `high`, использует classifier и gate-check. | Ежедневный рабочий режим ревью. |
-| `--deep`, `-d` | Более широкий обзор. Та же стратегия агентов, что в Standard, но включает `medium`. | Перед релизом и для рискованных изменений. |
-| `--exhaustive`, `-e` | Полный аудит. Включает `low`, принудительно запускает все доменные агенты, classifier оставляет для оценки scope. | Крупные архитектурные/интеграционные этапы. |
+| `--quick`<br/>`-q` | Быстрая проверка блокеров. Показывает только `critical`, пропускает classifier и gate-check, запускает только `spec-analyst` + `spec-test`. | Быстрый pre-check перед стартом разработки. |
+| `--standard`<br/>`-s` | Сбалансированный режим по умолчанию. Показывает `critical` + `high`, использует classifier и gate-check. | Ежедневный рабочий режим ревью. |
+| `--deep`<br/>`-d` | Более широкий обзор. Та же стратегия агентов, что в Standard, но включает `medium`. | Перед релизом и для рискованных изменений. |
+| `--exhaustive`<br/>`-e` | Полный аудит. Включает `low`, принудительно запускает все доменные агенты, classifier оставляет для оценки scope. | Крупные архитектурные/интеграционные этапы. |
 | `--no-ask` | Не задавать интерактивный вопрос «какой уровень?». Если явный флаг глубины не задан, сразу запускается `standard`. | CI/non-interactive запуск, скрипты. |
 
 Примечания про `--no-ask`:
@@ -113,10 +113,10 @@ English version: [README.md](./README.md)
 
 | Уровень | Флаги | Видимая severity (фокус) | Classifier | Стратегия агентов | Gate Check | Макс. итераций |
 |---|---|---|---|---|---|---|
-| Quick | `--quick`, `-q` | только `critical` (blockers) | пропускается | только `spec-analyst` + `spec-test` | нет | 1 |
-| Standard (default) | `--standard`, `-s` | `critical`, `high` | да | база + `spec-axes` + доменные по classifier (+`spec-scoper` при необходимости) | да | 2 |
-| Deep | `--deep`, `-d` | `critical`, `high`, `medium` | да | как Standard, но шире окно отчёта | да | 3 |
-| Exhaustive | `--exhaustive`, `-e` | всё, включая `low` | да (только для scope) | база + `spec-axes` + все доменные (+`spec-scoper` при необходимости) | да | 3 |
+| Quick | `--quick`<br/>`-q` | только `critical` (blockers) | пропускается | только `spec-analyst` + `spec-test` | нет | 1 |
+| Standard (default) | `--standard`<br/>`-s` | `critical`, `high` | да | база + `spec-axes` + доменные по classifier (+`spec-scoper` при необходимости) | да | 2 |
+| Deep | `--deep`<br/>`-d` | `critical`, `high`, `medium` | да | как Standard, но шире окно отчёта | да | 3 |
+| Exhaustive | `--exhaustive`<br/>`-e` | всё, включая `low` | да (только для scope) | база + `spec-axes` + все доменные (+`spec-scoper` при необходимости) | да | 3 |
 
 Поведение `--no-ask` подробно описано в разделе **Объяснение аргументов команды**.
 
