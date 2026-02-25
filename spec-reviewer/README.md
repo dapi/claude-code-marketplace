@@ -39,30 +39,20 @@ Use `spec-reviewer` when you want to:
 
 ## Review Levels
 
-| Level | Flags | Focus | Iterations |
-|---|---|---|---|
-| Quick | `--quick`, `-q` | critical blockers only | 1 |
-| Standard (default) | `--standard`, `-s` | critical + high | 2 |
-| Deep | `--deep`, `-d` | critical + high + medium | 3 |
-| Exhaustive | `--exhaustive`, `-e` | full audit incl. low | 3 |
+| Level | Flags | Visible Severity (Focus) | Classifier | Agent Strategy | Gate Check | Max Iterations |
+|---|---|---|---|---|---|---|
+| Quick | `--quick`, `-q` | `critical` only (blockers) | skipped | only `spec-analyst` + `spec-test` | no | 1 |
+| Standard (default) | `--standard`, `-s` | `critical`, `high` | yes | base + `spec-axes` + classifier-selected domain agents (+`spec-scoper` if needed) | yes | 2 |
+| Deep | `--deep`, `-d` | `critical`, `high`, `medium` | yes | same as Standard, but wider reporting window | yes | 3 |
+| Exhaustive | `--exhaustive`, `-e` | all, incl. `low` | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | yes | 3 |
 
 Extra flag:
-- `--no-ask` — skip depth selection question and run `standard`.
+- `--no-ask` — skip the depth-selection question and run `standard` directly.
+  This is not an autopilot mode: it does not auto-edit the spec.
 
-### What Actually Changes Between Levels
+### What Changes By Level
 
-`spec-reviewer` changes four things by level:
-1. issue visibility threshold (`critical/high/medium/low`),
-2. max iteration count,
-3. whether classifier/gate-check/scope analysis are used,
-4. which subskills are run.
-
-| Level | Classifier | Agent Strategy | Visible Severity | Gate Check | Max Iterations |
-|---|---|---|---|---|---|
-| Quick | skipped | only `spec-analyst` + `spec-test` | `critical` | no | 1 |
-| Standard | yes | base + `spec-axes` + classifier-selected domain agents (+`spec-scoper` if needed) | `critical`, `high` | yes | 2 |
-| Deep | yes | same as Standard, but deeper reporting window | `critical`, `high`, `medium` | yes | 3 |
-| Exhaustive | yes (scope-only) | base + `spec-axes` + all domain agents (+`spec-scoper` if needed) | all, incl. `low` | yes | 3 |
+The table above captures severity threshold, iteration budget, classifier usage, and subagent strategy in one place.
 
 ### Subskill Combination Logic
 
