@@ -22,6 +22,7 @@ Use `spec-reviewer` when you want to:
 ## Quick Start
 
 ```bash
+/spec-reviewer:spec-review [--quick|-q|--standard|-s|--deep|-d|--exhaustive|-e|--no-ask] [Google Doc URL | GitHub Issue URL | Docmost URL | file path]
 /spec-review docs/spec.md
 /spec-review --quick #42
 /spec-review --deep https://docs.google.com/document/d/<DOC_ID>/edit
@@ -168,8 +169,8 @@ Main orchestration command. It runs a multi-phase review flow:
 
 Auto-router skill that triggers on requests like:
 - "review spec",
-- "проверь спецификацию",
-- "найди нестыковки в требованиях",
+- "check the specification",
+- "find inconsistencies in requirements",
 - and similar requirement-review intents.
 
 ## Subskills (Agents)
