@@ -41,8 +41,11 @@ if [[ -z "$PROMPT" ]]; then
   exit 1
 fi
 
-# Create state file (markdown with YAML frontmatter)
+# Clean up previous run artifacts
 mkdir -p .claude
+rm -f .claude/pr-review-loop-report.local.md .codex-review.md .codex-review.stderr
+
+# Create state file (markdown with YAML frontmatter)
 
 if [[ -n "$COMPLETION_PROMISE" ]] && [[ "$COMPLETION_PROMISE" != "null" ]]; then
   COMPLETION_PROMISE_YAML="\"$COMPLETION_PROMISE\""

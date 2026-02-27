@@ -15,8 +15,8 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 - code-explorer for context analysis before fixes
 - code-reviewer for final validation
 - Configurable criticality threshold and review aspects
-- Optional RuboCop auto-fix
-- Optional auto-commit
+- Auto-detect linter (RuboCop, ESLint, Ruff, gofmt, cargo clippy)
+- Auto-commit on clean review
 - Markdown report generation
 
 **Usage:**
@@ -25,7 +25,7 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 /pr-review-fix-loop --max-iterations 5
 /pr-review-fix-loop --aspects "code errors"
 /pr-review-fix-loop --min-criticality 7
-/pr-review-fix-loop --rubocop --auto-commit
+/pr-review-fix-loop --lint
 /pr-review-fix-loop --codex
 /pr-review-fix-loop --codex --base develop
 ```
@@ -36,8 +36,7 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 | --max-iterations N | 10 | Max loop iterations |
 | --aspects ASPECTS | code errors tests | Review aspects |
 | --min-criticality N | 5 | Min criticality level (1-10) |
-| --auto-commit | off | Auto-commit after clean review |
-| --rubocop | off | Run RuboCop -a after fixes |
+| --lint | off | Run auto-detected linter after fixes |
 | --codex | off | Also run Codex CLI review |
 | --base BRANCH | auto-detect | Base branch for Codex diff |
 

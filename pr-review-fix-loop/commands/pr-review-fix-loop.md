@@ -100,7 +100,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 ### Подстановка условных шагов
 
 **{codex_bg_step}** — если `--codex` указан:
-`Шаг 0: Только на ПЕРВОЙ итерации - удалить файлы .codex-review.md и .codex-review.stderr если они существуют. Затем запустить в фоне через Bash с таймаутом 5 минут команду direnv exec . codex review --base {base}, перенаправить stdout в файл .codex-review.md и stderr в файл .codex-review.stderr. На последующих итерациях пропустить шаг 0 и использовать результат codex из первой итерации. `
+`Шаг 0: Только на ПЕРВОЙ итерации - запустить в фоне через Bash с таймаутом 5 минут команду direnv exec . codex review --base {base}, перенаправить stdout в файл .codex-review.md и stderr в файл .codex-review.stderr. На последующих итерациях пропустить шаг 0 и использовать результат codex из первой итерации. `
 Если `--codex` НЕ указан: убрать полностью.
 
 **{codex_collect_step}** — если `--codex` указан:
@@ -182,11 +182,9 @@ LOOP_PROMPT
 
 ## Очистка
 
-После завершения loop (в любом случае) удалить временные файлы:
-- `.codex-review.md` (если был создан)
-- `.codex-review.stderr` (если был создан)
+Временные файлы (`.codex-review.md`, `.codex-review.stderr`, старый отчёт) удаляются автоматически при старте loop в `setup-loop.sh`.
 
-Файл `.claude/pr-review-loop-report.local.md` НЕ удалять — это артефакт для пользователя.
+Файл `.claude/pr-review-loop-report.local.md` НЕ удалять после завершения — это артефакт для пользователя.
 
 ## Значения по умолчанию
 
