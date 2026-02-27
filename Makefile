@@ -14,8 +14,7 @@
 # Plugins to install (override: make PLUGINS="a b c")
 PLUGINS = github-workflow zellij-workflow spec-reviewer \
           cluster-efficiency doc-validate media-upload \
-          himalaya task-router skill-finder pr-review-fix-loop \
-          tgcli
+          himalaya task-router skill-finder pr-review-fix-loop
 
 PLUGIN_JSON = github-workflow/.claude-plugin/plugin.json
 MARKETPLACE_PATH = $(shell pwd)
