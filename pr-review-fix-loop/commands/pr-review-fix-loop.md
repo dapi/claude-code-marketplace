@@ -1,6 +1,6 @@
 ---
 description: "Iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit)"
-argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [--auto-commit] [--rubocop] [--codex] [--base BRANCH]"
+argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [--lint] [--codex] [--base BRANCH]"
 allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 ---
 
@@ -14,8 +14,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 - `--max-iterations N` — максимум итераций (по умолчанию 10)
 - `--aspects ASPECTS` — аспекты ревью (по умолчанию `code errors tests`)
 - `--min-criticality N` — минимальный уровень criticality для исправления, 1-10 (по умолчанию 5)
-- `--auto-commit` — автоматически коммитить после чистого ревью (по умолчанию выключен)
-- `--rubocop` — запускать RuboCop -a после исправлений (по умолчанию выключен)
+- `--lint` — запускать линтер с автофиксом после исправлений (по умолчанию выключен). Линтер определяется автоматически по типу проекта
 - `--codex` — параллельно запускать ревью через Codex CLI (по умолчанию выключен)
 - `--base BRANCH` — base branch для Codex diff (по умолчанию: автодетект из PR или main branch из CLAUDE.md)
 
@@ -41,6 +40,26 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
    Если base branch не существует — сообщить пользователю ошибку и прекратить выполнение.
 4. Запомнить значение base для подстановки в промпт
 
+## Автодетект линтера (если указан --lint)
+
+Определить тип проекта и соответствующий линтер по маркерам в корне репозитория. Проверять в порядке приоритета:
+
+| Маркер | Линтер | Команда автофикса |
+|-|-|-|
+| `Gemfile` | RuboCop | `direnv exec . bundle exec rubocop -a` |
+| `package.json` | npm lint | `direnv exec . npm run lint -- --fix` (если есть скрипт lint), иначе `direnv exec . npx eslint --fix .` (если установлен eslint), иначе `direnv exec . npx prettier --write .` (если установлен prettier) |
+| `pyproject.toml` или `requirements.txt` | Ruff/Black | `direnv exec . ruff check --fix .` (если установлен), иначе `direnv exec . black .` |
+| `go.mod` | gofmt | `direnv exec . gofmt -w .` |
+| `Cargo.toml` | cargo clippy | `direnv exec . cargo clippy --fix --allow-dirty` |
+
+Алгоритм:
+1. Проверить наличие файлов-маркеров в порядке таблицы
+2. Для первого найденного маркера — проверить доступность линтера (команда --version или which)
+3. Если линтер недоступен — записать предупреждение в отчёт и продолжить без линтера
+4. Запомнить команду автофикса для подстановки в промпт
+
+Если ни один маркер не найден — записать в отчёт "Автодетект линтера: тип проекта не определён" и продолжить без линтера
+
 ## Создание файла отчёта
 
 Перед запуском loop создать файл `.claude/pr-review-loop-report.local.md` с заголовком:
@@ -49,7 +68,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 # PR Review Fix Loop Report
 
 Дата: {текущая дата}
-Параметры: aspects={aspects}, min-criticality={min_criticality}, rubocop={yes/no}, codex={yes/no}
+Параметры: aspects={aspects}, min-criticality={min_criticality}, lint={yes/no}, codex={yes/no}
 
 ---
 
@@ -62,7 +81,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 - **Issues** — количество и список issues выше порога с источником, criticality, файлом
 - **Exploration** — для каждой группы: область, паттерны, ключевые файлы (от code-explorer)
 - **Исправления** — для TDD-issues: spec-файл, red/green статусы; для остальных: краткое описание фикса
-- **RuboCop** (если включен) — количество авто-исправленных файлов
+- **Linter** (если включен) — количество авто-исправленных файлов
 
 ## Запуск iteration loop
 
@@ -92,9 +111,9 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 `Если codex вернул результат - добавить issues от codex с пометкой codex отдельным списком. При подсчёте и отчёте НЕ дедуплицировать с review-pr, но при исправлении в Шаге 3 пропускать issues которые уже были исправлены ранее. `
 Если `--codex` НЕ указан: убрать полностью.
 
-**{rubocop_step}** — если `--rubocop` указан:
-`Шаг 3.5: Запустить direnv exec . bundle exec rubocop -a для изменённых файлов. Если rubocop изменил файлы, дописать это в .claude/pr-review-loop-report.local.md. `
-Если `--rubocop` НЕ указан: убрать полностью.
+**{lint_step}** — если `--lint` указан:
+`Шаг 3.5: Запустить {lint_command} для изменённых файлов. Если линтер изменил файлы, дописать это в .claude/pr-review-loop-report.local.md. `
+Если `--lint` НЕ указан: убрать полностью.
 
 **ВАЖНО**: Итоговый промпт должен быть ровно одной строкой, без переносов. После подстановки всех переменных в итоговом промпте НЕ должно быть фигурных скобок, квадратных скобок, знаков больше-меньше или кавычек.
 
@@ -143,7 +162,6 @@ LOOP_PROMPT
 
 ### 3. Коммит (если loop завершился с REVIEW CLEAN)
 
-Если указан `--auto-commit`:
 - Показать список изменённых файлов через `direnv exec . git diff --name-only` и `direnv exec . git diff --cached --name-only` (объединить оба списка для полноты)
 - Если нет изменённых файлов ни в unstaged, ни в staged — сообщить пользователю "Ревью чистое, изменений не было, коммит не нужен" и пропустить коммит
 - Иначе: добавить ТОЛЬКО файлы, которые были изменены в ходе loop-исправлений, в staging через `direnv exec . git add` для каждого файла
@@ -155,9 +173,6 @@ LOOP_PROMPT
   ```
 - НЕ пушить автоматически
 - Сообщить пользователю что коммит создан
-
-Если `--auto-commit` НЕ указан:
-- Сообщить пользователю что ревью чистое и изменения готовы к коммиту
 
 ### 4. Если loop достиг max-iterations без REVIEW CLEAN
 
@@ -180,8 +195,7 @@ LOOP_PROMPT
 | max-iterations | 10 |
 | aspects | code errors tests |
 | min-criticality | 5 |
-| auto-commit | выключен |
-| rubocop | выключен |
+| lint | выключен |
 | codex | выключен |
 | base | автодетект / main branch из CLAUDE.md |
 
@@ -192,9 +206,9 @@ LOOP_PROMPT
 /pr-review-fix-loop --max-iterations 5
 /pr-review-fix-loop --aspects "code errors"
 /pr-review-fix-loop --min-criticality 7
-/pr-review-fix-loop --rubocop --auto-commit
+/pr-review-fix-loop --lint
 /pr-review-fix-loop --codex
 /pr-review-fix-loop --codex --base develop
-/pr-review-fix-loop --codex --rubocop --auto-commit --aspects all
-/pr-review-fix-loop --max-iterations 15 --aspects "code errors" --min-criticality 3 --codex --rubocop --auto-commit
+/pr-review-fix-loop --codex --lint --aspects all
+/pr-review-fix-loop --max-iterations 15 --aspects "code errors" --min-criticality 3 --codex --lint
 ```
