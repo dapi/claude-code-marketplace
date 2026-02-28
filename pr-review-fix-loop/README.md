@@ -18,6 +18,9 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 - Auto-detect linter (RuboCop, ESLint, Ruff, gofmt, cargo clippy)
 - Auto-commit on clean review
 - Markdown report generation
+- Smart stagnation detection (auto-exit if issues stop decreasing over 5 iterations)
+- Recommendation agent on stagnation (analyzes root causes, suggests manual fixes)
+- Exit tracking with machine-readable markers: `[OK] [EXIT:SUCCESS]`, `[!!] [EXIT:STAGNANT]`, `[!!] [EXIT:LIMIT]`, `[XX] [EXIT:ERROR]`
 
 **Usage:**
 ```
@@ -33,7 +36,7 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 **Arguments:**
 | Argument | Default | Description |
 |-|-|-|
-| --max-iterations N | 10 | Max loop iterations |
+| --max-iterations N | 20 | Max loop iterations |
 | --aspects ASPECTS | code errors tests | Review aspects |
 | --min-criticality N | 5 | Min criticality level (1-10) |
 | --lint | off | Run auto-detected linter after fixes |

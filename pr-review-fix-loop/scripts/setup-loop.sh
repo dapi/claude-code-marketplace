@@ -5,8 +5,11 @@
 
 set -euo pipefail
 
-MAX_ITERATIONS=10
-COMPLETION_PROMISE="null"
+PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo "unknown")
+
+MAX_ITERATIONS=20
+COMPLETION_PROMISES=()
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -23,7 +26,7 @@ while [[ $# -gt 0 ]]; do
         echo "Error: --completion-promise requires a text argument" >&2
         exit 1
       fi
-      COMPLETION_PROMISE="$2"
+      COMPLETION_PROMISES+=("$2")
       shift 2
       ;;
     *)
@@ -32,6 +35,13 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Build pipe-separated completion promise string
+if [[ ${#COMPLETION_PROMISES[@]} -gt 0 ]]; then
+  COMPLETION_PROMISE=$(IFS='|'; echo "${COMPLETION_PROMISES[*]}")
+else
+  COMPLETION_PROMISE="null"
+fi
 
 # Read prompt from stdin
 PROMPT=$(cat)
@@ -66,11 +76,16 @@ $PROMPT
 EOF
 
 # Output setup message
+echo "pr-review-fix-loop v$VERSION"
 echo "Loop activated: iteration 1, max $MAX_ITERATIONS"
 if [[ "$COMPLETION_PROMISE" != "null" ]]; then
-  echo "Completion promise: $COMPLETION_PROMISE"
+  echo "Completion promises: $(echo "$COMPLETION_PROMISE" | sed 's/|/, /g')"
   echo ""
-  echo "To complete this loop, output: <promise>$COMPLETION_PROMISE</promise>"
+  echo "To complete this loop, output one of:"
+  IFS='|' read -ra P <<< "$COMPLETION_PROMISE"
+  for p in "${P[@]}"; do
+    echo "  <promise>$p</promise>"
+  done
   echo "ONLY when the statement is completely TRUE."
 fi
 echo ""

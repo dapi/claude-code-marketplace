@@ -41,7 +41,7 @@ fail() {
 
 create_state_file() {
   local iteration="${1:-1}"
-  local max="${2:-10}"
+  local max="${2:-20}"
   local promise="${3:-null}"
   local prompt="${4:-Review and fix PR issues}"
 
@@ -131,13 +131,13 @@ else
 fi
 teardown
 
-# Test 5: Default max_iterations = 10
+# Test 5: Default max_iterations = 20
 setup
 echo "test prompt" | bash "$SETUP_SCRIPT" >/dev/null
-if grep -q '^max_iterations: 10$' .claude/pr-review-fix-loop.local.md; then
-  pass "default max_iterations is 10"
+if grep -q '^max_iterations: 20$' .claude/pr-review-fix-loop.local.md; then
+  pass "default max_iterations is 20"
 else
-  fail "default max_iterations is 10"
+  fail "default max_iterations is 20"
 fi
 teardown
 
@@ -167,7 +167,7 @@ else
 fi
 teardown
 
-# Test 8: max_iterations reached -> exit 0, writes to report, deletes state
+# Test 8: max_iterations reached -> exit 0, writes exit reason, deletes state
 setup
 create_state_file 5 5 "null"
 touch .claude/pr-review-loop-report.local.md
@@ -176,11 +176,11 @@ EXIT_CODE=$?
 ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 [[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
-grep -q "LOOP ЗАВЕРШЕН" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+grep -q '\[EXIT:LIMIT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 if $ok; then
-  pass "max iterations reached -> cleanup and report"
+  pass "max iterations reached -> cleanup and exit reason"
 else
-  fail "max iterations reached -> cleanup and report" "exit=$EXIT_CODE state_exists=$(test -f .claude/pr-review-fix-loop.local.md && echo yes || echo no)"
+  fail "max iterations reached -> cleanup and exit reason" "exit=$EXIT_CODE state_exists=$(test -f .claude/pr-review-fix-loop.local.md && echo yes || echo no)"
 fi
 teardown
 
@@ -277,6 +277,169 @@ if [[ $EXIT_CODE -eq 0 ]] && echo "$OUTPUT" | jq -e '.decision == "block"' >/dev
   pass "null completion_promise -> ignores promise tags, continues loop"
 else
   fail "null completion_promise -> ignores promise tags, continues loop" "exit=$EXIT_CODE output='$OUTPUT'"
+fi
+teardown
+
+# --- New tests (15-24) ---
+
+echo ""
+echo "=== New tests ==="
+
+# Test 15: Multiple --completion-promise joined with pipe
+setup
+echo "test prompt" | bash "$SETUP_SCRIPT" --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" >/dev/null
+if grep -q '^completion_promise: "REVIEW CLEAN|REVIEW STAGNANT"$' .claude/pr-review-fix-loop.local.md; then
+  pass "multiple --completion-promise joined with pipe"
+else
+  fail "multiple --completion-promise joined with pipe" "$(grep completion_promise .claude/pr-review-fix-loop.local.md)"
+fi
+teardown
+
+# Test 16: REVIEW CLEAN -> [EXIT:SUCCESS] in report
+setup
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>REVIEW CLEAN</promise>'
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[OK\] \[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "REVIEW CLEAN -> [EXIT:SUCCESS] in report"
+else
+  fail "REVIEW CLEAN -> [EXIT:SUCCESS] in report" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 17: REVIEW STAGNANT -> [EXIT:STAGNANT] in report
+setup
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>REVIEW STAGNANT</promise>'
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[!!\] \[EXIT:STAGNANT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "REVIEW STAGNANT -> [EXIT:STAGNANT] in report"
+else
+  fail "REVIEW STAGNANT -> [EXIT:STAGNANT] in report" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 18: Max iterations -> [EXIT:LIMIT] in report
+setup
+create_state_file 5 5 "null"
+touch .claude/pr-review-loop-report.local.md
+OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
+ok=true
+grep -q '\[!!\] \[EXIT:LIMIT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+grep -q 'Max iterations (5) reached' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "max iterations -> [EXIT:LIMIT] with reason in report"
+else
+  fail "max iterations -> [EXIT:LIMIT] with reason in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 19: Corrupted state -> [EXIT:ERROR] in report
+setup
+cat > .claude/pr-review-fix-loop.local.md <<'EOF'
+---
+active: true
+iteration: abc
+max_iterations: xyz
+---
+
+some prompt
+EOF
+touch .claude/pr-review-loop-report.local.md
+OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q '\[XX\] \[EXIT:ERROR\]' .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "corrupted state -> [EXIT:ERROR] in report"
+else
+  fail "corrupted state -> [EXIT:ERROR] in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 20: Missing transcript -> [EXIT:ERROR] in report
+setup
+create_state_file 1 10 "null"
+touch .claude/pr-review-loop-report.local.md
+INPUT=$(hook_input "/nonexistent/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q '\[XX\] \[EXIT:ERROR\]' .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "missing transcript -> [EXIT:ERROR] in report"
+else
+  fail "missing transcript -> [EXIT:ERROR] in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 21: Unknown promise text -> loop continues (block)
+setup
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT" "Do review"
+create_transcript '<promise>SOMETHING ELSE</promise>'
+touch .claude/pr-review-loop-report.local.md
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "unknown promise text -> loop continues (block)"
+else
+  fail "unknown promise text -> loop continues (block)" "exit=$EXIT_CODE output='$OUTPUT'"
+fi
+teardown
+
+# Test 22: Default max_iterations = 20 (setup-loop)
+setup
+OUTPUT=$(echo "test" | bash "$SETUP_SCRIPT" 2>/dev/null)
+if echo "$OUTPUT" | grep -q 'max 20'; then
+  pass "default max_iterations = 20 in output"
+else
+  fail "default max_iterations = 20 in output" "output='$OUTPUT'"
+fi
+teardown
+
+# Test 23: Single promise -> [EXIT:SUCCESS] (backward compatibility)
+setup
+create_state_file 1 10 "REVIEW CLEAN"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>REVIEW CLEAN</promise>'
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[OK\] \[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "single promise -> [EXIT:SUCCESS] (backward compat)"
+else
+  fail "single promise -> [EXIT:SUCCESS] (backward compat)" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 24: Error exit without report file -> does not crash
+setup
+create_state_file 1 10 "null"
+# Intentionally do NOT create report file
+INPUT=$(hook_input "/nonexistent/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+if [[ $EXIT_CODE -eq 0 ]] && [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "error exit without report file -> does not crash"
+else
+  fail "error exit without report file -> does not crash" "exit=$EXIT_CODE"
 fi
 teardown
 
