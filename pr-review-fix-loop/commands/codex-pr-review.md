@@ -35,6 +35,7 @@ ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec // empty')
 
 ```bash
 BASE=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-base-branch.sh" --base "${user_base:-}" ${ENV_EXEC:+--env-exec "$ENV_EXEC"})
+# NOTE: quote $BASE in all subsequent commands to handle branch names safely
 ```
 
 Если скрипт вернул ошибку — вывести сообщение об ошибке и прекратить выполнение.
@@ -49,7 +50,7 @@ ${ENV_EXEC:+$ENV_EXEC }which codex
 
 Убедиться что есть изменения:
 ```bash
-${ENV_EXEC:+$ENV_EXEC }git diff $BASE...HEAD --stat
+${ENV_EXEC:+$ENV_EXEC }git diff "$BASE"...HEAD --stat
 ```
 Если diff пустой — сообщить что нет изменений для ревью и прекратить.
 
@@ -58,7 +59,7 @@ ${ENV_EXEC:+$ENV_EXEC }git diff $BASE...HEAD --stat
 Использовать встроенную подкоманду `codex review`:
 
 ```bash
-${ENV_EXEC:+$ENV_EXEC }codex review --base $BASE
+${ENV_EXEC:+$ENV_EXEC }codex review --base "$BASE"
 ```
 
 **Важно:** Подкоманда `review` и свободный промпт взаимоисключающие — нельзя передать и `--base`, и текст промпта одновременно. Codex сам получит diff, проанализирует изменения и выведет структурированный отчёт.
