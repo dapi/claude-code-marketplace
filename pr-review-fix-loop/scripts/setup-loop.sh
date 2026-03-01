@@ -55,6 +55,15 @@ fi
 mkdir -p .claude
 rm -f .claude/pr-review-loop-report.local.md .codex-review.md .codex-review.stderr
 
+# Ensure .claude/*.local.md is in .gitignore (double protection against report leaking into git)
+if [[ -f .gitignore ]]; then
+  if ! grep -qF '.claude/*.local.md' .gitignore; then
+    printf '\n# pr-review-fix-loop local artifacts\n.claude/*.local.md\n' >> .gitignore
+  fi
+else
+  printf '# pr-review-fix-loop local artifacts\n.claude/*.local.md\n' > .gitignore
+fi
+
 # Create state file (markdown with YAML frontmatter)
 
 if [[ -n "$COMPLETION_PROMISE" ]] && [[ "$COMPLETION_PROMISE" != "null" ]]; then

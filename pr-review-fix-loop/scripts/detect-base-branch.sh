@@ -43,6 +43,7 @@ fi
 # Try autodetect from PR (gh may need env wrapper for direnv projects)
 if command -v gh &>/dev/null; then
   GH_STDERR=$(mktemp)
+  trap "rm -f '$GH_STDERR'" EXIT
   if PR_BASE=$(run gh pr view --json baseRefName -q .baseRefName 2>"$GH_STDERR"); then
     : # success
   else

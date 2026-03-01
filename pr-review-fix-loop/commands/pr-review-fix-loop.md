@@ -35,11 +35,17 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 
 ```bash
 PROJECT_JSON=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh")
-STACK=$(echo "$PROJECT_JSON" | jq -r '.stack')
-ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec')
-TEST_CMD=$(echo "$PROJECT_JSON" | jq -r '.test_cmd')
-LINT_CMD=$(echo "$PROJECT_JSON" | jq -r '.lint_cmd')
+if [[ $? -ne 0 ]] || [[ -z "$PROJECT_JSON" ]]; then
+  echo "Error: Failed to detect project" >&2
+  # stop execution
+fi
+STACK=$(echo "$PROJECT_JSON" | jq -r '.stack // empty')
+ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec // empty')
+TEST_CMD=$(echo "$PROJECT_JSON" | jq -r '.test_cmd // empty')
+LINT_CMD=$(echo "$PROJECT_JSON" | jq -r '.lint_cmd // empty')
 ```
+
+Если `PROJECT_JSON` пуст или скрипт вернул ненулевой exit code — вывести ошибку и прекратить выполнение.
 
 Если STACK пустой — записать предупреждение "Тип проекта не определён, TDD и тесты будут в generic-режиме" в отчёт и продолжить.
 
@@ -135,9 +141,32 @@ LOOP_PROMPT
 
 Вывести пользователю строку диагноза: причина завершения, номер последней итерации, количество завершённых итераций.
 
-### 1. Вывести отчёт
+### 1. Вывести компактную сводку
 
-Прочитать и вывести содержимое `.claude/pr-review-loop-report.local.md` пользователю.
+НЕ выводить полный файл отчёта. Вместо этого извлечь из `.claude/pr-review-loop-report.local.md` данные и вывести пользователю компактную сводку в формате:
+
+```
+## PR Review Fix Loop - {STATUS}
+
+Итераций: {N}
+Время: {M} мин
+Найдено issues: {total} (выше порога: {above_threshold})
+Исправлено: {fixed}
+Пропущено (FP/enhancements): {skipped}
+Коммиты: {count} ({hashes через запятую})
+
+Полный отчёт: .claude/pr-review-loop-report.local.md
+pr-review-fix-loop v{VERSION}
+```
+
+Где:
+- `{STATUS}` — REVIEW CLEAN, REVIEW STAGNANT, LIMIT REACHED, или INTERRUPTED
+- Время — разница между `started_at` из `.claude/pr-review-fix-loop.local.md` (или `Дата:` из report) и текущим временем, в целых минутах
+- Версию получить: `jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
+- Количество коммитов и хеши — из `${ENV_EXEC:+$ENV_EXEC }git log --oneline` за время работы loop (коммиты с "iteration" в сообщении)
+
+При статусе STAGNANT — добавить строку `Тренд issues: {последние 5 значений issues_count}`.
+При статусе LIMIT REACHED — добавить строку `Оставшиеся issues: {count}`.
 
 ### 2. Финальная проверка через feature-dev:code-reviewer
 
@@ -145,19 +174,12 @@ LOOP_PROMPT
 
 Если `feature-dev:code-reviewer` недоступен (subagent_type не найден) — записать в отчёт "Финальная проверка: пропущена (code-reviewer недоступен)" и продолжить с шагом 3. Если code-reviewer запустился, но завершился с ошибкой — записать в отчёт "Финальная проверка: code-reviewer завершился с ошибкой" с текстом ошибки и продолжить с шагом 3.
 
-### 3. Коммит (если loop завершился с REVIEW CLEAN)
+### 3. Проверка незакоммиченных изменений
 
-- Показать список изменённых файлов через `${ENV_EXEC:+$ENV_EXEC }git diff --name-only` и `${ENV_EXEC:+$ENV_EXEC }git diff --cached --name-only` (объединить оба списка для полноты)
-- Если нет изменённых файлов ни в unstaged, ни в staged — сообщить пользователю "Ревью чистое, изменений не было, коммит не нужен" и пропустить коммит
-- Иначе: добавить ТОЛЬКО файлы, которые были изменены в ходе loop-исправлений, в staging через `${ENV_EXEC:+$ENV_EXEC }git add` для каждого файла
-- Создать коммит с сообщением (использовать HEREDOC для форматирования):
-  ```
-  fix: address PR review issues (auto-fix loop)
-
-  Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-  ```
-- НЕ пушить автоматически
-- Сообщить пользователю что коммит создан
+Коммиты создаются внутри каждой итерации (шаг 4.5 в промпте). После завершения loop проверить, остались ли незакоммиченные изменения:
+- Запустить `${ENV_EXEC:+$ENV_EXEC }git diff --name-only` и `${ENV_EXEC:+$ENV_EXEC }git diff --cached --name-only`
+- Если есть незакоммиченные файлы (кроме `*.local.md`) — создать финальный коммит аналогично шагу 4.5 с сообщением `fix: address PR review issues (final)`
+- Если нет незакоммиченных файлов — ничего не делать
 
 ### 4. Если loop достиг max-iterations без REVIEW CLEAN
 
@@ -172,7 +194,6 @@ LOOP_PROMPT
 - Запустить Task tool (subagent_type: "general-purpose") с промптом: "Прочитай файл .claude/pr-review-loop-report.local.md. Проанализируй нерешённые issues из последних итераций. Определи корневые причины стагнации. Выведи: 1) ROOT CAUSES - группировка issues по корневым причинам; 2) RECOMMENDATIONS - для каждой группы что исправить вручную и подход; 3) AFFECTED FILES - список файлов. Формат plain text, маркеры [MANUAL] [APPROACH] [SKIP]."
 - Если Task tool вернул ошибку -- записать "Recommendation agent unavailable" в отчёт и продолжить
 - Результат вывести пользователю и дописать в отчёт секцию "STAGNATION ANALYSIS"
-- НЕ коммитить (стагнация = не все issues решены)
 
 ## Очистка
 

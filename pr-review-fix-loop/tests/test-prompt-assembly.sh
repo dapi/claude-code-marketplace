@@ -119,6 +119,24 @@ else
   pass "unknown argument exits with error"
 fi
 
+# Test 12: --aspects custom value appears in prompt
+echo "Test 12: --aspects custom value"
+OUTPUT=$("$ASSEMBLE" --aspects "code comments" 2>/dev/null)
+if echo "$OUTPUT" | grep -q "review-pr code comments"; then
+  pass "--aspects custom value appears in prompt"
+else
+  fail "--aspects custom value missing from prompt"
+fi
+
+# Test 13: --lint without --lint-cmd -> no lint step
+echo "Test 13: --lint without --lint-cmd"
+OUTPUT=$("$ASSEMBLE" --lint 2>/dev/null)
+if echo "$OUTPUT" | grep -q "Шаг 3.5:"; then
+  fail "--lint without --lint-cmd should not add lint step"
+else
+  pass "--lint without --lint-cmd -> no lint step"
+fi
+
 echo ""
 echo "Results: $PASSED passed, $FAILED failed out of $((PASSED + FAILED))"
 [[ "$FAILED" -eq 0 ]] && exit 0 || exit 1

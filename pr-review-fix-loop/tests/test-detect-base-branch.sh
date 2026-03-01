@@ -117,6 +117,29 @@ else
 fi
 teardown
 
+# Test 7: --base without value -> exit 1
+setup_git
+STDERR=$(bash "$DETECT_SCRIPT" --base 2>&1 || true)
+if ! bash "$DETECT_SCRIPT" --base 2>/dev/null; then
+  if echo "$STDERR" | grep -q "requires a value"; then
+    pass "--base without value -> exit 1 with error message"
+  else
+    fail "--base without value -> missing error message" "stderr=$STDERR"
+  fi
+else
+  fail "--base without value should exit 1"
+fi
+teardown
+
+# Test 8: --env-exec without value -> exit 1
+setup_git
+if ! bash "$DETECT_SCRIPT" --env-exec 2>/dev/null; then
+  pass "--env-exec without value -> exit 1"
+else
+  fail "--env-exec without value should exit 1"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
