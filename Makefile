@@ -4,7 +4,7 @@
         release release-patch release-minor release-major version \
         install-zellij-tab-status \
         list-claude-profiles \
-        lint lint-emoji lint-emoji-fix \
+        lint \
         remote-update
 
 # ============================================================================
@@ -270,10 +270,7 @@ endif
 # LINT TARGETS
 # ============================================================================
 
-lint: lint-emoji
+lint: lint-surrogates
 
-lint-emoji:
-	@./scripts/lint_no_emoji.sh
-
-lint-emoji-fix:
-	@./scripts/lint_no_emoji.sh --fix
+lint-surrogates:
+	@./scripts/lint_no_surrogates.sh

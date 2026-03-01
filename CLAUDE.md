@@ -536,23 +536,17 @@ git commit -m "Fix skill triggers: expand verb diversity (78/100 → 88/100)"
 - Skill descriptions must explicitly state activation criteria
 - Include concrete examples, not vague generalizations
 
-### Encoding Safety (NO EMOJI in plugin files)
+### Bash Output Safety (Unicode)
 
-**CRITICAL**: Plugin files (.md, .json) must NOT contain supplementary plane Unicode characters (U+10000+). This includes all emoji like `U+1F680` etc. These characters require UTF-16 surrogate pairs and cause `"no low surrogate in string"` API errors when Claude Code serializes large payloads.
+Claude Code has a known bug ([#16294](https://github.com/anthropics/claude-code/issues/16294)) where **unpaired UTF-16 surrogates** in Bash tool output crash the session with `"no low surrogate in string"` API error. This happens when bash commands output binary data, corrupted text, or certain terminal escape sequences.
 
-**What to use instead:**
-- Categories: `**Bold Headers**` instead of emoji prefixes
-- Status markers: `[YES]`, `[NO]`, `[OK]`, `[FAIL]` instead of checkmarks/crosses
-- Bullets: `- `, `* `, `>` instead of decorative emoji
+**When using Bash tool:**
+- Avoid `cat`-ing binary files or files with unknown encoding
+- Redirect binary output to files instead of capturing in variables
+- Use `2>/dev/null` or `| head` to limit output from tools that may produce binary data (e.g., mutation testing tools like mutmut/Stryker)
+- If a session crashes with surrogate error, start a new session
 
-**Validation:**
-```bash
-make lint-emoji           # Check all plugins
-make lint-emoji-fix       # Auto-remove emoji
-./scripts/lint_no_emoji.sh task-router  # Check single plugin
-```
-
-**CI enforced**: The `skill-quality-check` workflow blocks merge if emoji are found.
+**Emoji in plugin files are fine.** Valid Unicode characters (including supplementary plane emoji like `U+1F680`) are correctly serialized to JSON and do NOT cause surrogate pair errors.
 
 ### JSON Validity
 - All `plugin.json` files must be valid JSON
@@ -596,13 +590,6 @@ make reinstall-plugin PLUGIN=zellij-workflow
 4. Install всех `PLUGINS`
 
 **Суффикс `-all`** означает "для всех Claude-аккаунтов", а не "все плагины".
-
-### Линтинг
-
-```bash
-make lint-emoji       # Проверить на запрещённые emoji
-make lint-emoji-fix   # Авто-удалить emoji
-```
 
 ### Релизы
 
