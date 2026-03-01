@@ -471,6 +471,25 @@ else
 fi
 teardown
 
+# Test 27: Promise with leading/trailing whitespace should match
+setup
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>  REVIEW CLEAN  </promise>'
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[OK\] \[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "promise with whitespace -> strips and matches"
+else
+  fail "promise with whitespace -> strips and matches" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""

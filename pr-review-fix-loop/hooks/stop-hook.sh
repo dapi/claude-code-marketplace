@@ -101,7 +101,7 @@ fi
 
 # Check for completion promise (multi-promise: pipe-separated)
 if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
-  PROMISE_TEXT=$(echo "$LAST_OUTPUT" | perl -0777 -ne 'if (/<promise>(.*?)<\/promise>/s) { my $t = $1; $t =~ s/^\s+|\s+$//g; $t =~ s/\s+/ /g; print $t }' 2>/dev/null || echo "")
+  PROMISE_TEXT=$(echo "$LAST_OUTPUT" | sed -n 's/.*<promise>\(.*\)<\/promise>.*/\1/p' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/[[:space:]]\+/ /g')
   if [[ -n "$PROMISE_TEXT" ]]; then
     IFS='|' read -ra PROMISES <<< "$COMPLETION_PROMISE"
     for p in "${PROMISES[@]}"; do
