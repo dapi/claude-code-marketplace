@@ -1,6 +1,6 @@
 #!/bin/bash
 # Assembles the iteration prompt for pr-review-fix-loop
-# Output: single-line prompt to stdout
+# Output: single-line prompt to stdout (Russian language)
 
 set -euo pipefail
 
@@ -91,7 +91,7 @@ if [[ -n "$CMD_PREFIX" ]]; then
   PROMPT="$PROMPT Все команды запускать через ${CMD_PREFIX%% }."
 fi
 
-# Validate: no template placeholders remain
+# Safety check: catch forgotten placeholders like {aspect} from template refactors
 if echo "$PROMPT" | grep -qE '\{[a-z_]+\}'; then
   echo "Error: Template placeholders remain in prompt" >&2
   echo "$PROMPT" | grep -oE '\{[a-z_]+\}' | sort -u >&2

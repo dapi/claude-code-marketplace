@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Helper: run command with optional env wrapper
-# Word splitting on $ENV_EXEC is intentional: it is always "direnv exec ." or empty
+# Word splitting on $ENV_EXEC is intentional: it is always a simple command like "direnv exec .", never paths with spaces
 run() {
   if [[ -n "$ENV_EXEC" ]]; then
     $ENV_EXEC "$@"
@@ -31,7 +31,7 @@ run() {
 
 # If --base provided, validate and use it
 if [[ -n "$BASE" ]]; then
-  if run git rev-parse --verify "$BASE" >/dev/null; then
+  if run git rev-parse --verify "$BASE" >/dev/null 2>/dev/null; then
     echo "$BASE"
     exit 0
   else
@@ -45,7 +45,7 @@ if command -v gh &>/dev/null; then
   GH_STDERR=$(mktemp)
   trap "rm -f \"$GH_STDERR\"" EXIT
   if PR_BASE=$(run gh pr view --json baseRefName -q .baseRefName 2>"$GH_STDERR"); then
-    : # success
+    :
   else
     if [[ -s "$GH_STDERR" ]]; then
       echo "Warning: gh pr view failed: $(cat "$GH_STDERR")" >&2
@@ -54,7 +54,7 @@ if command -v gh &>/dev/null; then
   fi
   rm -f "$GH_STDERR"
   if [[ -n "$PR_BASE" ]]; then
-    if run git rev-parse --verify "$PR_BASE" >/dev/null; then
+    if run git rev-parse --verify "$PR_BASE" >/dev/null 2>/dev/null; then
       echo "$PR_BASE"
       exit 0
     else
@@ -64,14 +64,14 @@ if command -v gh &>/dev/null; then
 fi
 
 # Fallback: master
-if run git rev-parse --verify master >/dev/null; then
+if run git rev-parse --verify master >/dev/null 2>/dev/null; then
   echo "Warning: Using fallback branch 'master'" >&2
   echo "master"
   exit 0
 fi
 
 # Last resort: main
-if run git rev-parse --verify main >/dev/null; then
+if run git rev-parse --verify main >/dev/null 2>/dev/null; then
   echo "Warning: Using fallback branch 'main'" >&2
   echo "main"
   exit 0
