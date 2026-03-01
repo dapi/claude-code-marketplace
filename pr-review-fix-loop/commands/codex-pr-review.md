@@ -1,5 +1,5 @@
 ---
-description: "Code review текущей ветки через OpenAI Codex CLI"
+description: "Standalone code review via OpenAI Codex CLI. Reviews current branch diff against base branch and outputs structured findings."
 argument-hint: "[--base BRANCH]"
 allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 ---

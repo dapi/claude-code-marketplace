@@ -1,5 +1,5 @@
 ---
-description: "Iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit)"
+description: "Iterative PR review + autofix loop. Reviews code, fixes issues above criticality threshold, repeats until clean. Supports Ruby, Node, Python, Go, Rust with auto-detected test/lint commands."
 argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [--lint] [--codex] [--base BRANCH]"
 allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 ---
