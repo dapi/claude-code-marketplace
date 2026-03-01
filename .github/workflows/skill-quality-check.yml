@@ -27,14 +27,14 @@ jobs:
           fetch-depth: 0  # Full history for accurate diff
 
       - name: Make scripts executable
-        run: chmod +x scripts/review_skill_triggers.sh scripts/lint_no_emoji.sh
+        run: chmod +x scripts/review_skill_triggers.sh scripts/lint_no_surrogates.sh
 
-      - name: Lint encoding (no supplementary plane emoji)
-        id: emoji-lint
+      - name: Lint shell scripts (no surrogate codepoints)
+        id: surrogate-lint
         run: |
-          ./scripts/lint_no_emoji.sh || {
+          ./scripts/lint_no_surrogates.sh || {
             echo "status=failed" >> $GITHUB_OUTPUT
-            echo "::error::Supplementary plane characters (emoji U+10000+) found in plugin files. Run: ./scripts/lint_no_emoji.sh --fix"
+            echo "::error::Shell scripts contain invalid UTF-8 or surrogate codepoints. See output above."
             exit 1
           }
           echo "status=passed" >> $GITHUB_OUTPUT
