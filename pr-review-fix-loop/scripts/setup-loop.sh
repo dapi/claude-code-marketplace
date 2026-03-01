@@ -81,8 +81,9 @@ completion_promise: $COMPLETION_PROMISE_YAML
 started_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 ---
 
-$PROMPT
 EOF
+# Append prompt without shell expansion to avoid double-interpolation of $ in prompt text
+printf '%s\n' "$PROMPT" >> .claude/pr-review-fix-loop.local.md
 
 # Output setup message
 echo "pr-review-fix-loop v$VERSION"
