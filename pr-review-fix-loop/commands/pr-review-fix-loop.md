@@ -143,30 +143,66 @@ LOOP_PROMPT
 
 ### 1. Вывести компактную сводку
 
-НЕ выводить полный файл отчёта. Вместо этого извлечь из `.claude/pr-review-loop-report.local.md` данные и вывести пользователю компактную сводку в формате:
+НЕ выводить полный файл отчёта. Вместо этого извлечь из `.claude/pr-review-loop-report.local.md` данные и вывести пользователю компактную сводку.
 
+Версию получить: `jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
+Время — разница между `started_at` из `.claude/pr-review-fix-loop.local.md` (или `Дата:` из report) и текущим временем, в целых минутах.
+
+Формат сводки по статусам:
+
+**REVIEW CLEAN:**
 ```
-## PR Review Fix Loop - {STATUS}
+---
 
-Итераций: {N}
-Время: {M} мин
-Найдено issues: {total} (выше порога: {above_threshold})
-Исправлено: {fixed}
-Пропущено (FP/enhancements): {skipped}
-Коммиты: {count} ({hashes через запятую})
+## PR Review Fix Loop v{VERSION} — **REVIEW CLEAN** ✅
 
-Полный отчёт: .claude/pr-review-loop-report.local.md
-pr-review-fix-loop v{VERSION}
+Итераций: **{N}**
+Время: **{M} мин**
+Найдено issues: **{total}** (выше порога: **{above_threshold}**)
+Исправлено: **{fixed}**
 ```
 
-Где:
-- `{STATUS}` — REVIEW CLEAN, REVIEW STAGNANT, LIMIT REACHED, или INTERRUPTED
-- Время — разница между `started_at` из `.claude/pr-review-fix-loop.local.md` (или `Дата:` из report) и текущим временем, в целых минутах
-- Версию получить: `jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
-- Количество коммитов и хеши — из `${ENV_EXEC:+$ENV_EXEC }git log --oneline` за время работы loop (коммиты с "iteration" в сообщении)
+**REVIEW STAGNANT:**
+```
+---
 
-При статусе STAGNANT — добавить строку `Тренд issues: {последние 5 значений issues_count}`.
-При статусе LIMIT REACHED — добавить строку `Оставшиеся issues: {count}`.
+## PR Review Fix Loop v{VERSION} — **REVIEW STAGNANT** ⚠️
+
+Итераций: **{N}**
+Время: **{M} мин**
+Найдено issues: **{total}** (выше порога: **{above_threshold}**)
+Исправлено: **{fixed}**
+Тренд issues: {последние 5 значений через →}
+```
+
+**LIMIT REACHED:**
+```
+---
+
+## PR Review Fix Loop v{VERSION} — **LIMIT REACHED** ❌
+
+Итераций: **{N}**
+Время: **{M} мин**
+Найдено issues: **{total}** (выше порога: **{above_threshold}**)
+Исправлено: **{fixed}**
+Оставшиеся issues:
+- {criticality} {source}: {описание} ({файл})
+- ...
+```
+
+**INTERRUPTED:**
+```
+---
+
+## PR Review Fix Loop v{VERSION} — **INTERRUPTED** ⚠️
+
+Итераций: **{N}** (последняя не завершена)
+Время: **{M} мин**
+Найдено issues: **{total}** (выше порога: **{above_threshold}**)
+Исправлено: **{fixed}**
+```
+
+При LIMIT REACHED список оставшихся issues извлечь из последней итерации отчёта — каждый issue с его criticality, источником (review-pr/codex), описанием и файлом.
 
 ### 2. Финальная проверка через feature-dev:code-reviewer
 
