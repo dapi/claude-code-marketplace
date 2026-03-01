@@ -6,6 +6,10 @@
 set -euo pipefail
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if ! command -v jq >/dev/null 2>&1; then
+  echo "Error: jq is required but not installed. Install with: apt install jq (or brew install jq)" >&2
+  exit 1
+fi
 VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null) || {
   echo "Warning: failed to read plugin version from $PLUGIN_ROOT/.claude-plugin/plugin.json" >&2
   VERSION="unknown"
@@ -65,7 +69,7 @@ fi
 
 # Clean up previous run artifacts
 mkdir -p .claude
-rm -f .claude/pr-review-loop-report.local.md .codex-review.md .codex-review.stderr
+rm -f .claude/pr-review-loop-report.local.md .claude/pr-review-loop-stats.local.json .codex-review.md .codex-review.stderr
 
 # Create fresh report file (consumed by assemble-prompt and stop-hook)
 cat > .claude/pr-review-loop-report.local.md <<REPORT_EOF
@@ -99,18 +103,27 @@ else
   COMPLETION_PROMISE_YAML="null"
 fi
 
+STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 cat > .claude/pr-review-fix-loop.local.md <<EOF
 ---
 active: true
 iteration: 1
 max_iterations: $MAX_ITERATIONS
 completion_promise: $COMPLETION_PROMISE_YAML
-started_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+started_at: "$STARTED_AT"
 ---
 
 EOF
 # Append prompt without shell expansion to avoid double-interpolation of $ in prompt text
 printf '%s\n' "$PROMPT" >> .claude/pr-review-fix-loop.local.md
+
+jq -n \
+  --arg v "$VERSION" \
+  --arg sa "$STARTED_AT" \
+  --argjson mi "$MAX_ITERATIONS" \
+  '{version: $v, started_at: $sa, max_iterations: $mi, iterations: []}' \
+  > .claude/pr-review-loop-stats.local.json
 
 # Output setup message
 echo "pr-review-fix-loop v$VERSION"
