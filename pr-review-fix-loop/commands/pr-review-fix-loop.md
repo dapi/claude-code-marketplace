@@ -1,7 +1,7 @@
 ---
 description: "Iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit)"
 argument-hint: "[--max-iterations N] [--aspects ASPECTS] [--min-criticality N] [--lint] [--codex] [--base BRANCH]"
-allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 ---
 
 # PR Review Fix Loop
@@ -29,36 +29,35 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 
 ## Проверки перед запуском
 
+### Детект проекта
+
+Запустить detect-project.sh и получить JSON с параметрами проекта:
+
+```bash
+PROJECT_JSON=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh")
+STACK=$(echo "$PROJECT_JSON" | jq -r '.stack')
+ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec')
+TEST_CMD=$(echo "$PROJECT_JSON" | jq -r '.test_cmd')
+LINT_CMD=$(echo "$PROJECT_JSON" | jq -r '.lint_cmd')
+```
+
+Если STACK пустой — записать предупреждение "Тип проекта не определён, TDD и тесты будут в generic-режиме" в отчёт и продолжить.
+
+Если `--lint` указан но LINT_CMD пустой — записать предупреждение "Линтер не найден для стека $STACK" и продолжить без линтера.
+
+### Детект base branch (если --codex)
+
 Если `--codex` указан:
-1. Проверить что codex CLI установлен: `direnv exec . which codex`
-2. Определить base branch (логика дублируется в `codex-pr-review.md` — при изменении обновить оба файла):
-   - Если указан `--base` — использовать его
-   - Попробовать автодетект из PR: сначала проверить `direnv exec . which gh`, если gh не установлен — предупредить и перейти к следующему шагу. Если установлен — выполнить `direnv exec . gh pr view --json baseRefName -q .baseRefName`. Если команда вернула ненулевой exit code — предупредить в отчёте что автодетект PR не сработал и перейти к следующему шагу
-   - Использовать main branch из CLAUDE.md проекта (уже в контексте — найти строку "Main branch" или аналогичную)
-   - Fallback — `master`
-3. Проверить что base branch существует: `direnv exec . git rev-parse --verify {base} 2>/dev/null`
-   Если base branch не существует — сообщить пользователю ошибку и прекратить выполнение.
-4. Запомнить значение base для подстановки в промпт
 
-## Автодетект линтера (если указан --lint)
+```bash
+BASE=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-base-branch.sh" --base "${user_base:-}" --env-exec "$ENV_EXEC")
+```
 
-Определить тип проекта и соответствующий линтер по маркерам в корне репозитория. Проверять в порядке приоритета:
+Если скрипт вернул ошибку — сообщить пользователю и прекратить выполнение.
 
-| Маркер | Линтер | Команда автофикса |
-|-|-|-|
-| `Gemfile` | RuboCop | `direnv exec . bundle exec rubocop -a` |
-| `package.json` | npm lint | `direnv exec . npm run lint -- --fix` (если есть скрипт lint), иначе `direnv exec . npx eslint --fix .` (если установлен eslint), иначе `direnv exec . npx prettier --write .` (если установлен prettier) |
-| `pyproject.toml` или `requirements.txt` | Ruff/Black | `direnv exec . ruff check --fix .` (если установлен), иначе `direnv exec . black .` |
-| `go.mod` | gofmt | `direnv exec . gofmt -w .` |
-| `Cargo.toml` | cargo clippy | `direnv exec . cargo clippy --fix --allow-dirty` |
-
-Алгоритм:
-1. Проверить наличие файлов-маркеров в порядке таблицы
-2. Для первого найденного маркера — проверить доступность линтера (команда --version или which)
-3. Если линтер недоступен — записать предупреждение в отчёт и продолжить без линтера
-4. Запомнить команду автофикса для подстановки в промпт
-
-Если ни один маркер не найден — записать в отчёт "Автодетект линтера: тип проекта не определён" и продолжить без линтера
+Если `--codex` НЕ указан:
+1. Проверить что codex CLI установлен: `${ENV_EXEC:+$ENV_EXEC }which codex`
+2. Если не установлен — сообщить пользователю и прекратить выполнение.
 
 ## Создание файла отчёта
 
@@ -85,53 +84,33 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh:*)"]
 
 ## Запуск iteration loop
 
-Собрать однострочный промпт и запустить setup-loop.sh для инициализации цикла.
+### Сборка промпта
 
-### Построение промпта
+Запустить assemble-prompt.sh с параметрами:
 
-Промпт должен быть ровно одной строкой, без переносов. В шаблоне ниже переменные в фигурных скобках нужно заменить на конкретные значения. В итоговом промпте после подстановки НЕ должно быть фигурных скобок, квадратных скобок, знаков больше-меньше или кавычек.
-
-Условные шаги включать только если соответствующий флаг указан. Если флаг не указан — убрать шаг полностью, без placeholder.
-
+```bash
+PROMPT=$("${CLAUDE_PLUGIN_ROOT}/scripts/assemble-prompt.sh" \
+  --aspects "$ASPECTS" \
+  --min-criticality "$MIN_CRITICALITY" \
+  ${CODEX:+--codex} \
+  ${LINT:+--lint} \
+  ${BASE:+--base "$BASE"} \
+  ${TEST_CMD:+--test-cmd "$TEST_CMD"} \
+  ${LINT_CMD:+--lint-cmd "$LINT_CMD"} \
+  ${ENV_EXEC:+--env-exec "$ENV_EXEC"})
 ```
-КАЖДУЮ итерацию ВСЕГДА выполняй ВСЕ шаги по порядку. НЕ пропускай шаги, даже если в прошлой итерации ты уже исправил issues. ШАГИ -- {codex_bg_step}Шаг 1: Запустить /pr-review-toolkit:review-pr {aspects} и дождаться результата. {codex_collect_step}Шаг 2: Собрать все issues. Из review-pr взять issues с пометкой review-pr. {codex_report_note}Отфильтровать только issues с criticality от {min_criticality} из 10 и выше. Issues с criticality ниже {min_criticality} игнорировать. Добавить в файл .claude/pr-review-loop-report.local.md секцию текущей итерации - номер итерации, количество найденных issues выше порога, для каждого issue его источник и criticality и краткое описание с указанием файла. Шаг 3a: Если найдены issues выше порога - сгруппировать их по затронутому файлу или области кода. Для каждой уникальной группы запустить агент feature-dev:code-explorer через Task tool с задачей проанализировать архитектуру этой области кода, найти похожие реализации и паттерны, вернуть список ключевых файлов. Запускать explorer-агентов параллельно. Дождаться завершения всех. Шаг 3b: Прочитать ключевые файлы возвращённые каждым explorer-агентом для понимания контекста и паттернов. Дописать в .claude/pr-review-loop-report.local.md секцию EXPLORATION с результатами - область, найденные паттерны, ключевые файлы. Шаг 3c: Для каждого issue с criticality от 7 и выше применить TDD подход - ПЕРЕД исправлением написать фокусный spec в соответствующем spec-файле который воспроизводит проблему, запустить его через direnv exec . bundle exec rspec путь_к_spec чтобы подтвердить что он ПАДАЕТ, затем исправить код минимально и точечно используя контекст из exploration, затем запустить spec снова чтобы подтвердить что он ПРОХОДИТ. Шаг 3d: Для каждого issue с criticality ниже 7 но выше порога - прочитать файл и строку, понять причину используя контекст из exploration, исправить минимально и точечно. НЕ рефакторить окружающий код, НЕ добавлять комментарии и docstrings, НЕ делать косметических правок. Шаг 3e: После всех исправлений дописать в .claude/pr-review-loop-report.local.md что было исправлено - для TDD-issues указать имя spec-файла и результаты red-green, для остальных краткое описание фикса. {rubocop_step}Шаг 4: Если были исправления - запустить тесты direnv exec . bundle exec rspec для затронутых spec-файлов. Если падают - исправить. Шаг 5 - РЕШЕНИЕ И СТАТУС: Дописать в .claude/pr-review-loop-report.local.md маркер ИТЕРАЦИЯ N ЗАВЕРШЕНА issues_count=K где K это количество issues выше порога найденных в шаге 2 текущей итерации. Затем прочитать файл .claude/pr-review-loop-report.local.md и извлечь значения K из всех строк вида ИТЕРАЦИЯ M ЗАВЕРШЕНА issues_count=K. Построить массив counts по порядку итераций. РЕШЕНИЕ -- Вариант А ЧИСТО: Если K текущей итерации равно 0 - дописать статус ЧИСТО, добавить секцию ИТОГО с общим количеством итераций и исправленных issues, вывести <promise>REVIEW CLEAN</promise>. Вариант Б СТАГНАЦИЯ: Если массив counts содержит 5 или более значений И значение последнего элемента больше или равно значению элемента на позиции 5 с конца - дописать статус СТАГНАЦИЯ с трендом последних 5 значений, вывести <promise>REVIEW STAGNANT</promise>. Вариант В ПРОДОЛЖИТЬ: Иначе дописать статус ПРОДОЛЖИТЬ с количеством исправленных issues и завершить итерацию БЕЗ promise, loop продолжится. Все команды через direnv exec .
-```
-
-### Подстановка условных шагов
-
-**{codex_bg_step}** — если `--codex` указан:
-`Шаг 0: Только на ПЕРВОЙ итерации - запустить в фоне через Bash с таймаутом 5 минут команду direnv exec . codex review --base {base}, перенаправить stdout в файл .codex-review.md и stderr в файл .codex-review.stderr. На последующих итерациях пропустить шаг 0 и использовать результат codex из первой итерации. `
-Если `--codex` НЕ указан: убрать полностью.
-
-**{codex_collect_step}** — если `--codex` указан:
-`Шаг 1.5: Только на ПЕРВОЙ итерации - дождаться завершения фоновой задачи codex, но не более 5 минут. Если codex не завершился за 5 минут - убить фоновый процесс, записать в отчёт Codex превысил таймаут 5 минут и был остановлен, продолжить без codex. Если codex завершился - проверить exit code. Если ненулевой exit code - прочитать .codex-review.stderr, записать в отчёт Codex завершился с ошибкой и текст ошибки, продолжить без codex. Если codex завершился успешно и файл .codex-review.md существует и не пуст - прочитать его. Если файл пуст - записать что Codex не нашёл замечаний. На последующих итерациях пропустить шаг 1.5. `
-Если `--codex` НЕ указан: убрать полностью.
-
-**{codex_report_note}** — если `--codex` указан:
-`Если codex вернул результат - добавить issues от codex с пометкой codex отдельным списком. При подсчёте и отчёте НЕ дедуплицировать с review-pr, но при исправлении в Шаге 3 пропускать issues которые уже были исправлены ранее. `
-Если `--codex` НЕ указан: убрать полностью.
-
-**{lint_step}** — если `--lint` указан:
-`Шаг 3.5: Запустить {lint_command} для изменённых файлов. Если линтер изменил файлы, дописать это в .claude/pr-review-loop-report.local.md. `
-Если `--lint` НЕ указан: убрать полностью.
-
-**ВАЖНО**: Итоговый промпт должен быть ровно одной строкой, без переносов. После подстановки всех переменных в итоговом промпте НЕ должно быть фигурных скобок, квадратных скобок, знаков больше-меньше или кавычек.
 
 ### Запуск setup-loop.sh
 
 Передать собранный промпт в setup-loop.sh через heredoc:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations {max_iterations} --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" <<'LOOP_PROMPT'
-{собранный промпт}
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations $MAX_ITERATIONS --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" <<'LOOP_PROMPT'
+$PROMPT
 LOOP_PROMPT
 ```
 
 После запуска setup-loop.sh выполнить шаги из промпта. Stop hook автоматически подаст тот же промпт при завершении каждой итерации.
-
-## Связь с /codex-pr-review
-
-Команда `/codex-pr-review` существует как самостоятельный инструмент для запуска Codex-ревью вне loop. Внутри loop codex запускается напрямую через Bash (а не через `/codex-pr-review`), потому что Skill-вызовы синхронные и не могут выполняться параллельно с review-pr. В обоих случаях используется одна и та же команда `codex review --base`, но `/codex-pr-review` выводит результат в stdout, а loop перенаправляет его в файл `.codex-review.md`.
 
 ## После завершения loop
 
@@ -164,9 +143,9 @@ LOOP_PROMPT
 
 ### 3. Коммит (если loop завершился с REVIEW CLEAN)
 
-- Показать список изменённых файлов через `direnv exec . git diff --name-only` и `direnv exec . git diff --cached --name-only` (объединить оба списка для полноты)
+- Показать список изменённых файлов через `${ENV_EXEC:+$ENV_EXEC }git diff --name-only` и `${ENV_EXEC:+$ENV_EXEC }git diff --cached --name-only` (объединить оба списка для полноты)
 - Если нет изменённых файлов ни в unstaged, ни в staged — сообщить пользователю "Ревью чистое, изменений не было, коммит не нужен" и пропустить коммит
-- Иначе: добавить ТОЛЬКО файлы, которые были изменены в ходе loop-исправлений, в staging через `direnv exec . git add` для каждого файла
+- Иначе: добавить ТОЛЬКО файлы, которые были изменены в ходе loop-исправлений, в staging через `${ENV_EXEC:+$ENV_EXEC }git add` для каждого файла
 - Создать коммит с сообщением (использовать HEREDOC для форматирования):
   ```
   fix: address PR review issues (auto-fix loop)
