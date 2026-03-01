@@ -78,9 +78,9 @@ if [[ -n "$CMD_PREFIX" ]]; then
 fi
 
 # Validate: no template placeholders remain
-if echo "$PROMPT" | grep -qP '\{[a-z_]+\}'; then
+if echo "$PROMPT" | grep -qE '\{[a-z_]+\}'; then
   echo "Error: Template placeholders remain in prompt" >&2
-  echo "$PROMPT" | grep -oP '\{[a-z_]+\}' | sort -u >&2
+  echo "$PROMPT" | grep -oE '\{[a-z_]+\}' | sort -u >&2
   exit 1
 fi
 

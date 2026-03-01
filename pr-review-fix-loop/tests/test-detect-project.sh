@@ -93,6 +93,20 @@ else
 fi
 teardown
 
+# Test 3b: requirements.txt -> python
+setup
+touch requirements.txt
+OUTPUT=$(bash "$DETECT_SCRIPT")
+ok=true
+echo "$OUTPUT" | jq -e '.stack == "python"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.test_cmd == "pytest"' >/dev/null 2>&1 || ok=false
+if $ok; then
+  pass "requirements.txt -> python"
+else
+  fail "requirements.txt -> python" "output=$OUTPUT"
+fi
+teardown
+
 # Test 4: go.mod -> go
 setup
 touch go.mod

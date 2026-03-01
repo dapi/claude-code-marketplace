@@ -94,6 +94,29 @@ else
 fi
 teardown
 
+# Test 5: Unknown argument -> exit 1
+setup_git master
+if bash "$DETECT_SCRIPT" --unknown 2>/dev/null; then
+  fail "unknown argument should exit 1"
+else
+  pass "unknown argument exits with error"
+fi
+teardown
+
+# Test 6: No master, no main -> exit 1
+TMPDIR_TEST=$(mktemp -d)
+cd "$TMPDIR_TEST"
+git init -b develop >/dev/null 2>&1
+git config user.email "test@test.com"
+git config user.name "Test"
+git commit --allow-empty -m "init" >/dev/null 2>&1
+if bash "$DETECT_SCRIPT" 2>/dev/null; then
+  fail "no master/main should exit 1"
+else
+  pass "no master/main -> exit 1"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""

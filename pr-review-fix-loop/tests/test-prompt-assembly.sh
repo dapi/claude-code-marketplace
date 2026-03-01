@@ -17,7 +17,7 @@ echo ""
 # Test 1: Default args — no template placeholders, exit 0
 echo "Test 1: Default args, no placeholders"
 OUTPUT=$("$ASSEMBLE" 2>/dev/null)
-if echo "$OUTPUT" | grep -qP '\{[a-z_]+\}'; then
+if echo "$OUTPUT" | grep -qE '\{[a-z_]+\}'; then
   fail "Template placeholders found in output"
 else
   pass "No template placeholders in default output"
@@ -91,6 +91,32 @@ if echo "$OUTPUT" | grep -q "Все команды запускать через
   pass "--env-exec phrase present in output"
 else
   fail "Missing env-exec phrase with --env-exec flag"
+fi
+
+# Test 9: --test-cmd appears in TDD step
+echo "Test 9: --test-cmd in TDD step"
+OUTPUT=$("$ASSEMBLE" --test-cmd "bundle exec rspec" 2>/dev/null)
+if echo "$OUTPUT" | grep -q "bundle exec rspec"; then
+  pass "--test-cmd appears in prompt"
+else
+  fail "--test-cmd missing from prompt"
+fi
+
+# Test 10: --min-criticality custom value
+echo "Test 10: --min-criticality 8"
+OUTPUT=$("$ASSEMBLE" --min-criticality 8 2>/dev/null)
+if echo "$OUTPUT" | grep -q "criticality от 8 из 10"; then
+  pass "--min-criticality 8 appears in prompt"
+else
+  fail "--min-criticality 8 missing from prompt"
+fi
+
+# Test 11: Unknown argument -> exit 1
+echo "Test 11: Unknown argument"
+if "$ASSEMBLE" --unknown-flag 2>/dev/null; then
+  fail "unknown argument should exit 1"
+else
+  pass "unknown argument exits with error"
 fi
 
 echo ""

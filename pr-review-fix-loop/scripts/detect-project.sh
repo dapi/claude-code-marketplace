@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+command -v jq &>/dev/null || { echo "Error: jq is required but not installed" >&2; exit 1; }
+
 # Detect env wrapper
 if [[ -f .envrc ]] && command -v direnv &>/dev/null; then
   ENV_EXEC="direnv exec ."

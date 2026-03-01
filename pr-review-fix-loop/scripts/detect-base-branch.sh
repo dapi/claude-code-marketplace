@@ -36,8 +36,13 @@ if [[ -n "$BASE" ]]; then
 fi
 
 # Try autodetect from PR (gh may need env wrapper for direnv projects)
-if command -v gh &>/dev/null || ($ENV_EXEC command -v gh &>/dev/null 2>&1); then
-  PR_BASE=$(run gh pr view --json baseRefName -q .baseRefName 2>/dev/null || echo "")
+if command -v gh &>/dev/null; then
+  GH_STDERR=$(mktemp)
+  PR_BASE=$(run gh pr view --json baseRefName -q .baseRefName 2>"$GH_STDERR" || true)
+  if [[ -z "$PR_BASE" ]] && [[ -s "$GH_STDERR" ]]; then
+    echo "Warning: gh pr view failed: $(cat "$GH_STDERR")" >&2
+  fi
+  rm -f "$GH_STDERR"
   if [[ -n "$PR_BASE" ]] && run git rev-parse --verify "$PR_BASE" &>/dev/null; then
     echo "$PR_BASE"
     exit 0
