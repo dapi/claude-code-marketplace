@@ -667,6 +667,7 @@ setup
 git init -q .
 echo '.claude/*.local.md' >> .gitignore
 echo '.claude/*.local.json' >> .gitignore
+echo '.claude/*.local.log' >> .gitignore
 echo '.codex-review.md' >> .gitignore
 echo '.codex-review.stderr' >> .gitignore
 OUTPUT=$(bash "$CHECK_GITIGNORE")
@@ -684,11 +685,11 @@ OUTPUT=$(bash "$CHECK_GITIGNORE")
 ok=true
 echo "$OUTPUT" | jq -e '.action_needed == true' >/dev/null 2>&1 || ok=false
 COUNT=$(echo "$OUTPUT" | jq '.missing | length')
-[[ "$COUNT" -eq 5 ]] || ok=false
+[[ "$COUNT" -eq 6 ]] || ok=false
 if $ok; then
-  pass "no .gitignore -> action_needed true, 5 missing"
+  pass "no .gitignore -> action_needed true, 6 missing"
 else
-  fail "no .gitignore -> action_needed true, 5 missing" "output=$OUTPUT"
+  fail "no .gitignore -> action_needed true, 6 missing" "output=$OUTPUT"
 fi
 teardown
 
@@ -701,11 +702,11 @@ OUTPUT=$(bash "$CHECK_GITIGNORE")
 ok=true
 echo "$OUTPUT" | jq -e '.action_needed == true' >/dev/null 2>&1 || ok=false
 COUNT=$(echo "$OUTPUT" | jq '.missing | length')
-[[ "$COUNT" -eq 3 ]] || ok=false
+[[ "$COUNT" -eq 4 ]] || ok=false
 if $ok; then
-  pass "partial .gitignore -> reports 3 missing"
+  pass "partial .gitignore -> reports 4 missing"
 else
-  fail "partial .gitignore -> reports 3 missing" "output=$OUTPUT count=$COUNT"
+  fail "partial .gitignore -> reports 4 missing" "output=$OUTPUT count=$COUNT"
 fi
 teardown
 
@@ -913,7 +914,7 @@ OUTPUT=$(bash "$CHECK_GITIGNORE" 2>/dev/null)
 ok=true
 echo "$OUTPUT" | jq -e '.warning' >/dev/null 2>&1 || ok=false
 echo "$OUTPUT" | jq -e '.action_needed == true' >/dev/null 2>&1 || ok=false
-echo "$OUTPUT" | jq -e '.missing | length == 5' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.missing | length == 6' >/dev/null 2>&1 || ok=false
 if $ok; then
   pass "outside git repo -> warning, action_needed true, all files listed"
 else
@@ -1000,7 +1001,7 @@ EXIT_CODE=$?
 if [[ $EXIT_CODE -ne 0 ]]; then
   pass "malformed hook input -> non-zero exit (set -e)"
 else
-  pass "malformed hook input -> handled gracefully"
+  fail "malformed hook input -> expected non-zero exit under set -euo pipefail" "exit=$EXIT_CODE"
 fi
 teardown
 
@@ -1106,7 +1107,7 @@ chmod 755 .claude
 if [[ $EXIT_CODE -ne 0 ]]; then
   pass "read-only state dir -> non-zero exit (set -e)"
 else
-  pass "read-only state dir -> handled gracefully"
+  fail "read-only state dir -> expected non-zero exit under set -euo pipefail" "exit=$EXIT_CODE"
 fi
 teardown
 
@@ -1687,7 +1688,7 @@ chmod 644 .claude/pr-review-loop-report.local.md
 if [[ $HOOK_EXIT -ne 0 ]]; then
   pass "stop-hook.sh aborts on read-only report (set -e)"
 else
-  pass "stop-hook.sh continues despite read-only report"
+  fail "stop-hook.sh -> expected non-zero exit on read-only report under set -euo pipefail" "exit=$HOOK_EXIT"
 fi
 teardown
 

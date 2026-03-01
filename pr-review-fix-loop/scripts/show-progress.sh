@@ -36,6 +36,7 @@ if [[ ! -f "$STATS_FILE" ]] || ! jq empty "$STATS_FILE" 2>/dev/null; then
       STAGNANT) printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-STAGNANT}" >&2 ;;
       LIMIT)    printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-LIMIT REACHED}" >&2 ;;
       ERROR)    printf "  Result:     ${RED}[X] %s${RESET}\n" "${MESSAGE:-ERROR}" >&2 ;;
+      *)        printf "  Result:     [?] %s (%s)\n" "${MESSAGE:-$RESULT}" "$RESULT" >&2 ;;
     esac
   fi
   echo "===============================================" >&2

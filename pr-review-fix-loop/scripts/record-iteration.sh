@@ -75,13 +75,14 @@ DURATION_SEC=$((NOW_EPOCH - PREV_EPOCH))
 # Append iteration record atomically
 TEMP_FILE="${STATS_FILE}.tmp.$$"
 trap 'rm -f "$TEMP_FILE"' EXIT
-if ! jq --argjson n "$ITERATION" \
+JQ_ERR=""
+if ! JQ_ERR=$(jq --argjson n "$ITERATION" \
    --argjson ic "$ISSUES_COUNT" \
    --arg ca "$NOW" \
    --argjson ds "$DURATION_SEC" \
    '.iterations += [{"n":$n,"issues_count":$ic,"completed_at":$ca,"duration_sec":$ds}]' \
-   "$STATS_FILE" > "$TEMP_FILE" 2>/dev/null; then
-  echo "Error: jq failed to append iteration record to $STATS_FILE" >&2
+   "$STATS_FILE" 2>&1 > "$TEMP_FILE"); then
+  echo "Error: jq failed to append iteration record to $STATS_FILE: $JQ_ERR" >&2
   exit 2
 fi
 

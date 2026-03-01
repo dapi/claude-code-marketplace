@@ -114,14 +114,14 @@ COMPLETION_PROMISE=$(echo "$FRONTMATTER" | awk -F': *' '/^completion_promise:/{v
 # Validate numeric fields
 if [[ ! "$ITERATION" =~ ^[0-9]+$ ]] || [[ ! "$MAX_ITERATIONS" =~ ^[0-9]+$ ]]; then
   write_exit_reason "ERROR" "State corrupted: invalid iteration or max_iterations"
-  rm "$STATE_FILE"
+  rm -f "$STATE_FILE"
   exit 0
 fi
 
 # Check max iterations reached
 if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
   write_exit_reason "LIMIT" "Max iterations ($MAX_ITERATIONS) reached"
-  rm "$STATE_FILE"
+  rm -f "$STATE_FILE"
   exit 0
 fi
 

@@ -7,6 +7,7 @@ set -euo pipefail
 FILES_TO_CHECK=(
   ".claude/pr-review-loop-report.local.md"
   ".claude/pr-review-loop-stats.local.json"
+  ".claude/pr-review-loop-debug.local.log"
   ".claude/pr-review-fix-loop.local.md"
   ".codex-review.md"
   ".codex-review.stderr"
