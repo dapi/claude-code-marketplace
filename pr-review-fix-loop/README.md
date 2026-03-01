@@ -23,7 +23,7 @@ Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for
 - code-reviewer for final validation
 - Configurable criticality threshold and review aspects
 - Auto-detect linter (RuboCop, ESLint, Ruff, gofmt, cargo clippy)
-- Auto-commit on clean review
+- Auto-commit after each iteration with fixes
 - Markdown report generation
 - Smart stagnation detection (auto-exit if issues stop decreasing over 5 iterations)
 - Recommendation agent on stagnation (analyzes root causes, suggests manual fixes)

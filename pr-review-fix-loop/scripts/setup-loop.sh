@@ -6,7 +6,10 @@
 set -euo pipefail
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo "unknown")
+VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null) || {
+  echo "Warning: failed to read plugin version from $PLUGIN_ROOT/.claude-plugin/plugin.json" >&2
+  VERSION="unknown"
+}
 
 MAX_ITERATIONS=20
 COMPLETION_PROMISES=()
@@ -67,7 +70,9 @@ fi
 # Create state file (markdown with YAML frontmatter)
 
 if [[ -n "$COMPLETION_PROMISE" ]] && [[ "$COMPLETION_PROMISE" != "null" ]]; then
-  COMPLETION_PROMISE_YAML="\"$COMPLETION_PROMISE\""
+  # Escape backslashes and double quotes for safe YAML embedding
+  ESCAPED=$(printf '%s' "$COMPLETION_PROMISE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  COMPLETION_PROMISE_YAML="\"$ESCAPED\""
 else
   COMPLETION_PROMISE_YAML="null"
 fi
