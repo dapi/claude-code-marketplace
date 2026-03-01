@@ -13,6 +13,7 @@ VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null
 
 MAX_ITERATIONS=20
 COMPLETION_PROMISES=()
+REPORT_PARAMS=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -30,6 +31,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       COMPLETION_PROMISES+=("$2")
+      shift 2
+      ;;
+    --report-params)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --report-params requires a text argument" >&2
+        exit 1
+      fi
+      REPORT_PARAMS="$2"
       shift 2
       ;;
     *)
@@ -57,6 +66,19 @@ fi
 # Clean up previous run artifacts
 mkdir -p .claude
 rm -f .claude/pr-review-loop-report.local.md .codex-review.md .codex-review.stderr
+
+# Create fresh report file (consumed by assemble-prompt and stop-hook)
+cat > .claude/pr-review-loop-report.local.md <<REPORT_EOF
+# PR Review Fix Loop Report
+
+Дата: $(date -u +%Y-%m-%d)
+Параметры: ${REPORT_PARAMS:-n/a}
+
+---
+
+ИТЕРАЦИЯ 1 НАЧАЛО
+
+REPORT_EOF
 
 # Ensure .claude/*.local.md is in .gitignore (double protection against report leaking into git)
 if [[ -f .gitignore ]]; then

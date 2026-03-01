@@ -451,13 +451,17 @@ echo "stale codex" > .codex-review.md
 echo "stale stderr" > .codex-review.stderr
 echo "test prompt" | bash "$SETUP_SCRIPT" >/dev/null
 ok=true
-[[ ! -f .claude/pr-review-loop-report.local.md ]] || ok=false
+# report should exist (fresh, not stale) after setup
+[[ -f .claude/pr-review-loop-report.local.md ]] || ok=false
+grep -q "^# PR Review Fix Loop Report" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+grep -q "ИТЕРАЦИЯ 1 НАЧАЛО" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+! grep -q "stale report" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 [[ ! -f .codex-review.md ]] || ok=false
 [[ ! -f .codex-review.stderr ]] || ok=false
 if $ok; then
-  pass "setup cleans previous artifacts"
+  pass "setup cleans previous artifacts and creates fresh report"
 else
-  fail "setup cleans previous artifacts" "report=$(test -f .claude/pr-review-loop-report.local.md && echo exists || echo gone) codex=$(test -f .codex-review.md && echo exists || echo gone)"
+  fail "setup cleans previous artifacts and creates fresh report" "report=$(test -f .claude/pr-review-loop-report.local.md && cat .claude/pr-review-loop-report.local.md | head -1 || echo gone) codex=$(test -f .codex-review.md && echo exists || echo gone)"
 fi
 teardown
 
@@ -487,6 +491,16 @@ if $ok; then
   pass "promise with whitespace -> strips and matches"
 else
   fail "promise with whitespace -> strips and matches" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 28: --report-params written to report file
+setup
+echo "test prompt" | bash "$SETUP_SCRIPT" --report-params "aspects=code errors, min-criticality=5, lint=no, codex=no" >/dev/null
+if grep -q 'aspects=code errors, min-criticality=5, lint=no, codex=no' .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "--report-params written to report file"
+else
+  fail "--report-params written to report file" "report=$(head -4 .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 

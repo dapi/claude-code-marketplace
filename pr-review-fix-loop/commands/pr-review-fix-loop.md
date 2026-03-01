@@ -65,21 +65,9 @@ ${ENV_EXEC:+$ENV_EXEC }which codex
 
 Если не установлен — сообщить пользователю и прекратить выполнение.
 
-## Создание файла отчёта
+## Файл отчёта
 
-Перед запуском loop создать файл `.claude/pr-review-loop-report.local.md` с заголовком:
-
-```markdown
-# PR Review Fix Loop Report
-
-Дата: {текущая дата}
-Параметры: aspects={aspects}, min-criticality={min_criticality}, lint={yes/no}, codex={yes/no}
-
----
-
-ИТЕРАЦИЯ 1 НАЧАЛО
-
-```
+Файл `.claude/pr-review-loop-report.local.md` создаётся автоматически скриптом `setup-loop.sh` (через `--report-params`). НЕ создавать его вручную.
 
 Ожидаемая структура секций для каждой итерации:
 
@@ -111,7 +99,7 @@ PROMPT=$("${CLAUDE_PLUGIN_ROOT}/scripts/assemble-prompt.sh" \
 Передать собранный промпт в setup-loop.sh через heredoc:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations $MAX_ITERATIONS --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" <<'LOOP_PROMPT'
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations $MAX_ITERATIONS --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" --report-params "aspects=$ASPECTS, min-criticality=$MIN_CRITICALITY, lint=${LINT:-no}, codex=${CODEX:-no}" <<'LOOP_PROMPT'
 $PROMPT
 LOOP_PROMPT
 ```
