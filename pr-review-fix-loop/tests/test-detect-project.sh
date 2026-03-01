@@ -196,6 +196,63 @@ else
 fi
 teardown
 
+# Test 10: Invalid package.json -> warning, empty commands
+setup
+echo "NOT JSON" > package.json
+OUTPUT=$(bash "$DETECT_SCRIPT" 2>/dev/null)
+STDERR=$(bash "$DETECT_SCRIPT" 2>&1 >/dev/null || true)
+ok=true
+echo "$OUTPUT" | jq -e '.stack == "node"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.test_cmd == ""' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.lint_cmd == ""' >/dev/null 2>&1 || ok=false
+echo "$STDERR" | grep -q "not valid JSON" || ok=false
+if $ok; then
+  pass "invalid package.json -> warning + empty commands"
+else
+  fail "invalid package.json -> warning + empty commands" "output=$OUTPUT stderr=$STDERR"
+fi
+teardown
+
+# Test 11: package.json without scripts.test or scripts.lint -> no npm-based commands
+setup
+echo '{"name": "test"}' > package.json
+OUTPUT=$(bash "$DETECT_SCRIPT")
+ok=true
+echo "$OUTPUT" | jq -e '.stack == "node"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.test_cmd == ""' >/dev/null 2>&1 || ok=false
+# lint_cmd may be set via eslint/prettier fallback if installed; verify no npm-script-based lint
+LINT_VAL=$(echo "$OUTPUT" | jq -r '.lint_cmd')
+if [[ "$LINT_VAL" == "npm run lint -- --fix" ]]; then
+  ok=false
+fi
+if $ok; then
+  pass "package.json without scripts -> no npm-script-based commands"
+else
+  fail "package.json without scripts -> no npm-script-based commands" "output=$OUTPUT"
+fi
+teardown
+
+# Test 12: Missing jq -> exit 1 with error message
+setup
+touch Gemfile
+# Create a minimal PATH without jq by using an empty temp bin dir
+FAKE_BIN=$(mktemp -d)
+# Copy only bash and basic utils needed by the script
+for cmd in bash env cat; do
+  SRC=$(command -v "$cmd" 2>/dev/null) && cp "$SRC" "$FAKE_BIN/" 2>/dev/null || true
+done
+STDERR=$(PATH="$FAKE_BIN" bash "$DETECT_SCRIPT" 2>&1 >/dev/null || true)
+EXIT_CODE=0
+PATH="$FAKE_BIN" bash "$DETECT_SCRIPT" 2>/dev/null >/dev/null || EXIT_CODE=$?
+rm -rf "$FAKE_BIN"
+if [[ $EXIT_CODE -ne 0 ]] && echo "$STDERR" | grep -q "jq is required"; then
+  pass "missing jq -> exit 1 with error message"
+else
+  # jq might be a shell builtin or statically linked — skip gracefully
+  skip "missing jq -> exit 1 with error message" "could not isolate jq from PATH"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""

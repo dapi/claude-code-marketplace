@@ -13,17 +13,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 Разобрать `$ARGUMENTS`:
 - `--base BRANCH` — base branch для сравнения (по умолчанию: автодетект или master)
 
-## Определение base branch
-
-Запустить detect-base-branch.sh:
-
-```bash
-BASE=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-base-branch.sh" --base "${user_base:-}")
-```
-
-Если скрипт вернул ошибку — вывести сообщение об ошибке и прекратить выполнение.
-
-## Проверки перед запуском
+## Детект проекта
 
 Получить env wrapper:
 
@@ -38,6 +28,18 @@ ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec // empty')
 
 Если `PROJECT_JSON` пуст или скрипт вернул ненулевой exit code — вывести ошибку и прекратить выполнение.
 Если `ENV_EXEC` пуст (jq вернул empty) — продолжить без env wrapper.
+
+## Определение base branch
+
+Запустить detect-base-branch.sh с env wrapper:
+
+```bash
+BASE=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-base-branch.sh" --base "${user_base:-}" ${ENV_EXEC:+--env-exec "$ENV_EXEC"})
+```
+
+Если скрипт вернул ошибку — вывести сообщение об ошибке и прекратить выполнение.
+
+## Проверки перед запуском
 
 Убедиться что codex CLI установлен:
 ```bash
