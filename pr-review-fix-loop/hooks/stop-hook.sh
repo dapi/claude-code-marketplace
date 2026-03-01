@@ -11,6 +11,8 @@ HOOK_INPUT=$(cat)
 STATE_FILE=".claude/pr-review-fix-loop.local.md"
 REPORT_FILE=".claude/pr-review-loop-report.local.md"
 DEBUG_LOG=".claude/pr-review-loop-debug.local.log"
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+SHOW_PROGRESS="$HOOK_DIR/../scripts/show-progress.sh"
 
 # Debug log: append timestamped entry
 dbg() {
@@ -31,6 +33,10 @@ write_exit_reason() {
     WARN)     marker="[~~]" ;;
     *)        marker="[??]" ;;
   esac
+  # Show progress banner for terminal state
+  if [[ -x "$SHOW_PROGRESS" ]]; then
+    bash "$SHOW_PROGRESS" --result "$exit_type" --message "$reason" || echo "[warn] progress banner failed" >&2
+  fi
   if [[ -f "$REPORT_FILE" ]]; then
     printf '\n%s [EXIT:%s] %s\n' "$marker" "$exit_type" "$reason" >> "$REPORT_FILE"
   fi
@@ -54,12 +60,17 @@ continue_loop() {
     echo "" >> "$REPORT_FILE"
   fi
 
+  # Show progress banner for continuing iteration
+  if [[ -x "$SHOW_PROGRESS" ]]; then
+    bash "$SHOW_PROGRESS" || echo "[warn] progress banner failed" >&2
+  fi
+
   local prompt_text
   prompt_text=$(awk '/^---$/{i++; next} i>=2' "$STATE_FILE")
 
   if [[ -z "$prompt_text" ]]; then
     write_exit_reason "ERROR" "No prompt text in state file"
-    rm "$STATE_FILE"
+    rm -f "$STATE_FILE"
     exit 0
   fi
 
@@ -103,14 +114,14 @@ COMPLETION_PROMISE=$(echo "$FRONTMATTER" | awk -F': *' '/^completion_promise:/{v
 # Validate numeric fields
 if [[ ! "$ITERATION" =~ ^[0-9]+$ ]] || [[ ! "$MAX_ITERATIONS" =~ ^[0-9]+$ ]]; then
   write_exit_reason "ERROR" "State corrupted: invalid iteration or max_iterations"
-  rm "$STATE_FILE"
+  rm -f "$STATE_FILE"
   exit 0
 fi
 
 # Check max iterations reached
 if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
   write_exit_reason "LIMIT" "Max iterations ($MAX_ITERATIONS) reached"
-  rm "$STATE_FILE"
+  rm -f "$STATE_FILE"
   exit 0
 fi
 
@@ -176,7 +187,7 @@ if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
           *)          EXIT_TYPE="SUCCESS" ;;
         esac
         write_exit_reason "$EXIT_TYPE" "Promise detected: $p"
-        rm "$STATE_FILE"
+        rm -f "$STATE_FILE"
         exit 0
       fi
     done
