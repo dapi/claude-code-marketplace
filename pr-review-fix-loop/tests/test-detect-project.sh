@@ -232,7 +232,94 @@ else
 fi
 teardown
 
-# Test 12: Missing jq -> exit 1 with error message
+# Test 12: Python + ruff available -> ruff lint_cmd
+setup
+touch pyproject.toml
+FAKE_BIN=$(mktemp -d)
+cat > "$FAKE_BIN/ruff" <<'FAKE'
+#!/bin/bash
+FAKE
+chmod +x "$FAKE_BIN/ruff"
+OUTPUT=$(PATH="$FAKE_BIN:$PATH" bash "$DETECT_SCRIPT")
+rm -rf "$FAKE_BIN"
+LINT_VAL=$(echo "$OUTPUT" | jq -r '.lint_cmd')
+if [[ "$LINT_VAL" == "ruff check --fix ." ]]; then
+  pass "python + ruff -> ruff check --fix ."
+else
+  fail "python + ruff -> ruff check --fix ." "got=$LINT_VAL"
+fi
+teardown
+
+# Test 13: Python + black (no ruff) -> black lint_cmd
+setup
+touch pyproject.toml
+FAKE_BIN=$(mktemp -d)
+for cmd in jq bash env; do
+  SRC=$(command -v "$cmd" 2>/dev/null) && cp "$SRC" "$FAKE_BIN/" 2>/dev/null || true
+done
+cat > "$FAKE_BIN/black" <<'FAKE'
+#!/bin/bash
+FAKE
+chmod +x "$FAKE_BIN/black"
+# Restricted PATH: has black + jq but no ruff
+OUTPUT=$(PATH="$FAKE_BIN" bash "$DETECT_SCRIPT" 2>/dev/null)
+rm -rf "$FAKE_BIN"
+if [[ -n "$OUTPUT" ]]; then
+  LINT_VAL=$(echo "$OUTPUT" | jq -r '.lint_cmd')
+  if [[ "$LINT_VAL" == "black ." ]]; then
+    pass "python + black (no ruff) -> black ."
+  else
+    fail "python + black (no ruff) -> black ." "got=$LINT_VAL"
+  fi
+else
+  skip "python + black (no ruff) -> black ." "could not isolate PATH"
+fi
+teardown
+
+# Test 14: Node + no scripts.lint + eslint available -> eslint fallback
+setup
+echo '{"scripts": {"test": "jest"}}' > package.json
+FAKE_BIN=$(mktemp -d)
+cat > "$FAKE_BIN/eslint" <<'FAKE'
+#!/bin/bash
+FAKE
+chmod +x "$FAKE_BIN/eslint"
+OUTPUT=$(PATH="$FAKE_BIN:$PATH" bash "$DETECT_SCRIPT")
+rm -rf "$FAKE_BIN"
+LINT_VAL=$(echo "$OUTPUT" | jq -r '.lint_cmd')
+if [[ "$LINT_VAL" == "npx eslint --fix ." ]]; then
+  pass "node + no scripts.lint + eslint -> npx eslint --fix ."
+else
+  fail "node + no scripts.lint + eslint -> npx eslint --fix ." "got=$LINT_VAL"
+fi
+teardown
+
+# Test 15: Node + no scripts.lint + prettier (no eslint) -> prettier fallback
+setup
+echo '{"scripts": {"test": "jest"}}' > package.json
+FAKE_BIN=$(mktemp -d)
+for cmd in jq bash env; do
+  SRC=$(command -v "$cmd" 2>/dev/null) && cp "$SRC" "$FAKE_BIN/" 2>/dev/null || true
+done
+cat > "$FAKE_BIN/prettier" <<'FAKE'
+#!/bin/bash
+FAKE
+chmod +x "$FAKE_BIN/prettier"
+OUTPUT=$(PATH="$FAKE_BIN" bash "$DETECT_SCRIPT" 2>/dev/null)
+rm -rf "$FAKE_BIN"
+if [[ -n "$OUTPUT" ]]; then
+  LINT_VAL=$(echo "$OUTPUT" | jq -r '.lint_cmd')
+  if [[ "$LINT_VAL" == "npx prettier --write ." ]]; then
+    pass "node + no scripts.lint + prettier -> npx prettier --write ."
+  else
+    fail "node + no scripts.lint + prettier -> npx prettier --write ." "got=$LINT_VAL"
+  fi
+else
+  skip "node + no scripts.lint + prettier -> npx prettier --write ." "could not isolate PATH"
+fi
+teardown
+
+# Test 16: Missing jq -> exit 1 with error message
 setup
 touch Gemfile
 # Create a minimal PATH without jq by using an empty temp bin dir

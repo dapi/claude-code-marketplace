@@ -140,6 +140,61 @@ else
 fi
 teardown
 
+# Test 9: gh pr view autodetect -> uses PR base branch
+setup_git
+git checkout -b develop >/dev/null 2>&1
+git checkout master >/dev/null 2>&1
+# Create fake gh that returns "develop" as PR base
+FAKE_BIN=$(mktemp -d)
+cat > "$FAKE_BIN/gh" <<'FAKEGH'
+#!/bin/bash
+echo "develop"
+FAKEGH
+chmod +x "$FAKE_BIN/gh"
+OUTPUT=$(PATH="$FAKE_BIN:$PATH" bash "$DETECT_SCRIPT")
+rm -rf "$FAKE_BIN"
+if [[ "$OUTPUT" == "develop" ]]; then
+  pass "gh pr view autodetect -> uses PR base branch"
+else
+  fail "gh pr view autodetect -> uses PR base branch" "expected=develop got=$OUTPUT"
+fi
+teardown
+
+# Test 10: gh pr view returns nonexistent branch -> fallback to master
+setup_git
+FAKE_BIN=$(mktemp -d)
+cat > "$FAKE_BIN/gh" <<'FAKEGH'
+#!/bin/bash
+echo "nonexistent-branch"
+FAKEGH
+chmod +x "$FAKE_BIN/gh"
+OUTPUT=$(PATH="$FAKE_BIN:$PATH" bash "$DETECT_SCRIPT" 2>/dev/null)
+rm -rf "$FAKE_BIN"
+if [[ "$OUTPUT" == "master" ]]; then
+  pass "gh pr view returns nonexistent branch -> fallback to master"
+else
+  fail "gh pr view returns nonexistent branch -> fallback to master" "expected=master got=$OUTPUT"
+fi
+teardown
+
+# Test 11: gh pr view fails -> fallback to master
+setup_git
+FAKE_BIN=$(mktemp -d)
+cat > "$FAKE_BIN/gh" <<'FAKEGH'
+#!/bin/bash
+echo "no PR found" >&2
+exit 1
+FAKEGH
+chmod +x "$FAKE_BIN/gh"
+OUTPUT=$(PATH="$FAKE_BIN:$PATH" bash "$DETECT_SCRIPT" 2>/dev/null)
+rm -rf "$FAKE_BIN"
+if [[ "$OUTPUT" == "master" ]]; then
+  pass "gh pr view fails -> fallback to master"
+else
+  fail "gh pr view fails -> fallback to master" "expected=master got=$OUTPUT"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
