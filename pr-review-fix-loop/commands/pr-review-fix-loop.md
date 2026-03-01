@@ -109,7 +109,7 @@ PROMPT=$("${CLAUDE_PLUGIN_ROOT}/scripts/assemble-prompt.sh" \
 Передать собранный промпт в setup-loop.sh через heredoc:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations $MAX_ITERATIONS --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" <<'LOOP_PROMPT'
+"${CLAUDE_PLUGIN_ROOT}/scripts/setup-loop.sh" --max-iterations $MAX_ITERATIONS --completion-promise "REVIEW CLEAN" --completion-promise "REVIEW STAGNANT" <<LOOP_PROMPT
 $PROMPT
 LOOP_PROMPT
 ```

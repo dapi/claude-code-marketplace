@@ -28,8 +28,16 @@ BASE=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-base-branch.sh" --base "${user_base
 Получить env wrapper:
 
 ```bash
-ENV_EXEC=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh" | jq -r '.env_exec')
+PROJECT_JSON=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh")
+if [[ $? -ne 0 ]] || [[ -z "$PROJECT_JSON" ]]; then
+  echo "Error: Failed to detect project" >&2
+  # stop execution
+fi
+ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec // empty')
 ```
+
+Если `PROJECT_JSON` пуст или скрипт вернул ненулевой exit code — вывести ошибку и прекратить выполнение.
+Если `ENV_EXEC` пуст (jq вернул empty) — продолжить без env wrapper.
 
 Убедиться что codex CLI установлен:
 ```bash

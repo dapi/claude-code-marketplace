@@ -23,18 +23,24 @@ if [[ -f Gemfile ]]; then
   LINT_CMD="bundle exec rubocop -a"
 elif [[ -f package.json ]]; then
   STACK="node"
-  if jq -e '.scripts.test' package.json &>/dev/null; then
-    TEST_CMD="npm test"
+  if jq empty package.json 2>/dev/null; then
+    if jq -e '.scripts.test' package.json >/dev/null 2>&1; then
+      TEST_CMD="npm test"
+    else
+      TEST_CMD=""
+    fi
+    if jq -e '.scripts.lint' package.json >/dev/null 2>&1; then
+      LINT_CMD="npm run lint -- --fix"
+    elif command -v eslint &>/dev/null; then
+      LINT_CMD="npx eslint --fix ."
+    elif command -v prettier &>/dev/null; then
+      LINT_CMD="npx prettier --write ."
+    else
+      LINT_CMD=""
+    fi
   else
+    echo "Warning: package.json is not valid JSON, skipping script detection" >&2
     TEST_CMD=""
-  fi
-  if jq -e '.scripts.lint' package.json &>/dev/null; then
-    LINT_CMD="npm run lint -- --fix"
-  elif command -v eslint &>/dev/null; then
-    LINT_CMD="npx eslint --fix ."
-  elif command -v prettier &>/dev/null; then
-    LINT_CMD="npx prettier --write ."
-  else
     LINT_CMD=""
   fi
 elif [[ -f pyproject.toml ]] || [[ -f requirements.txt ]]; then

@@ -15,14 +15,26 @@ ENV_EXEC=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --aspects) ASPECTS="$2"; shift 2 ;;
-    --min-criticality) MIN_CRITICALITY="$2"; shift 2 ;;
+    --aspects)
+      [[ $# -ge 2 ]] || { echo "Error: --aspects requires a value" >&2; exit 1; }
+      ASPECTS="$2"; shift 2 ;;
+    --min-criticality)
+      [[ $# -ge 2 ]] || { echo "Error: --min-criticality requires a value" >&2; exit 1; }
+      MIN_CRITICALITY="$2"; shift 2 ;;
     --codex) CODEX=true; shift ;;
     --lint) LINT=true; shift ;;
-    --base) BASE="$2"; shift 2 ;;
-    --test-cmd) TEST_CMD="$2"; shift 2 ;;
-    --lint-cmd) LINT_CMD="$2"; shift 2 ;;
-    --env-exec) ENV_EXEC="$2"; shift 2 ;;
+    --base)
+      [[ $# -ge 2 ]] || { echo "Error: --base requires a value" >&2; exit 1; }
+      BASE="$2"; shift 2 ;;
+    --test-cmd)
+      [[ $# -ge 2 ]] || { echo "Error: --test-cmd requires a value" >&2; exit 1; }
+      TEST_CMD="$2"; shift 2 ;;
+    --lint-cmd)
+      [[ $# -ge 2 ]] || { echo "Error: --lint-cmd requires a value" >&2; exit 1; }
+      LINT_CMD="$2"; shift 2 ;;
+    --env-exec)
+      [[ $# -ge 2 ]] || { echo "Error: --env-exec requires a value" >&2; exit 1; }
+      ENV_EXEC="$2"; shift 2 ;;
     *) echo "Error: Unknown option: $1" >&2; exit 1 ;;
   esac
 done
