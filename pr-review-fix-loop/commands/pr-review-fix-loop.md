@@ -27,27 +27,19 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*:*)"]
 - `--aspects` — каждый указанный аспект должен входить в список доступных. Если найден неизвестный аспект — сообщить пользователю ошибку со списком доступных аспектов и прекратить. При парсинге убрать обрамляющие кавычки, если они есть.
 - Если `--base` указан без `--codex` — предупредить пользователю что `--base` используется только вместе с `--codex` и будет проигнорирован.
 
-## Вывод версии
-
-Прочитать `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` и извлечь поле `version`. Вывести первой строкой: `pr-review-fix-loop v{version}`, затем параметры.
-
 ## Проверки перед запуском
 
-### Детект проекта
+### Версия и детект проекта
 
-Запустить detect-project.sh и получить JSON с параметрами проекта:
+Получить версию и параметры проекта **одним вызовом**:
 
 ```bash
-PROJECT_JSON=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh")
-if [[ $? -ne 0 ]] || [[ -z "$PROJECT_JSON" ]]; then
-  echo "Error: Failed to detect project" >&2
-  # stop execution
-fi
-STACK=$(echo "$PROJECT_JSON" | jq -r '.stack // empty')
-ENV_EXEC=$(echo "$PROJECT_JSON" | jq -r '.env_exec // empty')
-TEST_CMD=$(echo "$PROJECT_JSON" | jq -r '.test_cmd // empty')
-LINT_CMD=$(echo "$PROJECT_JSON" | jq -r '.lint_cmd // empty')
+VERSION=$(jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json") && PROJECT_JSON=$("${CLAUDE_PLUGIN_ROOT}/scripts/detect-project.sh") && echo "pr-review-fix-loop v${VERSION}" && echo "$PROJECT_JSON"
 ```
+
+Из вывода извлечь:
+- Первая строка — версия для отображения пользователю (`pr-review-fix-loop v{version}`)
+- JSON — параметры проекта: `STACK`, `ENV_EXEC`, `TEST_CMD`, `LINT_CMD` (через `jq -r`)
 
 Если `PROJECT_JSON` пуст или скрипт вернул ненулевой exit code — вывести ошибку и прекратить выполнение.
 
