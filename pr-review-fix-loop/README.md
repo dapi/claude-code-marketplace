@@ -1,6 +1,6 @@
 # pr-review-fix-loop
 
-Iterative PR review + autofix loop for Ruby/Rails projects.
+Multi-language iterative PR review + autofix loop.
 
 ## Commands
 
@@ -10,13 +10,20 @@ Iterative cycle: run PR review, fix critical issues, repeat until clean report.
 
 Uses a built-in iteration engine (Stop hook + state file), pr-review-toolkit for code review, and optionally OpenAI Codex CLI for additional review.
 
+**Supported stacks** (auto-detected):
+- Ruby (rspec, rubocop)
+- Node.js (npm test, eslint/prettier)
+- Python (pytest, ruff/black)
+- Go (go test, gofmt)
+- Rust (cargo test, cargo clippy)
+
 **Features:**
 - TDD approach for high-criticality issues (writes spec first, then fixes)
 - code-explorer for context analysis before fixes
 - code-reviewer for final validation
 - Configurable criticality threshold and review aspects
 - Auto-detect linter (RuboCop, ESLint, Ruff, gofmt, cargo clippy)
-- Auto-commit on clean review
+- Auto-commit after each iteration with fixes
 - Markdown report generation
 - Smart stagnation detection (auto-exit if issues stop decreasing over 5 iterations)
 - Recommendation agent on stagnation (analyzes root causes, suggests manual fixes)
@@ -63,11 +70,17 @@ Standalone code review via OpenAI Codex CLI.
 ```
 
 **Required tools:**
-- **direnv** -- project environment wrapper
-- **Ruby/Rails** stack -- `bundle exec rspec`, `bundle exec rubocop`
 - **gh** CLI -- for auto-detecting base branch from PR
 
+**Auto-detected per stack:**
+- Ruby: `bundle`, `rspec`, `rubocop`
+- Node.js: `npm`, `eslint`/`prettier`
+- Python: `pytest`, `ruff`/`black`
+- Go: `go`, `gofmt`
+- Rust: `cargo`, `clippy`
+
 **Optional:**
+- **direnv** -- auto-detected if `.envrc` exists
 - **codex** CLI -- OpenAI Codex, for `--codex` flag (`npm install -g @openai/codex`)
 
 ## Install

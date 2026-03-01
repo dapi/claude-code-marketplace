@@ -443,6 +443,34 @@ else
 fi
 teardown
 
+# Test 25: Setup cleans previous artifacts
+setup
+# Create stale artifacts
+echo "stale report" > .claude/pr-review-loop-report.local.md
+echo "stale codex" > .codex-review.md
+echo "stale stderr" > .codex-review.stderr
+echo "test prompt" | bash "$SETUP_SCRIPT" >/dev/null
+ok=true
+[[ ! -f .claude/pr-review-loop-report.local.md ]] || ok=false
+[[ ! -f .codex-review.md ]] || ok=false
+[[ ! -f .codex-review.stderr ]] || ok=false
+if $ok; then
+  pass "setup cleans previous artifacts"
+else
+  fail "setup cleans previous artifacts" "report=$(test -f .claude/pr-review-loop-report.local.md && echo exists || echo gone) codex=$(test -f .codex-review.md && echo exists || echo gone)"
+fi
+teardown
+
+# Test 26: Setup outputs version
+setup
+OUTPUT=$(echo "test prompt" | bash "$SETUP_SCRIPT" 2>/dev/null)
+if echo "$OUTPUT" | grep -qP '^pr-review-fix-loop v\d+\.\d+\.\d+$'; then
+  pass "setup outputs version"
+else
+  fail "setup outputs version" "output='$(echo "$OUTPUT" | head -1)'"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""

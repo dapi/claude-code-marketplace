@@ -6,7 +6,10 @@
 set -euo pipefail
 
 PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo "unknown")
+VERSION=$(jq -r '.version' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null) || {
+  echo "Warning: failed to read plugin version from $PLUGIN_ROOT/.claude-plugin/plugin.json" >&2
+  VERSION="unknown"
+}
 
 MAX_ITERATIONS=20
 COMPLETION_PROMISES=()
@@ -55,10 +58,21 @@ fi
 mkdir -p .claude
 rm -f .claude/pr-review-loop-report.local.md .codex-review.md .codex-review.stderr
 
+# Ensure .claude/*.local.md is in .gitignore (double protection against report leaking into git)
+if [[ -f .gitignore ]]; then
+  if ! grep -qF '.claude/*.local.md' .gitignore; then
+    printf '\n# pr-review-fix-loop local artifacts\n.claude/*.local.md\n' >> .gitignore
+  fi
+else
+  printf '# pr-review-fix-loop local artifacts\n.claude/*.local.md\n' > .gitignore
+fi
+
 # Create state file (markdown with YAML frontmatter)
 
 if [[ -n "$COMPLETION_PROMISE" ]] && [[ "$COMPLETION_PROMISE" != "null" ]]; then
-  COMPLETION_PROMISE_YAML="\"$COMPLETION_PROMISE\""
+  # Escape backslashes and double quotes for safe YAML embedding
+  ESCAPED=$(printf '%s' "$COMPLETION_PROMISE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  COMPLETION_PROMISE_YAML="\"$ESCAPED\""
 else
   COMPLETION_PROMISE_YAML="null"
 fi
@@ -72,8 +86,9 @@ completion_promise: $COMPLETION_PROMISE_YAML
 started_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 ---
 
-$PROMPT
 EOF
+# Append prompt without shell expansion to avoid double-interpolation of $ in prompt text
+printf '%s\n' "$PROMPT" >> .claude/pr-review-fix-loop.local.md
 
 # Output setup message
 echo "pr-review-fix-loop v$VERSION"
