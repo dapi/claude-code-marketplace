@@ -162,7 +162,11 @@ dbg "text_found len=${#LAST_OUTPUT} first_50=$(echo "$LAST_OUTPUT" | head -c 50)
 
 # Check for completion promise (multi-promise: pipe-separated)
 if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
+  # Try single-line match first, then fallback to multiline (collapse \n to space)
   PROMISE_TEXT=$(echo "$LAST_OUTPUT" | sed -n 's/.*<promise>\(.*\)<\/promise>.*/\1/p' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/[[:space:]]\+/ /g')
+  if [[ -z "$PROMISE_TEXT" ]]; then
+    PROMISE_TEXT=$(echo "$LAST_OUTPUT" | tr '\n' ' ' | sed -n 's/.*<promise>\(.*\)<\/promise>.*/\1/p' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/[[:space:]]\+/ /g')
+  fi
   if [[ -n "$PROMISE_TEXT" ]]; then
     IFS='|' read -ra PROMISES <<< "$COMPLETION_PROMISE"
     for p in "${PROMISES[@]}"; do

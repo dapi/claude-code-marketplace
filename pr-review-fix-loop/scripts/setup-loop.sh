@@ -76,7 +76,7 @@ cat > .claude/pr-review-loop-report.local.md <<REPORT_EOF
 
 ---
 
-ИТЕРАЦИЯ 1 НАЧАЛО
+ITERATION 1 START
 
 REPORT_EOF
 

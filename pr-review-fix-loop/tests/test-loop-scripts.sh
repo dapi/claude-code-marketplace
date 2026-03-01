@@ -210,7 +210,7 @@ ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
 echo "$OUTPUT" | jq -e '.reason | contains("Fix the bugs")' >/dev/null 2>&1 || ok=false
-grep -q "ИТЕРАЦИЯ 2 НАЧАЛО" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+grep -q "ITERATION 2 START" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 grep -q '^iteration: 2$' .claude/pr-review-fix-loop.local.md 2>/dev/null || ok=false
 if $ok; then
   pass "normal iteration -> block, increment, marker"
@@ -238,16 +238,22 @@ else
 fi
 teardown
 
-# Test 12: Missing transcript -> exit 0, deletes state
+# Test 12: Missing transcript -> continues loop (transient error recovery)
 setup
-create_state_file 1 10 "null"
+create_state_file 1 10 "null" "Do review"
+touch .claude/pr-review-loop-report.local.md
 INPUT=$(hook_input "/nonexistent/transcript.jsonl")
 OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
-if [[ $EXIT_CODE -eq 0 ]] && [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
-  pass "missing transcript -> graceful cleanup"
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[EXIT:WARN\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "missing transcript -> continues loop with WARN"
 else
-  fail "missing transcript -> graceful cleanup" "exit=$EXIT_CODE"
+  fail "missing transcript -> continues loop with WARN" "exit=$EXIT_CODE output='$OUTPUT'"
 fi
 teardown
 
@@ -368,16 +374,16 @@ else
 fi
 teardown
 
-# Test 20: Missing transcript -> [EXIT:ERROR] in report
+# Test 20: Missing transcript -> [EXIT:WARN] in report (continues loop)
 setup
-create_state_file 1 10 "null"
+create_state_file 1 10 "null" "Do review"
 touch .claude/pr-review-loop-report.local.md
 INPUT=$(hook_input "/nonexistent/transcript.jsonl")
 OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
-if grep -q '\[XX\] \[EXIT:ERROR\]' .claude/pr-review-loop-report.local.md 2>/dev/null; then
-  pass "missing transcript -> [EXIT:ERROR] in report"
+if grep -q '\[~~\] \[EXIT:WARN\]' .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "missing transcript -> [EXIT:WARN] in report"
 else
-  fail "missing transcript -> [EXIT:ERROR] in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+  fail "missing transcript -> [EXIT:WARN] in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 
@@ -429,17 +435,21 @@ else
 fi
 teardown
 
-# Test 24: Error exit without report file -> does not crash
+# Test 24: Transient error without report file -> continues loop without crash
 setup
-create_state_file 1 10 "null"
+create_state_file 1 10 "null" "Do review"
 # Intentionally do NOT create report file
 INPUT=$(hook_input "/nonexistent/transcript.jsonl")
 OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
-if [[ $EXIT_CODE -eq 0 ]] && [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
-  pass "error exit without report file -> does not crash"
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "transient error without report file -> continues loop"
 else
-  fail "error exit without report file -> does not crash" "exit=$EXIT_CODE"
+  fail "transient error without report file -> continues loop" "exit=$EXIT_CODE output='$OUTPUT'"
 fi
 teardown
 
@@ -454,7 +464,7 @@ ok=true
 # report should exist (fresh, not stale) after setup
 [[ -f .claude/pr-review-loop-report.local.md ]] || ok=false
 grep -q "^# PR Review Fix Loop Report" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
-grep -q "ИТЕРАЦИЯ 1 НАЧАЛО" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+grep -q "ITERATION 1 START" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 ! grep -q "stale report" .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 [[ ! -f .codex-review.md ]] || ok=false
 [[ ! -f .codex-review.stderr ]] || ok=false
@@ -501,6 +511,26 @@ if grep -q 'aspects=code errors, min-criticality=5, lint=no, codex=no' .claude/p
   pass "--report-params written to report file"
 else
   fail "--report-params written to report file" "report=$(head -4 .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+teardown
+
+# Test 29: Multiline promise should match (P1 fix)
+setup
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+touch .claude/pr-review-loop-report.local.md
+# Promise split across lines
+create_transcript "$(printf 'Some text\n<promise>\nREVIEW CLEAN\n</promise>\nMore text')"
+INPUT=$(hook_input "$TMPDIR/transcript.jsonl")
+OUTPUT=$(echo "$INPUT" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[OK\] \[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "multiline promise -> collapses and matches"
+else
+  fail "multiline promise -> collapses and matches" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 
