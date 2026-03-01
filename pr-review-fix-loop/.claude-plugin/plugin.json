@@ -1,7 +1,7 @@
 {
   "name": "pr-review-fix-loop",
-  "description": "Iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit + optional Codex)",
-  "version": "1.4.0",
+  "description": "Multi-language iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit + optional Codex)",
+  "version": "1.5.0",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/dapi/claude-code-marketplace",
   "repository": "https://github.com/dapi/claude-code-marketplace",
   "license": "MIT",
-  "keywords": ["pr-review", "code-review", "autofix", "iteration-loop", "codex", "ruby", "rspec", "rubocop"]
+  "keywords": ["pr-review", "code-review", "autofix", "iteration-loop", "codex", "multi-language", "ruby", "node", "python", "go", "rust"]
 }
