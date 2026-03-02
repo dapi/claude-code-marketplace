@@ -1,54 +1,12 @@
 ---
 name: zellij-tab-pane
 description: |
-  **UNIVERSAL TRIGGER**: OPEN/CREATE/RUN/GET/START tab or pane IN zellij -- empty, with command, with Claude session, or with GitHub issue.
+  **UNIVERSAL TRIGGER**: OPEN/CREATE/RUN tab or pane IN zellij.
 
-  Common patterns:
-  - "open/create/get new tab/pane in zellij"
-  - "run/launch/start [command] in new tab/pane"
-  - "execute/delegate/send [task/plan] in new tab/pane"
-  - "start/open/launch [issue] in new tab/pane"
-  - "show/display/view command output in tab/pane"
-  - "check/retrieve/fetch results in tab/pane"
-  - "открой/создай вкладку/панель", "запусти/покажи [команду] в панели/вкладке"
-  - "стартани/запусти задачу/issue в панели/вкладке"
+  Modes: empty tab/pane, shell command in tab/pane, Claude session in tab/pane, GitHub issue in tab/pane.
 
-  **Empty Tab/Pane**:
-  - "open new tab", "create empty pane", "get a new tab"
-  - "новая вкладка", "создай панель"
-
-  **Command in Tab/Pane**:
-  - "run npm test in new tab", "execute make build in pane"
-  - "list files in a new pane", "show output in tab"
-  - "запусти тесты в панели", "make deploy в новой вкладке"
-
-  **Claude Session in Tab/Pane**:
-  - "execute plan in new tab", "delegate to pane"
-  - "run claude with prompt in tab", "launch task in pane"
-  - "выполни план в вкладке", "делегируй в панель"
-
-  **Issue Development in Tab/Pane**:
-  - "start issue #123 in new tab", "launch issue in pane"
-  - "run start-issue in new tab/pane", "create tab for issue #45"
-  - "запусти задачу в панели", "стартани issue в вкладке"
-
-  TRIGGERS: new tab, new pane, create tab, create pane, open tab, open pane,
-  run in tab, run in pane, execute in tab, execute in pane, launch in tab,
-  launch in pane, delegate to tab, delegate to pane, command in tab,
-  command in pane, parallel tab, parallel pane, background tab, background pane,
-  zellij tab, zellij pane, zellij panel,
-  start issue tab, open issue tab, launch issue tab, create tab issue,
-  run start-issue tab, run start-issue pane, zellij new tab issue,
-  separate tab development, issue development tab, issue development pane,
-  work on issue in tab, work on issue in pane, begin issue tab,
-  start issue pane, open issue pane, launch issue pane, create pane issue,
-  новая вкладка, новая панель, создай вкладку, создай панель,
-  открой вкладку, открой панель, запусти в вкладке, запусти в панели,
-  выполни в вкладке, выполни в панели, делегируй в вкладку, делегируй в панель,
-  параллельная вкладка, параллельная панель, фоновая вкладка,
-  запусти задачу в вкладке, запусти задачу в панели,
-  стартани issue в вкладке, стартани issue в панели,
-  разработка в вкладке, разработка в панели, вкладка для issue, панель для issue
+  Examples: "open new tab", "run npm test in pane", "execute plan in tab", "start issue #123 in pane",
+  "открой вкладку", "запусти тесты в панели", "делегируй в вкладку", "стартани issue в панели"
 allowed-tools: Bash
 ---
 
