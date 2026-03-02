@@ -61,11 +61,6 @@
       "description": "Smart task routing: classifies specs and routes to feature-dev or subagent-driven-dev"
     },
     {
-      "name": "skill-finder",
-      "source": "./skill-finder",
-      "description": "Search and install agent skills from skills.sh and other online catalogs"
-    },
-    {
       "name": "pr-review-fix-loop",
       "source": "./pr-review-fix-loop",
       "description": "Iterative PR review + autofix loop (Ralph Loop + pr-review-toolkit + optional Codex)"
