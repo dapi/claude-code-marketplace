@@ -177,6 +177,15 @@ Task:
 
 ### Вариант: subagent-driven-dev
 
+**Если `is_structured_plan` = true** (план уже есть в спеке — пропускаем writing-plans):
+
+Вызови Skill tool:
+- skill: `"superpowers:subagent-driven-development"`
+- args (если `NEW_SESSION=true`): "План реализации сохранён в {spec_file}. Используй его как готовый план для выполнения. НЕ пиши новый план — выполняй существующий. ВАЖНО: Это выделенная сессия (--new-session)."
+- args (если `NEW_SESSION=false`): "План реализации сохранён в {spec_file}. Используй его как готовый план для выполнения. НЕ пиши новый план — выполняй существующий."
+
+**Если `is_structured_plan` = false** (нужен план):
+
 Шаг 1 — вызови Skill tool:
 - skill: `"superpowers:writing-plans"`
 - args (если `NEW_SESSION=true`): "Спека задачи сохранена в {spec_file}. Используй её как входные данные для написания плана. ВАЖНО: Это выделенная сессия (--new-session). НЕ спрашивай про способ выполнения (Execution Handoff). Пропусти выбор 'Subagent-Driven vs Parallel Session' и сразу используй Subagent-Driven подход в этой сессии."
