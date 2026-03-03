@@ -11,36 +11,36 @@ description: |
   - пользователь дал ссылку на Google Doc, GitHub issue или Docmost-документ со спецификацией
   - пользователь вставил текст спецификации и просит проверить
 
-  ️ **Уровни глубины**:
+  **Уровни глубины**:
   - `--quick` / `-q` — только критические блокеры (быстро)
   - `--standard` / `-s` — критические + высокие (по умолчанию)
   - `--deep` / `-d` — все проблемы включая средние
   - `--exhaustive` / `-e` — полный аудит с рекомендациями
   - `--no-ask` — использовать standard без вопроса (для CI/CD)
 
-  ⚡ **Ключевые слова для уровней**:
-  - "быстро проверь", "только блокеры" → quick
-  - "тщательно", "подробно", "глубоко" → deep
-  - "полный аудит", "исчерпывающий" → exhaustive
+  **Ключевые слова для уровней**:
+  - "быстро проверь", "только блокеры" -> quick
+  - "тщательно", "подробно", "глубоко" -> deep
+  - "полный аудит", "исчерпывающий" -> exhaustive
 
-   **Google Doc**:
+  **Google Doc**:
   - "проверь спеку docs.google.com/document/d/XXX"
   - "ревью этого ТЗ [ссылка на Google Doc]"
 
-   **Docmost**:
+  **Docmost**:
   - "проверь спеку https://docs.company.com/p/XXXXXXXX"
   - "ревью этого ТЗ в Docmost [ссылка]"
 
-   **GitHub Issue** (ТОЛЬКО с ревью-контекстом!):
+  **GitHub Issue** (ТОЛЬКО с ревью-контекстом!):
   - "проанализируй issue #123" (ревью-слово: "проанализируй")
   - "проверь спецификацию github.com/.../issues/456" (ревью-слово: "проверь")
   - голый "issue #123" без ревью-контекста -- НЕ триггер (github-issues или task-routing)
 
-   **Текст в сообщении**:
+  **Текст в сообщении**:
   - "проверь это ТЗ: [текст спецификации]"
   - пользователь вставил большой текст и просит ревью
 
-   **Локальный файл**:
+  **Локальный файл**:
   - "проверь спеку в docs/spec.md"
   - "сделай ревью файла requirements.txt"
 
@@ -58,177 +58,62 @@ tools: Skill
 
 # Spec Review Skill
 
-Автоактивируемый роутер для ревью спецификаций.
-Определяет источник и уровень глубины, затем вызывает команду `/spec-review`.
+Роутер для ревью спецификаций. Определяет источник и уровень глубины,
+затем ВЫЗЫВАЕТ команду `/spec-review` через Skill tool.
 
-## Логика определения уровня глубины (NEW in 1.9.0)
+## КРИТИЧЕСКИ ВАЖНО
 
-### Шаг 1: Проверить явные флаги в сообщении
+Эта skill — роутер. Твоя задача:
+1. Извлечь источник (URL, path, #number) из ОРИГИНАЛЬНОГО сообщения пользователя
+2. Определить уровень глубины (флаги или ключевые слова)
+3. Вызвать Skill tool с `skill: "spec-review"` и корректным `args`
 
-```python
-flags_map = {
-    "--quick": "--quick", "-q": "--quick",
-    "--standard": "--standard", "-s": "--standard",
-    "--deep": "--deep", "-d": "--deep",
-    "--exhaustive": "--exhaustive", "-e": "--exhaustive",
-    "--no-ask": "--no-ask"
-}
+**НЕ выводи текст описывающий вызов. ВЫПОЛНИ вызов через Skill tool.**
+**НЕ теряй URL/path из оригинального сообщения пользователя.**
 
-depth_flag = None
-extra_flags = []
+## Алгоритм
 
-for flag in flags_map:
-    if flag in user_message:
-        if flag == "--no-ask":
-            extra_flags.append("--no-ask")
-        else:
-            depth_flag = flags_map[flag]
+### 1. Извлечь источник из сообщения пользователя
 
-# Если флаг найден — добавить в args
-```
+Найди в ОРИГИНАЛЬНОМ сообщении пользователя (до загрузки этого скилла) один из:
 
-### Шаг 2: Проверить ключевые слова (если нет флага)
+| Тип | Паттерн | Пример args |
+|-----|---------|-------------|
+| Google Doc | `docs.google.com/document/d/...` | `https://docs.google.com/document/d/1abc123/edit` |
+| GitHub Issue | `github.com/.../issues/N` или `#N` с ревью-контекстом | `https://github.com/org/repo/issues/42` |
+| Docmost | `https://{domain}/p/{pageId}` | `https://docs.company.com/p/3f6f2b9d` |
+| Локальный файл | путь к файлу | `docs/spec.md` |
+| Текст в сообщении | большой блок текста (>500 символов) | _(пустая строка)_ |
 
-```python
-if not depth_flag:
-    keywords_quick = ["быстро", "только критичное", "только блокеры"]
-    keywords_deep = ["тщательно", "подробно", "глубоко", "глубокий анализ", "детально"]
-    keywords_exhaustive = ["полный аудит", "исчерпывающий", "всё проверить", "проверить всё"]
+**GitHub Issue**: активируй ТОЛЬКО при ревью-контексте (слова: "проверь", "ревью", "review", "analyze", "проанализируй", "спеку", "ТЗ"). Без ревью-контекста — это github-issues или task-routing.
 
-    if any(kw in user_message.lower() for kw in keywords_exhaustive):
-        depth_flag = "--exhaustive"
-    elif any(kw in user_message.lower() for kw in keywords_deep):
-        depth_flag = "--deep"
-    elif any(kw in user_message.lower() for kw in keywords_quick):
-        depth_flag = "--quick"
-```
+### 2. Определить уровень глубины
 
-### Шаг 3: Формировать args с флагом
+**Явные флаги** (приоритет):
 
-```python
-# Если флаг определён — добавить его перед источником
-args = ""
-if depth_flag:
-    args += depth_flag + " "
-if extra_flags:
-    args += " ".join(extra_flags) + " "
-args += source  # URL, #number, или path
-```
+| Флаг | Синоним |
+|------|---------|
+| `--quick` | `-q` |
+| `--standard` | `-s` |
+| `--deep` | `-d` |
+| `--exhaustive` | `-e` |
+| `--no-ask` | _(доп. флаг, совместим с любым уровнем)_ |
 
-## Логика определения источника
+**Ключевые слова** (если нет флага):
+- "быстро", "только критичное", "только блокеры" -> `--quick`
+- "тщательно", "подробно", "глубоко", "детально" -> `--deep`
+- "полный аудит", "исчерпывающий", "всё проверить" -> `--exhaustive`
 
-### 1. Google Doc
+### 3. Собрать args и вызвать Skill tool
 
-**Паттерн:** `docs.google.com/document/d/{DOCUMENT_ID}`
+Формат args: `[depth_flag] [--no-ask] <source>`
 
-```
-Если в сообщении есть ссылка на Google Doc:
-→ Извлечь DOCUMENT_ID
-→ Вызвать: Skill tool → skill: "spec-review", args: "{URL}"
-```
+Примеры готовых args:
+- `https://github.com/org/repo/issues/42`
+- `--quick #42`
+- `--deep docs/spec.md`
+- `--exhaustive https://docs.google.com/document/d/xxx`
+- `--no-ask #42`
+- _(пустая строка, если текст спецификации в сообщении)_
 
-### 2. GitHub Issue
-
-**Паттерны:**
-- `github.com/{owner}/{repo}/issues/{number}`
-- `#123` (в контексте репозитория)
-- `issue #123`
-
-**ВАЖНО:** Активируй на issue #NNN ТОЛЬКО при наличии ревью-контекста:
-- Слова: "проверь", "ревью", "review", "analyze", "проанализируй", "найди гапы", "нестыковки", "spec", "спеку", "ТЗ"
-- Без ревью-контекста issue #NNN обрабатывается github-issues (чтение) или task-routing (реализация)
-
-```
-Если в сообщении есть ссылка/номер GitHub issue С РЕВЬЮ-КОНТЕКСТОМ:
-→ Вызвать: Skill tool → skill: "spec-review", args: "{URL или #number}"
-```
-
-### 3. Docmost документ
-
-**Паттерны (эвристика):**
-- URL на домене, известном как Docmost workspace
-- `https://{docmost-domain}/p/{pageId}`
-- `https://{docmost-domain}/pages/{pageId}`
-
-```
-Если в сообщении есть ссылка на Docmost:
-→ Предпочесть чтение через MCP Docmost (get_page / search)
-→ Вызвать: Skill tool → skill: "spec-review", args: "{URL}"
-```
-
-### 4. Текст спецификации
-
-**Признаки:**
-- Большой блок текста (>500 символов)
-- Содержит ключевые слова: "требования", "функционал", "user story", "acceptance criteria"
-- Пользователь явно просит проверить этот текст
-
-```
-Если пользователь вставил текст спецификации:
-→ Сохранить текст во временный файл или передать напрямую
-→ Вызвать: Skill tool → skill: "spec-review", args: ""
-→ В следующем сообщении передать текст спецификации
-```
-
-### 5. Локальный файл
-
-**Паттерны:**
-- Путь к файлу: `docs/spec.md`, `./requirements.txt`
-- "файл X", "в файле X"
-
-```
-Если указан путь к файлу:
-→ Вызвать: Skill tool → skill: "spec-review", args: "{path}"
-```
-
-## Примеры активации
-
-### Пример 1: Google Doc (без флага — будет AskUserQuestion)
-```
-User: Проверь спеку https://docs.google.com/document/d/1abc123/edit
-Assistant: [Вызывает Skill tool: spec-review с args: "https://docs.google.com/document/d/1abc123/edit"]
-```
-
-### Пример 2: GitHub Issue с флагом глубины
-```
-User: Сделай быстрое ревью issue #42
-Assistant: [Вызывает Skill tool: spec-review с args: "--quick #42"]
-```
-
-### Пример 3: Docmost документ
-```
-User: Проверь спеку https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11
-Assistant: [Вызывает Skill tool: spec-review с args: "https://docs.company.com/p/3f6f2b9d-9c2f-4d2f-a95e-2f3b7c6a9d11"]
-```
-
-### Пример 4: Явный флаг
-```
-User: /spec-review --deep https://github.com/owner/repo/issues/123
-Assistant: [Вызывает Skill tool: spec-review с args: "--deep https://github.com/owner/repo/issues/123"]
-```
-
-### Пример 5: Ключевое слово в промпте
-```
-User: Тщательно проанализируй спеку в docs/spec.md
-Assistant: [Вызывает Skill tool: spec-review с args: "--deep docs/spec.md"]
-```
-
-### Пример 6: Флаг --no-ask для CI/CD
-```
-User: /spec-review --no-ask #42
-Assistant: [Вызывает Skill tool: spec-review с args: "--no-ask #42"]
-```
-
-### Пример 7: Полный аудит
-```
-User: Сделай полный аудит этой спецификации https://docs.google.com/document/d/xxx
-Assistant: [Вызывает Skill tool: spec-review с args: "--exhaustive https://docs.google.com/document/d/xxx"]
-```
-
-### Пример 8: Текст спецификации
-```
-User: Проверь это ТЗ:
-## Функционал
-1. Пользователь может регистрироваться
-2. Пользователь может логиниться
-...
+**Теперь вызови Skill tool** с `skill: "spec-review"` и собранным `args`.
