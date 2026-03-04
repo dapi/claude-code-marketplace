@@ -1,7 +1,7 @@
 ---
 description: Ревью спецификации или ТЗ на гапы, нестыковки, противоречия и оценку объёма
 argument-hint: [--quick|-q|--standard|-s|--deep|-d|--exhaustive|-e|--no-ask] [Google Doc URL | GitHub Issue URL | Docmost URL | file path]
-version: "1.10.0"
+version: "1.11.0"
 ---
 
 # Spec Review Command
@@ -148,7 +148,7 @@ version: "1.10.0"
 ## Переменные состояния
 
 ```
-VERSION = "1.10.0"                # Версия команды (синхронизирована с frontmatter)
+VERSION = "1.11.0"                # Версия команды (синхронизирована с frontmatter)
 iteration = 1                    # Текущая итерация (начинаем с 1)
 spec_content = ""                # Текст спецификации
 issues_history = []              # История проблем по итерациям
@@ -687,6 +687,32 @@ all_issues = data_result.issues
            + (axes_result.issues если запускался spec-axes)
 ```
 
+### 3.2.1 Фильтрация ранее обработанных issues (NEW in 1.11.0)
+
+```python
+# При повторных итерациях — исключить issues, уже обработанные пользователем.
+# Это предотвращает повторный показ rejected/deferred/fixed issues в следующих итерациях.
+if iteration > 1:
+    previously_resolved_ids = {
+        issue.id
+        for issue in issues_history
+        if issue.status in ["rejected", "deferred", "fixed", "reclassified"]
+    }
+    # Удалить из all_issues — агенты не знают о решениях предыдущих итераций
+    all_issues = [i for i in all_issues if i.id not in previously_resolved_ids]
+
+    # Для reclassified — сохранить issue, но взять severity из issues_history
+    # (агент мог вернуть старый severity после ре-анализа)
+    reclassified = {
+        issue.id: issue.severity
+        for issue in issues_history
+        if issue.status == "reclassified"
+    }
+    for issue in all_issues:
+        if issue.id in reclassified:
+            issue.severity = reclassified[issue.id]  # сохранить пониженный severity
+```
+
 ### 3.3 Сортировка по severity
 
 ```
@@ -1109,6 +1135,18 @@ ELIF has_blocking_issues:
    → Запросить причину
    → Добавить комментарий в спецификацию
    → Пометить как rejected
+
+После обработки каждой проблемы → **сохранить в issues_history**:
+
+```python
+issues_history.append({
+    "id": issue.id,
+    "status": issue.status,           # fixed | deferred | reclassified | rejected
+    "severity": issue.severity,       # актуальный severity (после reclassified)
+    "iteration": iteration,
+    "comment": issue.comment
+})
+```
 
 После обработки всех → вернуться к Gate Check
 
