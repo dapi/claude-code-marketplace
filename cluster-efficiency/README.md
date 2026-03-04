@@ -17,40 +17,17 @@ Launch a comprehensive cluster analysis.
 ```
 /cluster-efficiency
 /cluster-efficiency --deep
+/cluster-efficiency --context=production --save
+/cluster-efficiency --namespace=production --focus=workloads
+/cluster-efficiency --prometheus
 ```
 
-### Skill: cluster-efficiency
-
-Activates automatically when you ask about cluster resource efficiency.
-
-### Agents
-
-| Agent | Purpose |
-|-------|---------|
-| `cluster-efficiency-orchestrator` | Analysis orchestration |
-| `cluster-node-analyzer` | Node efficiency analysis |
-| `cluster-workload-analyzer` | Workload analysis (requests vs actual) |
-| `cluster-karpenter-analyzer` | Karpenter consolidation and provisioning |
-| `cluster-oom-analyzer` | OOM kill analysis |
-
-## Usage
-
-```
-/cluster-efficiency
-"analyze cluster efficiency"
-"проанализируй эффективность кластера"
-"find over-provisioned resources"
-"почему ноды не консолидируются"
-```
+With `--deep`, the command spawns parallel subagents for node, workload, Karpenter, and OOM analysis.
 
 ## Requirements
 
 - `kubectl` configured with cluster access
 - Prometheus/metrics-server (for utilization data)
-
-## Documentation
-
-See [skills/cluster-efficiency/SKILL.md](./skills/cluster-efficiency/SKILL.md)
 
 ## License
 
