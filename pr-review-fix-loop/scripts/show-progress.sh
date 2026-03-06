@@ -33,8 +33,10 @@ if [[ ! -f "$STATS_FILE" ]] || ! jq empty "$STATS_FILE" 2>/dev/null; then
   if [[ -n "$RESULT" ]]; then
     case "$RESULT" in
       SUCCESS)  printf "  Result:     ${GREEN}[*] %s${RESET}\n" "${MESSAGE:-REVIEW CLEAN}" >&2 ;;
-      STAGNANT) printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-STAGNANT}" >&2 ;;
-      LIMIT)    printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-LIMIT REACHED}" >&2 ;;
+      STAGNANT) printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-STAGNANT}" >&2
+                printf "  ${YELLOW}Issues колеблются без снижения. Анализ причин ниже.${RESET}\n" >&2 ;;
+      LIMIT)    printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-LIMIT REACHED}" >&2
+                printf "  ${YELLOW}Лимит итераций исчерпан. Оставшиеся issues ниже.${RESET}\n" >&2 ;;
       ERROR)    printf "  Result:     ${RED}[X] %s${RESET}\n" "${MESSAGE:-ERROR}" >&2 ;;
       *)        printf "  Result:     [?] %s (%s)\n" "${MESSAGE:-$RESULT}" "$RESULT" >&2 ;;
     esac
@@ -182,8 +184,10 @@ fi
 if [[ -n "$RESULT" ]]; then
   case "$RESULT" in
     SUCCESS)  printf "  Result:     ${GREEN}[*] %s${RESET}\n" "${MESSAGE:-REVIEW CLEAN}" >&2 ;;
-    STAGNANT) printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-STAGNANT}" >&2 ;;
-    LIMIT)    printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-LIMIT REACHED}" >&2 ;;
+    STAGNANT) printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-STAGNANT}" >&2
+              printf "  ${YELLOW}Issues колеблются без снижения. Анализ причин ниже.${RESET}\n" >&2 ;;
+    LIMIT)    printf "  Result:     ${YELLOW}[!] %s${RESET}\n" "${MESSAGE:-LIMIT REACHED}" >&2
+              printf "  ${YELLOW}Лимит итераций исчерпан. Оставшиеся issues ниже.${RESET}\n" >&2 ;;
     ERROR)    printf "  Result:     ${RED}[X] %s${RESET}\n" "${MESSAGE:-ERROR}" >&2 ;;
     *)        printf "  Result:     [?] %s (%s)\n" "${MESSAGE:-$RESULT}" "$RESULT" >&2 ;;
   esac

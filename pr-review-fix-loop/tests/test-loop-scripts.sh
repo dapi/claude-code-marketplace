@@ -2051,6 +2051,37 @@ else
 fi
 teardown
 
+echo ""
+echo "=== show-progress.sh enhanced banners ==="
+
+# Test SP1: STAGNANT banner includes explanation
+setup
+create_stats_file 20
+jq '.iterations = [{"issues_count":5,"duration_sec":60},{"issues_count":3,"duration_sec":60},{"issues_count":6,"duration_sec":60}]' \
+  .claude/pr-review-loop-stats.local.json > .claude/tmp.json && mv .claude/tmp.json .claude/pr-review-loop-stats.local.json
+BANNER=$(bash "$SHOW_PROGRESS" --result STAGNANT --message "Promise detected: REVIEW STAGNANT" 2>&1)
+ok=true
+echo "$BANNER" | grep -q "колеблются" || ok=false
+if $ok; then
+  pass "STAGNANT banner includes explanation"
+else
+  fail "STAGNANT banner includes explanation" "banner=$BANNER"
+fi
+teardown
+
+# Test SP2: LIMIT banner includes explanation
+setup
+create_stats_file 5
+BANNER=$(bash "$SHOW_PROGRESS" --result LIMIT --message "Max iterations (5) reached" 2>&1)
+ok=true
+echo "$BANNER" | grep -q "Лимит" || ok=false
+if $ok; then
+  pass "LIMIT banner includes explanation"
+else
+  fail "LIMIT banner includes explanation" "banner=$BANNER"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
