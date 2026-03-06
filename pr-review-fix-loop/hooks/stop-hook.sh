@@ -122,6 +122,8 @@ fi
 if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
   write_exit_reason "LIMIT" "Max iterations ($MAX_ITERATIONS) reached"
   rm -f "$STATE_FILE"
+  # Return block response with post-loop prompt
+  bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "LIMIT" --message "Max iterations ($MAX_ITERATIONS) reached"
   exit 0
 fi
 
@@ -188,6 +190,8 @@ if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
         esac
         write_exit_reason "$EXIT_TYPE" "Promise detected: $p"
         rm -f "$STATE_FILE"
+        # Return block response with post-loop prompt
+        bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "$EXIT_TYPE" --message "Promise detected: $p"
         exit 0
       fi
     done

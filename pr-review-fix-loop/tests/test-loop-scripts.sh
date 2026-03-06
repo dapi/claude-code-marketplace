@@ -318,7 +318,7 @@ else
 fi
 teardown
 
-# Test 16: REVIEW CLEAN -> [EXIT:SUCCESS] in report
+# Test 16: REVIEW CLEAN -> [EXIT:SUCCESS] in report + block response
 setup
 create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
 touch .claude/pr-review-loop-report.local.md
@@ -330,14 +330,15 @@ ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 [[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
 grep -q '\[OK\] \[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
 if $ok; then
-  pass "REVIEW CLEAN -> [EXIT:SUCCESS] in report"
+  pass "REVIEW CLEAN -> [EXIT:SUCCESS] in report + block response"
 else
-  fail "REVIEW CLEAN -> [EXIT:SUCCESS] in report" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+  fail "REVIEW CLEAN -> [EXIT:SUCCESS] in report + block response" "exit=$EXIT_CODE output=$OUTPUT report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 
-# Test 17: REVIEW STAGNANT -> [EXIT:STAGNANT] in report
+# Test 17: REVIEW STAGNANT -> [EXIT:STAGNANT] in report + block response
 setup
 create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
 touch .claude/pr-review-loop-report.local.md
@@ -349,14 +350,15 @@ ok=true
 [[ $EXIT_CODE -eq 0 ]] || ok=false
 [[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
 grep -q '\[!!\] \[EXIT:STAGNANT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
 if $ok; then
-  pass "REVIEW STAGNANT -> [EXIT:STAGNANT] in report"
+  pass "REVIEW STAGNANT -> [EXIT:STAGNANT] in report + block response"
 else
-  fail "REVIEW STAGNANT -> [EXIT:STAGNANT] in report" "exit=$EXIT_CODE report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+  fail "REVIEW STAGNANT -> [EXIT:STAGNANT] in report + block response" "exit=$EXIT_CODE output=$OUTPUT report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 
-# Test 18: Max iterations -> [EXIT:LIMIT] in report
+# Test 18: Max iterations -> [EXIT:LIMIT] in report + block response
 setup
 create_state_file 5 5 "null"
 touch .claude/pr-review-loop-report.local.md
@@ -364,10 +366,11 @@ OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
 ok=true
 grep -q '\[!!\] \[EXIT:LIMIT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
 grep -q 'Max iterations (5) reached' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
 if $ok; then
-  pass "max iterations -> [EXIT:LIMIT] with reason in report"
+  pass "max iterations -> [EXIT:LIMIT] with reason + block response"
 else
-  fail "max iterations -> [EXIT:LIMIT] with reason in report" "report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
+  fail "max iterations -> [EXIT:LIMIT] with reason + block response" "output=$OUTPUT report=$(cat .claude/pr-review-loop-report.local.md 2>/dev/null)"
 fi
 teardown
 
