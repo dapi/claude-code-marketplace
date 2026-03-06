@@ -11,6 +11,7 @@ STOP_HOOK="$SCRIPT_DIR/hooks/stop-hook.sh"
 CHECK_GITIGNORE="$SCRIPT_DIR/scripts/check-gitignore.sh"
 RECORD_ITERATION="$SCRIPT_DIR/scripts/record-iteration.sh"
 SHOW_PROGRESS="$SCRIPT_DIR/scripts/show-progress.sh"
+POST_LOOP_PROMPT="$SCRIPT_DIR/scripts/post-loop-prompt.sh"
 
 PASSED=0
 FAILED=0
@@ -1985,6 +1986,65 @@ if [[ "$STATE_STARTED" = "$STATS_STARTED" ]]; then
   pass "stats started_at matches state file started_at"
 else
   fail "stats started_at matches state file started_at" "state=$STATE_STARTED stats=$STATS_STARTED"
+fi
+teardown
+
+echo ""
+echo "=== post-loop-prompt.sh ==="
+
+# Test P1: SUCCESS generates block response with summary prompt
+setup
+create_stats_file 10
+OUTPUT=$(bash "$POST_LOOP_PROMPT" --exit-type SUCCESS --message "Promise detected: REVIEW CLEAN" 2>/dev/null)
+ok=true
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.reason | length > 50' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.reason | test("REVIEW CLEAN")' >/dev/null 2>&1 || ok=false
+if $ok; then
+  pass "SUCCESS -> block response with summary prompt"
+else
+  fail "SUCCESS -> block response with summary prompt" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test P2: STAGNANT generates block response with stagnation analysis prompt
+setup
+create_stats_file 20
+OUTPUT=$(bash "$POST_LOOP_PROMPT" --exit-type STAGNANT --message "Promise detected: REVIEW STAGNANT" 2>/dev/null)
+ok=true
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.reason | test("stagnaci|СТАГНАЦИЯ")' >/dev/null 2>&1 || ok=false
+if $ok; then
+  pass "STAGNANT -> block response with stagnation prompt"
+else
+  fail "STAGNANT -> block response with stagnation prompt" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test P3: LIMIT generates block response
+setup
+create_stats_file 5
+OUTPUT=$(bash "$POST_LOOP_PROMPT" --exit-type LIMIT --message "Max iterations (5) reached" 2>/dev/null)
+ok=true
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.reason | test("ЛИМИТ")' >/dev/null 2>&1 || ok=false
+if $ok; then
+  pass "LIMIT -> block response with limit prompt"
+else
+  fail "LIMIT -> block response with limit prompt" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test P4: ERROR generates block response
+setup
+OUTPUT=$(bash "$POST_LOOP_PROMPT" --exit-type ERROR --message "State corrupted" 2>/dev/null)
+ok=true
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+echo "$OUTPUT" | jq -e '.reason | test("State corrupted")' >/dev/null 2>&1 || ok=false
+if $ok; then
+  pass "ERROR -> block response with error prompt"
+else
+  fail "ERROR -> block response with error prompt" "output=$(echo "$OUTPUT" | head -c 200)"
 fi
 teardown
 
