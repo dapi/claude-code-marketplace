@@ -1,7 +1,7 @@
 {
   "name": "pr-review-fix-loop",
   "description": "Multi-language iterative PR review + autofix loop (built-in iteration engine + pr-review-toolkit + optional Codex)",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
