@@ -79,12 +79,9 @@ The stop-hook evaluates these conditions in order:
        |yes --> EXIT:LIMIT
        |no
        v
-  <promise>REVIEW CLEAN</promise> found?
-       |yes --> EXIT:SUCCESS
-       |no
-       v
-  <promise>REVIEW STAGNANT</promise> found?
-       |yes --> EXIT:STAGNANT
+  <promise> tag found? (REVIEW CLEAN or REVIEW STAGNANT)
+       |yes, contains STAGNANT --> EXIT:STAGNANT
+       |yes, otherwise         --> EXIT:SUCCESS
        |no
        v
   fallback: check_report_for_completion()
@@ -107,7 +104,7 @@ The stop-hook evaluates these conditions in order:
 | File | Created by | Read by | Deleted by | Lifecycle |
 |-|-|-|-|-|
 | `.claude/pr-review-fix-loop.local.md` | `setup-loop.sh` | `stop-hook.sh` (frontmatter + prompt) | `stop-hook.sh` on exit | Per-loop session |
-| `.claude/pr-review-loop-report.local.md` | `setup-loop.sh` | Agent, `stop-hook.sh`, `post-loop-prompt.sh` | Never (user artifact) | Persistent |
+| `.claude/pr-review-loop-report.local.md` | `setup-loop.sh` | Agent, `stop-hook.sh`, `post-loop-prompt.sh` | `setup-loop.sh` on next run | Per-loop session |
 | `.claude/pr-review-loop-stats.local.json` | `setup-loop.sh` | `record-iteration.sh`, `show-progress.sh` | `setup-loop.sh` on next run | Per-loop session |
 | `.claude/pr-review-loop-debug.local.log` | `stop-hook.sh` (dbg()) | Developer | Never | Persistent |
 | `.codex-review.md` | Agent (codex run) | Agent | `setup-loop.sh` on next run | Per-loop session |
