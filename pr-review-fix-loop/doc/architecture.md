@@ -17,7 +17,7 @@ The core idea: a Claude Code Stop hook intercepts agent exit, evaluates whether 
 | `scripts/setup-loop.sh` | Creates state/report/stats files, outputs initial instructions |
 | `scripts/assemble-prompt.sh` | Builds iteration prompt text from parameters (5 steps) |
 | `scripts/post-loop-prompt.sh` | Generates post-loop `block` JSON for SUCCESS/STAGNANT/LIMIT/ERROR |
-| `scripts/record-iteration.sh` | Appends JSON record to stats file (iteration N, issues, duration) |
+| `scripts/record-iteration.sh` | Appends JSON record to stats file (n, issues_count, completed_at, duration_sec) |
 | `scripts/show-progress.sh` | Renders ASCII progress banner to stderr |
 | `scripts/detect-project.sh` | Auto-detects stack (Ruby/Node/Python/Go/Rust), returns JSON |
 | `scripts/detect-base-branch.sh` | Determines base branch for Codex diff |
@@ -211,5 +211,5 @@ Each iteration executes these steps:
 | 3e | Record fixes | Write fix results to report; record any USER DECISIONs |
 | 3.5 | Lint | (optional, `--lint`) Run auto-detected linter |
 | 4 | Test | Run tests for affected files |
-| 4.5 | Commit | `fix: address PR review issues (iteration N)` (no push) |
+| 4.5 | Commit | `fix: address PR review issues (iteration N)` with Co-Authored-By trailer (no push) |
 | 5 | Evaluate | Write `ITERATION N COMPLETED issues_count=K`, check CLEAN/STAGNANT/CONTINUE, emit `<promise>` tag |
