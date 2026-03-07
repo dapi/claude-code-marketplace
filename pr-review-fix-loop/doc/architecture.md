@@ -71,12 +71,16 @@ The stop-hook evaluates these conditions in order:
        |yes --> exit 0 (loop not active)
        |no
        v
-  transcript missing or empty?
+  iteration >= max_iterations?
+       |yes --> EXIT:LIMIT
+       |no
+       v
+  transcript missing?
        |yes --> WARN + continue_loop
        |no
        v
-  iteration >= max_iterations?
-       |yes --> EXIT:LIMIT
+  last assistant output empty?
+       |yes --> WARN + continue_loop
        |no
        v
   <promise> tag found? (REVIEW CLEAN or REVIEW STAGNANT)
@@ -117,15 +121,15 @@ All `.local.md` files are expected to be in `.gitignore`.
 The report file (`.claude/pr-review-loop-report.local.md`) uses structured markers:
 
 ```
-## ITERATION 1 START
+ITERATION 1 START
 ... iteration content ...
-## ITERATION 1 COMPLETED issues_count=5
+ITERATION 1 COMPLETED issues_count=5
 
-## ITERATION 2 START
+ITERATION 2 START
 ... iteration content ...
-## ITERATION 2 COMPLETED issues_count=3
+ITERATION 2 COMPLETED issues_count=3
 
-## USER DECISION iteration=2 -- file: src/foo.ts -- topic: naming -- choice: SKIP -- context: user prefers current name
+USER DECISION iteration=2 -- file: src/foo.ts -- topic: naming -- choice: SKIP -- context: user prefers current name
 
 [OK] [EXIT:SUCCESS] All issues resolved after 3 iterations
 ```
