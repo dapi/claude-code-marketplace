@@ -83,6 +83,10 @@ Standalone code review via OpenAI Codex CLI.
 - **direnv** -- auto-detected if `.envrc` exists
 - **codex** CLI -- OpenAI Codex, for `--codex` flag (`npm install -g @openai/codex`)
 
+## Architecture
+
+See [doc/architecture.md](./doc/architecture.md) for the full architecture reference: component map, data flow, state machine, artifacts, report format, key algorithms, and iteration prompt structure.
+
 ## Install
 
 ```
