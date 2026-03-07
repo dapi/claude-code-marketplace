@@ -2082,6 +2082,139 @@ else
 fi
 teardown
 
+echo "=== stop-hook.sh report fallback ==="
+
+# Test FB1: Fallback detects CLEAN from report when promise tag missing
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 START
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+ITERATION 2 COMPLETED issues_count=0
+REPORT
+# Transcript has text WITHOUT promise tag (the bug scenario)
+create_transcript "All issues fixed. Review is clean now."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' | grep -qi "REVIEW CLEAN\|summary\|сводк"; then
+  pass "Fallback detects CLEAN from report (issues_count=0)"
+else
+  fail "Fallback detects CLEAN from report (issues_count=0)" "output=$OUTPUT"
+fi
+# State file should be removed
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "Fallback CLEAN removes state file"
+else
+  fail "Fallback CLEAN removes state file"
+fi
+# Report should have exit marker
+if grep -q "EXIT:SUCCESS.*Report fallback" .claude/pr-review-loop-report.local.md; then
+  pass "Fallback CLEAN writes exit marker to report"
+else
+  fail "Fallback CLEAN writes exit marker to report"
+fi
+teardown
+
+# Test FB2: Fallback detects STAGNANT from report
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=4
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=3
+ITERATION 5 COMPLETED issues_count=4
+ITERATION 6 COMPLETED issues_count=5
+REPORT
+create_transcript "Still fixing issues, 5 remaining."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "stagnation\|стагнац"; then
+  pass "Fallback detects STAGNANT from report"
+else
+  fail "Fallback detects STAGNANT from report" "output=$OUTPUT"
+fi
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "Fallback STAGNANT removes state file"
+else
+  fail "Fallback STAGNANT removes state file"
+fi
+teardown
+
+# Test FB3: No fallback when current iteration has no COMPLETED marker
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=2
+ITERATION 2 COMPLETED issues_count=0
+ITERATION 3 START
+REPORT
+create_transcript "Working on iteration 3..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+# Should continue loop (block), not exit with fallback
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary"; then
+  pass "No fallback when current iteration has no COMPLETED marker"
+else
+  fail "No fallback when current iteration has no COMPLETED marker" "decision=$DECISION reason=$(echo "$REASON" | head -c 80)"
+fi
+# State file should still exist
+if [[ -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "State file preserved when no fallback triggered"
+else
+  fail "State file preserved when no fallback triggered"
+fi
+teardown
+
+# Test FB4: Promise detection still takes priority over fallback
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=1
+ITERATION 2 COMPLETED issues_count=0
+REPORT
+create_transcript "<promise>REVIEW CLEAN</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md; then
+  pass "Promise detection takes priority over fallback"
+else
+  fail "Promise detection takes priority over fallback"
+fi
+teardown
+
+# Test FB5: Fallback does NOT trigger for non-zero issues_count
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 COMPLETED issues_count=2
+REPORT
+create_transcript "Fixed some issues, 2 remaining."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && [[ -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "No fallback for non-zero issues_count (continues loop)"
+else
+  fail "No fallback for non-zero issues_count (continues loop)" "decision=$DECISION state_exists=$(test -f .claude/pr-review-fix-loop.local.md && echo yes || echo no)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
