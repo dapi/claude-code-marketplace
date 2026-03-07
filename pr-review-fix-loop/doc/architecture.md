@@ -23,6 +23,7 @@ The core idea: a Claude Code Stop hook intercepts agent exit, evaluates whether 
 | `scripts/detect-base-branch.sh` | Determines base branch for Codex diff |
 | `scripts/check-gitignore.sh` | Checks if `*.local.md` patterns are in `.gitignore` |
 | `skills/pr-review-fix-loop/SKILL.md` | Auto-activating skill (universal trigger) |
+| `tests/*.sh` | Automated test suite (loop scripts, prompt assembly, project/branch detection) |
 
 ## 3. Data Flow
 
