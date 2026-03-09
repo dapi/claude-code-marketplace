@@ -1,6 +1,16 @@
 {
-  "description": "PR Review Fix Loop stop hook for iteration management",
+  "description": "PR Review Fix Loop hooks: cleanup stale state on start, iteration management on stop",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/cleanup-stale-state.sh || true"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
