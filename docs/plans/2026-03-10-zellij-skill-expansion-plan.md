@@ -4,7 +4,7 @@
 
 **Goal:** Rewrite `zellij-tab-pane` skill into `zellij` skill covering 7 domains (~48 unique commands) of zellij 0.44, replacing the current 4-mode structure.
 
-**Architecture:** Single mega-skill with domain-based sections. Decision tree at top routes to correct section. Error diagnostics at bottom with two templates (inside-session vs outside-session).
+**Architecture:** Single mega-skill with domain-based sections. Decision tree at top routes to correct section. Error diagnostics at bottom with three templates (session-required action, session-required top-level, standalone top-level).
 
 **Tech Stack:** Markdown (SKILL.md), YAML frontmatter, bash code blocks
 
@@ -375,7 +375,7 @@ User: "send ctrl+c to pane terminal_3"
 
 **Step 12: Write Error Diagnostics and Dependencies**
 
-Two error templates based on command type:
+Three error templates based on command type:
 
 ```markdown
 ## Error Diagnostics
@@ -509,7 +509,18 @@ zellij action new-tab --name "$TAB_NAME" --cwd "$PROJECT_DIR" -- bash "$SCRIPT" 
 }
 ```
 
-**In a new pane** (for both simple and complex):
+**In a new pane (simple prompt):**
+```markdown
+zellij run -- claude --dangerously-skip-permissions "$PROMPT" || {
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v claude &>/dev/null; then echo "claude not found in PATH"
+  else echo "Exit code: $_rc"
+  fi
+}
+```
+
+**In a new pane (complex prompt):**
 ```markdown
 zellij run -- bash "$SCRIPT" || {
   _rc=$?
@@ -632,7 +643,7 @@ Minimum 54 positive (6 per domain x 9 categories), 10 negative. EN + RU.
 
 ```bash
 git add zellij-workflow/skills/zellij/TRIGGER_EXAMPLES.md
-git commit -m "Add zellij TRIGGER_EXAMPLES.md: 48+ examples across 7 domains"
+git commit -m "Add zellij TRIGGER_EXAMPLES.md: 54+ examples across 7 domains"
 ```
 
 ---
