@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Rewrite `zellij-tab-pane` skill into `zellij` skill covering 7 domains (~38 commands) of zellij 0.44, replacing the current 4-mode structure.
+**Goal:** Rewrite `zellij-tab-pane` skill into `zellij` skill covering 7 domains (~48 unique commands) of zellij 0.44, replacing the current 4-mode structure.
 
 **Architecture:** Single mega-skill with domain-based sections. Decision tree at top routes to correct section. Error diagnostics at bottom with two templates (inside-session vs outside-session).
 
@@ -11,6 +11,15 @@
 **Key simplification:** `write-chars` completely eliminated from skill and commands. All modes use `new-tab -- CMD` (verified on zellij 0.44). `write-chars` not documented at all — if Claude needs to type into existing pane, it can use `send-keys`.
 
 **Quoting caveat:** For Claude session prompts with special characters (quotes, `$`, backticks), use an intermediate script via `bash -c` or `mktemp`. Simple prompts work directly.
+
+**Timeout policy:** `timeout 5` removed from all commands. Rationale: `new-tab -- CMD` is non-blocking (returns immediately after creating tab), unlike the old `write-chars` chain that could hang mid-sequence. Top-level commands (`list-sessions`, `attach`) are also fast. If a command hangs, the user can Ctrl+C — an explicit timeout adds complexity without benefit for non-blocking operations.
+
+**Error handling convention:** Three templates based on command type:
+1. `zellij action ...` and session-required top-level (`zellij run`, `zellij edit`) -> check `$ZELLIJ`
+2. Standalone top-level (`list-sessions`, `attach`, `kill-session`, `delete-session`) -> no `$ZELLIJ` check
+3. All use `_rc=$?` immediately after `||` to preserve the original exit code
+
+Domain-specific checks (e.g. `command -v start-issue`, `command -v claude`) go in `elif` branches where relevant. No `command -v zellij` check — if the command ran and failed, zellij is in PATH.
 
 ---
 
@@ -23,9 +32,10 @@
 **Step 1: Rename directory**
 
 ```bash
-cd zellij-workflow/skills
-mv zellij-tab-pane zellij
+git mv zellij-workflow/skills/zellij-tab-pane zellij-workflow/skills/zellij
 ```
+
+Note: `git mv` preserves history and stages the rename automatically. The existing `TRIGGER_EXAMPLES.md` is carried over by the rename — Task 3 overwrites it with the expanded version.
 
 **Step 2: Write YAML frontmatter**
 
@@ -43,14 +53,16 @@ description: |
   "сохрани layout", "редактировать файл", "отправь ctrl+c"
 
   TRIGGERS: zellij, zellij tab, zellij pane, zellij session,
+  zellij multiplexer, terminal multiplexer,
   floating pane, fullscreen, layout,
   вкладка zellij, панель zellij, сессия zellij, плавающ, раскладка,
+  мультиплексер, терминальный мультиплексер,
   open tab, new tab, new pane, list sessions, switch session,
   close tab, close pane, rename pane, rename tab,
   toggle floating, dump layout, edit file in zellij, send keys,
-  resize pane, move focus, go to tab,
+  resize pane, move focus, go to tab, attach session, kill session,
   открой вкладку, новая панель, список сессий, закрой вкладку,
-  закрой панель, переименуй вкладку
+  закрой панель, переименуй вкладку, подключись к сессии
 allowed-tools: Bash
 ---
 ```
@@ -76,7 +88,7 @@ Request -> identify domain:
   pane/панель + close/rename/move/resize/focus    -> Panes: Manage
   floating/fullscreen/плавающ                     -> Floating & Fullscreen
   layout/раскладка                                -> Layout
-  edit/редакт + file                              -> Edit
+  edit/редакт + file                              -> Edit (NB: `zellij edit`, not `zellij action`)
   send-keys/paste/dump-screen/clear               -> Input/Output
 
 **Ambiguity rules:**
@@ -117,7 +129,7 @@ zellij delete-all-sessions
 
 **Switch session:**
 zellij action switch-session NAME
-zellij action switch-session NAME --cwd /path --layout LAYOUT
+zellij action switch-session NAME --cwd /path --layout LAYOUT   # verify flags on 0.44
 
 **Rename current session:**
 zellij action rename-session NEW_NAME
@@ -128,6 +140,8 @@ zellij action rename-session NEW_NAME
 Subsections: Create, Query, Navigate, Manage.
 
 Key: `new-tab -- CMD` replaces `write-chars` hack for all modes.
+
+NOTE on code format: Commands in SKILL.md should be in ` ```bash ``` ` code blocks (matching current SKILL.md style), not plain text. The plan shows them inline for brevity.
 
 ```markdown
 ## Tabs
@@ -169,25 +183,23 @@ zellij action new-tab --layout /path/to/layout.kdl --name "$NAME"
 ### Query tabs
 zellij action list-tabs                  # table format
 zellij action list-tabs --json           # JSON
-zellij action list-tabs --json --all     # all fields
-zellij action current-tab-info           # active tab name + ID
-zellij action current-tab-info --json    # full JSON
+zellij action query-tab-names            # tab names (verify on 0.44)
 
 ### Navigate tabs
 zellij action go-to-tab-name NAME
-zellij action go-to-tab-name NAME --create   # create if missing
+zellij action go-to-tab-name NAME --create   # create if missing (verify flag)
 zellij action go-to-tab INDEX                # by 1-based index
 zellij action go-to-next-tab
 zellij action go-to-previous-tab
 
 ### Manage tabs
 zellij action close-tab                      # close current
-zellij action close-tab-by-id ID             # close by stable ID
 zellij action rename-tab NEW_NAME            # rename current
-zellij action rename-tab-by-id ID NEW_NAME
 zellij action undo-rename-tab
 zellij action move-tab left|right
 zellij action toggle-active-sync-tab         # broadcast input to all panes
+
+NOTE: Verify on 0.44: close-tab-by-id, rename-tab-by-id may not exist. If absent, omit.
 ```
 
 **Step 6: Write Panes section**
@@ -197,12 +209,12 @@ zellij action toggle-active-sync-tab         # broadcast input to all panes
 
 ### Create pane
 zellij action new-pane                                # auto-placed
-zellij action new-pane -d right|down                  # directional
+zellij action new-pane -d right|down                  # directional (verify -d flag)
 zellij action new-pane -f                             # floating
 zellij action new-pane -f --width 50% --height 50%    # sized floating
-zellij action new-pane -f --pinned true               # always on top
+zellij action new-pane -f --pinned                    # always on top (verify flag)
 zellij action new-pane -i                             # in-place (suspends current)
-zellij action new-pane --stacked                      # stacked
+zellij action new-pane --stacked                      # stacked (verify flag)
 zellij action new-pane -n "name" -- CMD               # with command
 zellij action new-pane --cwd /path -- CMD             # with cwd
 
@@ -212,17 +224,14 @@ zellij run -f -- CMD                           # floating
 zellij run -i -- CMD                           # in-place
 zellij run -n "name" --cwd /path -- CMD        # named, with cwd
 zellij run -c -- CMD                           # close on exit
-zellij run -s -- CMD                           # start suspended
-zellij run --block-until-exit -- CMD           # block caller until command finishes
+zellij run -s -- CMD                           # start suspended (verify flag)
+zellij run --block-until-exit -- CMD           # block caller until command finishes (verify flag)
 
 ### Query panes
 zellij action list-panes                  # table
-zellij action list-panes --json           # JSON
-zellij action list-panes --json --all     # all fields
-zellij action list-panes --command        # include running command
-zellij action list-panes --geometry       # position/size
-zellij action list-panes --state          # focused/floating/exited
-zellij action list-panes --tab            # include tab info
+zellij action list-panes --json           # JSON (includes command, geometry, state, tab)
+
+NOTE: `list-panes --json` returns all fields at once. No per-field filters exist.
 
 ### Manage panes
 zellij action close-pane
@@ -234,9 +243,10 @@ zellij action focus-previous-pane
 zellij action move-pane [right|left|up|down]
 zellij action move-pane-backwards
 zellij action resize increase|decrease [right|left|up|down]
-zellij action stack-panes -- terminal_1 terminal_2 plugin_3
-zellij action set-pane-color --bg "#001a3a" --fg "#00e000"
-zellij action set-pane-color --reset
+NOTE: Verify on 0.44 before including:
+  zellij action stack-panes -- terminal_1 terminal_2 plugin_3  (syntax may differ)
+  zellij action set-pane-color ...  (args may be positional, not --bg/--fg)
+  zellij action change-floating-pane-coordinates ...  (verify arg names)
 ```
 
 **Step 7: Write Floating & Fullscreen section**
@@ -252,8 +262,8 @@ zellij action hide-floating-panes --tab-id ID
 zellij action toggle-pane-embed-or-floating            # convert focused pane
 zellij action toggle-pane-pinned                       # pin/unpin floating pane
 zellij action toggle-fullscreen                        # fullscreen focused pane
-zellij action change-floating-pane-coordinates \
-  --pane-id terminal_1 -x 10% -y 10% --width 80% --height 80%
+
+NOTE: `change-floating-pane-coordinates` — verify exact arg names on 0.44 before including.
 ```
 
 **Step 8: Write Layout section**
@@ -267,9 +277,9 @@ zellij action dump-layout > layout.kdl                 # to file (relative to CW
 
 ### Apply layout
 zellij action override-layout /path/to/layout.kdl
-zellij action override-layout /path/to/layout.kdl --apply-only-to-active-tab
-zellij action override-layout /path/to/layout.kdl --retain-existing-terminal-panes
-zellij action override-layout /path/to/layout.kdl --retain-existing-plugin-panes
+zellij action override-layout /path/to/layout.kdl --apply-only-to-active-tab          # verify flag
+zellij action override-layout /path/to/layout.kdl --retain-existing-terminal-panes   # verify flag
+zellij action override-layout /path/to/layout.kdl --retain-existing-plugin-panes     # verify flag
 
 ### Cycle swap layouts
 zellij action next-swap-layout
@@ -317,7 +327,7 @@ zellij action clear                                        # clear focused pane 
 
 **Step 11: Write Examples section**
 
-7 examples covering all domains:
+10 examples covering all 7 domains (at least one per domain):
 
 ```markdown
 ## Examples
@@ -326,9 +336,17 @@ zellij action clear                                        # clear focused pane 
 User: "show zellij sessions"
   zellij list-sessions -s
 
+### Attach to session
+User: "attach to zellij session dev"
+  zellij attach dev
+
 ### Run command in new tab
 User: "run npm test in new tab"
   zellij action new-tab --name "npm-test" -- npm test
+
+### Navigate to tab
+User: "go to tab api"
+  zellij action go-to-tab-name api
 
 ### Edit file at line
 User: "open src/main.rs at line 42 in zellij"
@@ -336,11 +354,15 @@ User: "open src/main.rs at line 42 in zellij"
 
 ### Query panes as JSON
 User: "show all panes with their commands"
-  zellij action list-panes --json --command --state
+  zellij action list-panes --json
 
 ### Floating pane with command
 User: "run htop in floating pane"
   zellij run -f -n "htop" -- htop
+
+### Toggle floating panes
+User: "toggle floating panes"
+  zellij action toggle-floating-panes
 
 ### Save layout to file
 User: "save current zellij layout"
@@ -360,14 +382,24 @@ Two error templates based on command type:
 
 ### For `zellij action` commands (require active session)
 command || {
+  _rc=$?
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
-  else echo "Exit code: $?"
+  else echo "Exit code: $_rc"
   fi
 }
 
-### For top-level commands (list-sessions, attach, kill-session, delete-session)
+### For session-required top-level commands (`zellij run`, `zellij edit`)
+Same template as `zellij action` -- these are top-level but still need an active session.
+command || {
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  else echo "Exit code: $_rc"
+  fi
+}
+
+### For standalone top-level commands (list-sessions, attach, kill-session, delete-session)
 No $ZELLIJ check needed -- these work outside zellij.
-command || { echo "Failed (exit code: $?)"; exit $?; }
+command || { _rc=$?; echo "Failed (exit code: $_rc)"; }
 
 | Error | Cause | Solution |
 |-|-|-|
@@ -401,7 +433,7 @@ Replace `zellij-tab-pane` with `zellij` in `zellij-workflow/README.md` (skill na
 
 ```bash
 git add zellij-workflow/skills/ zellij-workflow/README.md
-git commit -m "feat(zellij): rewrite skill as 7-domain mega-skill (sessions, tabs, panes, floating, layout, edit, I/O)
+git commit -m "Add zellij mega-skill: rewrite zellij-tab-pane as 7-domain skill
 
 BREAKING: skill renamed zellij-tab-pane -> zellij
 BREAKING: write-chars hack replaced with new-tab -- CMD (zellij 0.44)
@@ -419,7 +451,7 @@ Existing domains expanded: tabs (query, navigate, manage), panes (query, manage)
 
 **Step 1: Rewrite start-issue-in-new-tab.md**
 
-Replace `write-chars` hack with `new-tab -- CMD`:
+Keep "### 1. Parse issue number" section unchanged. Replace "### 2. Create tab and launch start-issue" — `write-chars` hack with `new-tab -- CMD`:
 
 ```markdown
 ### 2. Create tab and launch start-issue
@@ -429,13 +461,17 @@ zellij action new-tab --name "#${ISSUE_NUMBER}" -- start-issue $ISSUE_NUMBER || 
   _rc=$?
   if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
   elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
-  else echo "Exit code: $?"
+  else echo "Exit code: $_rc"
   fi
 }
 
 **In a new pane:**
 zellij run -- start-issue $ISSUE_NUMBER || {
-  ...same diagnostics...
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v start-issue &>/dev/null; then echo "start-issue not found in PATH"
+  else echo "Exit code: $_rc"
+  fi
 }
 ```
 
@@ -447,7 +483,13 @@ Replace `write-chars` hack with `new-tab -- CMD`. Use `--cwd` instead of `cd` in
 
 For simple prompts:
 ```markdown
-zellij action new-tab --name "$TAB_NAME" --cwd "$PROJECT_DIR" -- claude --dangerously-skip-permissions "$PROMPT"
+zellij action new-tab --name "$TAB_NAME" --cwd "$PROJECT_DIR" -- claude --dangerously-skip-permissions "$PROMPT" || {
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v claude &>/dev/null; then echo "claude not found in PATH"
+  else echo "Exit code: $_rc"
+  fi
+}
 ```
 
 For complex prompts (keep mktemp script but without `cd`):
@@ -458,7 +500,24 @@ cat > "$SCRIPT" << 'SCRIPT_EOF'
 exec claude --dangerously-skip-permissions '<PROMPT>'
 SCRIPT_EOF
 chmod +x "$SCRIPT"
-zellij action new-tab --name "$TAB_NAME" --cwd "$PROJECT_DIR" -- bash "$SCRIPT"
+zellij action new-tab --name "$TAB_NAME" --cwd "$PROJECT_DIR" -- bash "$SCRIPT" || {
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v claude &>/dev/null; then echo "claude not found in PATH"
+  else echo "Exit code: $_rc"
+  fi
+}
+```
+
+**In a new pane** (for both simple and complex):
+```markdown
+zellij run -- bash "$SCRIPT" || {
+  _rc=$?
+  if [ -z "$ZELLIJ" ]; then echo "Not in zellij session"
+  elif ! command -v claude &>/dev/null; then echo "claude not found in PATH"
+  else echo "Exit code: $_rc"
+  fi
+}
 ```
 
 Remove: `sleep 0.3`, `write-chars`, `timeout 5`, `cd` in script, `clear`+`echo` preamble.
@@ -469,7 +528,7 @@ Bump command versions: `1.0.0` -> `2.0.0`.
 
 ```bash
 git add zellij-workflow/commands/
-git commit -m "feat(zellij): rewrite slash commands to use new-tab -- CMD, remove write-chars"
+git commit -m "Update zellij commands: use new-tab -- CMD, remove write-chars"
 ```
 
 ---
@@ -481,7 +540,7 @@ git commit -m "feat(zellij): rewrite slash commands to use new-tab -- CMD, remov
 
 **Step 1: Write trigger examples**
 
-Minimum 42 positive (6 per domain), 10 negative. EN + RU.
+Minimum 54 positive (6 per domain x 9 categories), 10 negative. EN + RU.
 
 **Categories:**
 
@@ -533,23 +592,29 @@ Minimum 42 positive (6 per domain), 10 negative. EN + RU.
 - "hide floating panes" / "скрой плавающие панели"
 - "make pane floating" / "сделай панель плавающей"
 
-**Layout (4):**
+**Layout (6):**
 - "dump current layout" / "сохрани раскладку"
 - "apply layout from file" / "примени layout из файла"
 - "next swap layout" / "следующий layout"
 - "save layout to file" / "экспортируй layout"
+- "override layout keeping existing panes" / "примени layout с сохранением панелей"
+- "previous swap layout" / "предыдущий layout"
 
-**Edit (4):**
+**Edit (6):**
 - "edit file.rs in zellij" / "открой file.rs в редакторе"
 - "open scrollback" / "открой скроллбэк"
 - "edit src/main.rs at line 42" / "редактируй main.rs строка 42"
 - "open file in floating editor" / "открой файл в плавающем редакторе"
+- "edit file in-place" / "редактируй файл вместо текущей панели"
+- "open config.yaml in zellij editor" / "открой config.yaml в редакторе zellij"
 
-**Input/Output (4):**
+**Input/Output (6):**
 - "send ctrl+c to pane" / "отправь ctrl+c в панель"
 - "dump screen to file" / "сдампь экран в файл"
 - "clear pane" / "очисти панель"
 - "paste text into pane" / "вставь текст в панель"
+- "send F1 to pane" / "отправь F1 в панель"
+- "dump screen with full scrollback" / "сдампь экран со всем скроллбэком"
 
 **Negative (10):**
 - "install zellij"
@@ -567,7 +632,7 @@ Minimum 42 positive (6 per domain), 10 negative. EN + RU.
 
 ```bash
 git add zellij-workflow/skills/zellij/TRIGGER_EXAMPLES.md
-git commit -m "docs(zellij): add TRIGGER_EXAMPLES.md for expanded skill (42+ examples)"
+git commit -m "Add zellij TRIGGER_EXAMPLES.md: 48+ examples across 7 domains"
 ```
 
 ---
@@ -595,7 +660,7 @@ Major bump: skill renamed, restructured, breaking changes.
 
 ```bash
 git add zellij-workflow/.claude-plugin/plugin.json
-git commit -m "chore(zellij): bump version to 2.0.0 for skill expansion"
+git commit -m "Update zellij-workflow: bump version to 2.0.0 for skill expansion"
 ```
 
 ---
@@ -610,17 +675,19 @@ make reinstall-plugin PLUGIN=zellij-workflow
 
 **Step 2: Verify in new Claude session**
 
-Test these 6 queries:
-1. "list zellij sessions" -> expects `zellij list-sessions`
-2. "open new tab with npm test" -> expects `new-tab --name "npm-test" -- npm test`
-3. "list all panes as json" -> expects `list-panes --json`
-4. "toggle floating panes" -> expects `toggle-floating-panes`
-5. "dump current layout" -> expects `dump-layout`
-6. "run echo hello in tab and close on exit" -> expects `new-tab --close-on-exit -- echo hello`
+Test these 8 queries (one per domain + one extra for tabs):
+1. "list zellij sessions" -> expects `zellij list-sessions` (Sessions)
+2. "open new tab with npm test" -> expects `new-tab --name "npm-test" -- npm test` (Tabs: Create)
+3. "go to tab api" -> expects `go-to-tab-name api` (Tabs: Navigate)
+4. "list all panes as json" -> expects `list-panes --json` (Panes)
+5. "toggle floating panes" -> expects `toggle-floating-panes` (Floating)
+6. "dump current layout" -> expects `dump-layout` (Layout)
+7. "edit src/main.rs at line 42" -> expects `zellij edit src/main.rs -l 42` (Edit)
+8. "send ctrl+c to pane terminal_3" -> expects `send-keys -p terminal_3 "Ctrl c"` (I/O)
 
 **Step 3: Fix and commit if needed**
 
 ```bash
 git add zellij-workflow/
-git commit -m "fix(zellij): smoke test fixes"
+git commit -m "Fix zellij: smoke test corrections"
 ```
