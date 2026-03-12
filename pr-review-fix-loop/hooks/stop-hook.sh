@@ -144,7 +144,10 @@ fi
 
 # --- Guard: already terminated? ---
 # If the report already has an EXIT marker, the loop is done.
-# This prevents infinite re-entry when state file lingers after post-loop.
+# After EXIT, post-loop-prompt.sh injects a summary prompt. Claude processes
+# it and stops again, triggering this hook. By then the state file is deleted,
+# but if post-loop itself writes/recreates it (e.g. a bug), this guard
+# prevents infinite re-entry.
 if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE"; then
   dbg "EXIT guard: report already has EXIT marker, cleaning up"
   rm -f "$STATE_FILE"
