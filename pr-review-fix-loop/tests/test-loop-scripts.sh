@@ -2147,26 +2147,26 @@ else
 fi
 teardown
 
-# Test FB3: No fallback when current iteration has no COMPLETED marker
+# Test FB3: No fallback when issues still non-zero (last completed has issues)
 setup
 git init -q
 create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
 create_stats_file 20
 cat > .claude/pr-review-loop-report.local.md <<'REPORT'
 # PR Review Fix Loop Report
-ITERATION 1 COMPLETED issues_count=2
-ITERATION 2 COMPLETED issues_count=0
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=2
 ITERATION 3 START
 REPORT
 create_transcript "Working on iteration 3..."
 OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
 DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
 REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
-# Should continue loop (block), not exit with fallback
+# Should continue loop (block), not exit with fallback (issues still non-zero)
 if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary"; then
-  pass "No fallback when current iteration has no COMPLETED marker"
+  pass "No fallback when last completed iteration has non-zero issues"
 else
-  fail "No fallback when current iteration has no COMPLETED marker" "decision=$DECISION reason=$(echo "$REASON" | head -c 80)"
+  fail "No fallback when last completed iteration has non-zero issues" "decision=$DECISION reason=$(echo "$REASON" | head -c 80)"
 fi
 # State file should still exist
 if [[ -f .claude/pr-review-fix-loop.local.md ]]; then
@@ -2297,6 +2297,88 @@ if [[ "$DECISION" == "block" ]]; then
   pass "EG4: Normal flow continues when no EXIT marker"
 else
   fail "EG4: Normal flow continues when no EXIT marker" "decision=$DECISION"
+fi
+teardown
+
+echo "=== stop-hook.sh off-by-one fallback ==="
+
+# Test OBO1: Fallback detects CLEAN when state iteration is ahead by 1
+# State says iteration=6, but last COMPLETED is ITERATION 5 with issues_count=0
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=9
+ITERATION 2 COMPLETED issues_count=7
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=3
+ITERATION 5 COMPLETED issues_count=0
+ITERATION 6 START
+REPORT
+create_transcript "No issues found, everything clean."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should trigger EXIT:SUCCESS via fallback, not continue loop
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "REVIEW CLEAN\|summary\|сводк"; then
+  pass "OBO1: Fallback detects CLEAN with off-by-one (state=6, completed=5)"
+else
+  fail "OBO1: Fallback detects CLEAN with off-by-one (state=6, completed=5)" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "OBO1: State file removed"
+else
+  fail "OBO1: State file removed"
+fi
+teardown
+
+# Test OBO2: Fallback detects STAGNANT when state iteration is ahead by 1
+# State says iteration=7, COMPLETED iterations 1-6 show stagnation
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=6
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=7
+ITERATION 5 COMPLETED issues_count=5
+ITERATION 6 COMPLETED issues_count=6
+ITERATION 7 START
+REPORT
+create_transcript "Still working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "stagnation\|стагнац"; then
+  pass "OBO2: Fallback detects STAGNANT with off-by-one (state=7, completed=6)"
+else
+  fail "OBO2: Fallback detects STAGNANT with off-by-one (state=7, completed=6)" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test OBO3: No false positive — issues still being reduced
+setup
+git init -q
+create_state_file 4 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=10
+ITERATION 2 COMPLETED issues_count=7
+ITERATION 3 COMPLETED issues_count=4
+ITERATION 4 START
+REPORT
+create_transcript "Fixing remaining 4 issues..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк\|stagnation\|стагнац"; then
+  pass "OBO3: No false positive when issues still decreasing"
+else
+  fail "OBO3: No false positive when issues still decreasing" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
 fi
 teardown
 

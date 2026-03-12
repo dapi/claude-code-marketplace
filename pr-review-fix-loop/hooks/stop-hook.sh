@@ -52,22 +52,14 @@ write_exit_reason() {
 # --- Fallback: check report file for terminal conditions ---
 # When the agent follows the prompt but forgets <promise> tags,
 # the report file COMPLETED markers are authoritative.
+# NOTE: We check the LAST completed iteration, not the current state
+# iteration, because the state file iteration is often 1 ahead of
+# Claude's numbering (Claude stops mid-iteration, hook increments).
 check_report_for_completion() {
   local current_iter="$1"
   [[ -f "$REPORT_FILE" ]] || return 1
 
-  # Only trust COMPLETED marker for the current iteration
-  local current_count
-  current_count=$(grep -oP "ITERATION $current_iter COMPLETED issues_count=\\K\\d+" "$REPORT_FILE" | tail -1 || true)
-  [[ -n "$current_count" ]] || return 1
-
-  # CLEAN: current iteration found 0 issues
-  if [[ "$current_count" == "0" ]]; then
-    echo "CLEAN"
-    return 0
-  fi
-
-  # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
+  # Get ALL completed iteration counts
   local counts
   counts=$(grep -oP 'ITERATION \d+ COMPLETED issues_count=\K\d+' "$REPORT_FILE" || true)
   [[ -n "$counts" ]] || return 1
@@ -75,9 +67,18 @@ check_report_for_completion() {
   local count_array
   readarray -t count_array <<< "$counts"
   local n=${#count_array[@]}
+  local last_count=${count_array[$((n-1))]}
+
+  # CLEAN: last completed iteration found 0 issues
+  if [[ "$last_count" == "0" ]]; then
+    echo "CLEAN"
+    return 0
+  fi
+
+  # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
   if [[ $n -ge 5 ]]; then
     local five_ago=${count_array[$((n-5))]}
-    if [[ $current_count -ge $five_ago ]]; then
+    if [[ $last_count -ge $five_ago ]]; then
       echo "STAGNANT"
       return 0
     fi
@@ -250,15 +251,15 @@ REPORT_STATUS=$(check_report_for_completion "$ITERATION" || true)
 if [[ -n "$REPORT_STATUS" ]]; then
   case "$REPORT_STATUS" in
     CLEAN)
-      dbg "FALLBACK: report shows issues_count=0 for iteration $ITERATION (no promise tag found)"
-      write_exit_reason "SUCCESS" "Report fallback: issues_count=0 in iteration $ITERATION"
+      dbg "FALLBACK: report shows last issues_count=0 (state iteration=$ITERATION, no promise tag found)"
+      write_exit_reason "SUCCESS" "Report fallback: last completed iteration has issues_count=0"
       rm -f "$STATE_FILE"
       bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "SUCCESS" --message "Report fallback: issues_count=0"
       exit 0
       ;;
     STAGNANT)
-      dbg "FALLBACK: report shows stagnation at iteration $ITERATION (no promise tag found)"
-      write_exit_reason "STAGNANT" "Report fallback: stagnation detected at iteration $ITERATION"
+      dbg "FALLBACK: report shows stagnation (state iteration=$ITERATION, no promise tag found)"
+      write_exit_reason "STAGNANT" "Report fallback: stagnation detected (state iteration=$ITERATION)"
       rm -f "$STATE_FILE"
       bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "STAGNANT" --message "Report fallback: stagnation detected"
       exit 0
