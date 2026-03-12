@@ -2762,6 +2762,81 @@ else
 fi
 teardown
 
+echo "=== Non-numeric five_ago guard ==="
+
+# Test NG2: Non-numeric five_ago (5th-from-last corrupted) does not crash
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=abc
+ITERATION 2 COMPLETED issues_count=5
+ITERATION 3 COMPLETED issues_count=4
+ITERATION 4 COMPLETED issues_count=3
+ITERATION 5 COMPLETED issues_count=2
+ITERATION 6 COMPLETED issues_count=3
+ITERATION 7 START
+REPORT
+create_transcript "Still working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+# Should continue loop, not crash on non-numeric five_ago
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк"; then
+  pass "NG2: Non-numeric five_ago handled gracefully (loop continues)"
+else
+  fail "NG2: Non-numeric five_ago handled gracefully" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== Malformed JSON in transcript ==="
+
+# Test MJ1: Malformed JSON line is skipped, valid promise in next line is found
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Clean!\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":BROKEN_JSON}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MJ1: Malformed JSON skipped, valid promise found in other message"
+else
+  fail "MJ1: Malformed JSON skipped, valid promise found" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Multi-line promise tag ==="
+
+# Test MLP1: Promise tag split across lines is detected
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Create message where promise tag content spans multiple lines in the text
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Done!\n<promise>\nREVIEW CLEAN\n</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MLP1: Multi-line promise tag detected via tr fallback"
+else
+  fail "MLP1: Multi-line promise tag detected" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
