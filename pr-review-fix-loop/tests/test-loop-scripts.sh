@@ -2931,6 +2931,143 @@ else
 fi
 teardown
 
+echo "=== EXIT:ERROR recovery end-to-end ==="
+
+# Test ER1: After EXIT:ERROR, loop can continue and reach EXIT:SUCCESS
+setup
+git init -q
+
+# Step 1: Report has EXIT:ERROR, state file exists (bug scenario)
+create_state_file 4 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 2 COMPLETED issues_count=3
+[XX] [EXIT:ERROR] State corrupted
+ITERATION 4 START
+REPORT
+create_transcript "Recovering, found 2 issues..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# EXIT:ERROR should NOT trigger guard — loop continues
+if [[ "$DECISION" == "block" ]]; then
+  pass "ER1.1: EXIT:ERROR does not block recovery"
+else
+  fail "ER1.1: EXIT:ERROR does not block recovery" "decision=$DECISION"
+fi
+
+# Step 2: After recovery, agent writes CLEAN promise
+cat >> .claude/pr-review-loop-report.local.md <<'APPEND'
+ITERATION 4 COMPLETED issues_count=0
+APPEND
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "All clean! <promise>REVIEW CLEAN</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+# Should detect EXIT:SUCCESS (not blocked by earlier EXIT:ERROR)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "ER1.2: Recovery → EXIT:SUCCESS after earlier EXIT:ERROR"
+else
+  fail "ER1.2: Recovery → EXIT:SUCCESS" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+
+# Step 3: Now with EXIT:SUCCESS in report, guard should prevent re-entry
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "Post-loop."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "ER1.3: Guard fires on EXIT:SUCCESS after recovery"
+else
+  fail "ER1.3: Guard fires on EXIT:SUCCESS after recovery" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Empty report file ==="
+
+# Test EF1: Empty report file — fallback returns nothing, loop continues
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+touch .claude/pr-review-loop-report.local.md
+create_transcript "Working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EF1: Empty report file — loop continues"
+else
+  fail "EF1: Empty report file" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Transcript path validation ==="
+
+# Test TV1: Null transcript_path handled gracefully
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Send hook input with missing transcript_path
+OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should continue loop (transcript not found → WARN → continue)
+if [[ "$DECISION" == "block" ]]; then
+  pass "TV1: Null transcript_path — loop continues gracefully"
+else
+  fail "TV1: Null transcript_path" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Unrecognized promise text ==="
+
+# Test UP1: Promise tag with unknown text — not matched, falls through to fallback
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+create_transcript "Done! <promise>UNKNOWN PROMISE</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Unrecognized promise should NOT trigger exit — falls through to fallback/continue
+if [[ "$DECISION" == "block" ]] && ! grep -q "EXIT:SUCCESS\|EXIT:STAGNANT" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "UP1: Unrecognized promise text — loop continues"
+else
+  fail "UP1: Unrecognized promise text" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Interleaved user/assistant lines ==="
+
+# Test IL1: Promise found in transcript with interleaved user and assistant lines
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"user","message":{"content":[{"type":"text","text":"Fix the issues"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Working on it..."}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"Good"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"All done!\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"Thanks"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "IL1: Promise found in interleaved transcript"
+else
+  fail "IL1: Promise found in interleaved transcript" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
