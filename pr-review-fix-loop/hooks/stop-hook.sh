@@ -192,10 +192,14 @@ if [[ ! -f "$TRANSCRIPT_PATH" ]]; then
   continue_loop "$NEXT_ITERATION"
 fi
 
-# Find last assistant message WITH text content (skip tool_use-only entries)
-# Uses tac to search from end. Pipefail-safe: grep may exit 1 if no match.
+# Find assistant text from last N messages (not just the last one).
+# Claude may stop after tool_use messages, so the promise tag
+# could be in an earlier message. Search up to 5 messages back.
+SEARCH_DEPTH=5
+
 LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
   | grep '"role":"assistant"' \
+  | head -n "$SEARCH_DEPTH" \
   | while IFS= read -r line; do
       text=$(echo "$line" | jq -r '
         .message.content
@@ -205,7 +209,6 @@ LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
       ' 2>/dev/null)
       if [[ -n "$text" ]]; then
         echo "$text"
-        break
       fi
     done || true)
 

@@ -2300,6 +2300,79 @@ else
 fi
 teardown
 
+echo "=== stop-hook.sh multi-message promise ==="
+
+# Test MP1: Promise found in second-to-last message (last message is tool_use only)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+# Create transcript with promise in earlier message, tool_use in last
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"All issues resolved.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo done"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP1: Promise found in second-to-last message"
+else
+  fail "MP1: Promise found in second-to-last message" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP2: Promise found in third-to-last message (two tool_use messages after)
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Review complete.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"record-iteration.sh 2 0"}}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"Write","input":{"path":"report.md","content":"done"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP2: Promise found in third-to-last message"
+else
+  fail "MP2: Promise found in third-to-last message" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP3: Search depth limit — don't search beyond 5 messages back
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Promise is 7 messages back — beyond search depth
+{
+  echo '{"role":"assistant","message":{"content":[{"type":"text","text":"<promise>REVIEW CLEAN</promise>"}]}}'
+  for i in $(seq 1 6); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"Working on step $i...\"}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should NOT detect promise (too far back) — should continue loop
+if [[ "$DECISION" == "block" ]] && ! grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP3: Promise beyond depth limit is not detected"
+else
+  fail "MP3: Promise beyond depth limit is not detected" "decision=$DECISION"
+fi
+teardown
+
 echo "=== stop-hook.sh off-by-one fallback ==="
 
 # Test OBO1: Fallback detects CLEAN when state iteration is ahead by 1
