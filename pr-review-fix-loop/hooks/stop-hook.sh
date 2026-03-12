@@ -152,10 +152,15 @@ fi
 # it and stops again, triggering this hook. By then the state file is deleted,
 # but if post-loop itself writes/recreates it (e.g. a bug), this guard
 # prevents infinite re-entry.
+# NOTE: EXIT:ERROR is excluded intentionally — allows loop to recover after transient errors.
 if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE" 2>/dev/null; then
   dbg "EXIT guard: report already has EXIT marker, cleaning up"
   rm -f "$STATE_FILE"
   exit 0
+fi
+# Log if EXIT:ERROR present but not guarded (recovery path)
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:ERROR\]' "$REPORT_FILE" 2>/dev/null; then
+  dbg "EXIT:ERROR marker found but not guarding (allowing recovery)"
 fi
 
 # Parse YAML frontmatter
@@ -274,7 +279,10 @@ fi
 
 # --- Fallback: check report file for terminal conditions ---
 # Handles case where agent writes correct COMPLETED markers but forgets <promise> tags
-REPORT_STATUS=$(check_report_for_completion || true)
+REPORT_STATUS=""
+if ! REPORT_STATUS=$(check_report_for_completion); then
+  [[ -z "$REPORT_STATUS" ]] || dbg "WARN: check_report_for_completion failed unexpectedly"
+fi
 if [[ -n "$REPORT_STATUS" ]]; then
   case "$REPORT_STATUS" in
     CLEAN)

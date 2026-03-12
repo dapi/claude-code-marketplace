@@ -2837,6 +2837,77 @@ else
 fi
 teardown
 
+echo "=== Multiple EXIT markers ==="
+
+# Test EG7: Guard fires when report has both EXIT:SUCCESS and EXIT:STAGNANT
+setup
+git init -q
+create_state_file 10 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 8 COMPLETED issues_count=5
+[!!] [EXIT:STAGNANT] Report fallback: stagnation detected
+ITERATION 10 START
+REPORT
+create_transcript "Multiple exits in report."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG7: Guard fires with multiple EXIT markers"
+else
+  fail "EG7: Guard fires with multiple EXIT markers" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Stagnation boundary: exactly 4 iterations ==="
+
+# Test SB2: Exactly 4 completed iterations — stagnation does NOT fire (needs 5)
+setup
+git init -q
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=6
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=6
+ITERATION 5 START
+REPORT
+create_transcript "Still working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "stagnation\|стагнац\|fallback\|summary"; then
+  pass "SB2: Exactly 4 iterations — NOT stagnant (needs 5)"
+else
+  fail "SB2: Exactly 4 iterations — NOT stagnant" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== Mixed content messages ==="
+
+# Test MC1: Promise in message with both text and tool_use content blocks
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"All done!\n<promise>REVIEW CLEAN</promise>"},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo ok"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MC1: Promise detected in mixed content message (text + tool_use)"
+else
+  fail "MC1: Promise in mixed content" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
