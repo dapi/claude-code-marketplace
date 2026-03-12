@@ -2476,6 +2476,75 @@ else
 fi
 teardown
 
+echo "=== Integration: full loop lifecycle ==="
+
+# Test INT1: Simulate 5-iteration lifecycle with EXIT:SUCCESS, then post-loop stop
+setup
+git init -q
+
+# --- Iteration 1: 9 issues ---
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 START
+REPORT
+
+create_transcript "Found 9 issues, fixing them now."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+[[ "$D" == "block" ]] && pass "INT1.1: Iteration 1 continues" || fail "INT1.1: Iteration 1 continues" "$D"
+
+# Simulate Claude writing iteration 1 results
+cat >> .claude/pr-review-loop-report.local.md <<'APPEND'
+## Iteration 1
+ITERATION 1 COMPLETED issues_count=9
+APPEND
+
+# --- Iteration 2-4: decreasing issues ---
+for iter in 2 3 4; do
+  count=$((9 - iter * 2))
+  create_transcript "Iteration $((iter-1)) done, $count issues remain."
+  OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+  D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+  [[ "$D" == "block" ]] && pass "INT1.$iter: Iteration $iter continues" || fail "INT1.$iter: Iteration $iter continues" "$D"
+  cat >> .claude/pr-review-loop-report.local.md <<APPEND
+## Iteration $iter
+ITERATION $iter COMPLETED issues_count=$count
+APPEND
+done
+
+# --- Iteration 5: 0 issues, CLEAN ---
+create_transcript "All clean! <promise>REVIEW CLEAN</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should be "block" with post-loop prompt (EXIT:SUCCESS)
+if [[ "$D" == "block" ]] && grep -q "EXIT:SUCCESS" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "INT1.5: EXIT:SUCCESS detected, post-loop prompt injected"
+else
+  fail "INT1.5: EXIT:SUCCESS detected" "decision=$D report_has_exit=$(grep -c 'EXIT:SUCCESS' .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+
+# State file should be deleted after EXIT
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "INT1.6: State file deleted after EXIT:SUCCESS"
+else
+  fail "INT1.6: State file deleted after EXIT:SUCCESS"
+fi
+
+# --- Simulate post-loop: state file recreated (bug scenario) ---
+# Even if something goes wrong and state file reappears, the EXIT guard prevents re-entry
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "Post-loop complete, PR pushed."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "INT1.7: EXIT guard prevents re-entry even with recreated state file"
+else
+  fail "INT1.7: EXIT guard prevents re-entry" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+
+teardown
+
 # --- Summary ---
 
 echo ""
