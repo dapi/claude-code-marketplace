@@ -2300,6 +2300,26 @@ else
 fi
 teardown
 
+# Test EG5: Hook does NOT exit on EXIT:ERROR marker (only SUCCESS/STAGNANT/LIMIT)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+[XX] [EXIT:ERROR] State corrupted
+ITERATION 3 START
+REPORT
+create_transcript "Recovering from error..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EG5: EXIT:ERROR does NOT trigger guard (only SUCCESS/STAGNANT/LIMIT)"
+else
+  fail "EG5: EXIT:ERROR does NOT trigger guard" "decision=$DECISION"
+fi
+teardown
+
 echo "=== stop-hook.sh multi-message promise ==="
 
 # Test MP1: Promise found in second-to-last message (last message is tool_use only)
@@ -2497,6 +2517,31 @@ if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summar
   pass "OBO3: No false positive when issues still decreasing"
 else
   fail "OBO3: No false positive when issues still decreasing" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+# Test OBO4: 5 completed iterations with issues decreasing — NOT stagnant
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=10
+ITERATION 2 COMPLETED issues_count=8
+ITERATION 3 COMPLETED issues_count=6
+ITERATION 4 COMPLETED issues_count=4
+ITERATION 5 COMPLETED issues_count=2
+ITERATION 6 START
+REPORT
+create_transcript "Only 2 issues left, almost done..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "stagnation\|стагнац\|fallback\|summary"; then
+  pass "OBO4: 5 iterations with decreasing issues — NOT stagnant"
+else
+  fail "OBO4: 5 iterations with decreasing issues — NOT stagnant" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
 fi
 teardown
 
