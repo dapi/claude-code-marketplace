@@ -166,9 +166,9 @@ if last_count == 0:  --> CLEAN (SUCCESS)
 if len(counts) >= 5 AND last_count >= counts[-5]:  --> STAGNANT
 ```
 
-Note: The fallback checks the LAST completed iteration in the report, not
-the one matching the state file's iteration counter. This avoids an off-by-one
-where the state counter runs 1 ahead of Claude's iteration numbering.
+Note: The fallback always checks the last completed iteration in the report,
+not a specific iteration number. The state file's iteration counter may be
+ahead of Claude's numbering by 1.
 
 **In agent prompt (Step 5)** -- agent evaluates the same logic and emits `<promise>REVIEW STAGNANT</promise>` if true.
 
