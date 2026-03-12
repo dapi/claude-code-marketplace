@@ -72,6 +72,10 @@ The stop-hook evaluates these conditions in order:
        |yes --> exit 0 (loop not active)
        |no
        v
+  report has [EXIT:*] marker?
+       |yes --> rm state file, exit 0 (already terminated)
+       |no
+       v
   iteration >= max_iterations?
        |yes --> EXIT:LIMIT
        |no
@@ -157,9 +161,14 @@ Two mechanisms, both checking if issue counts plateau over 5 iterations:
 **In stop-hook (fallback)** -- `check_report_for_completion()`:
 ```
 counts = all K values from "ITERATION N COMPLETED issues_count=K"
-if len(counts) >= 5 AND counts[-1] >= counts[-5]:
-    --> STAGNANT
+last_count = counts[-1]  # always check LAST completed, not state iteration
+if last_count == 0:  --> CLEAN (SUCCESS)
+if len(counts) >= 5 AND last_count >= counts[-5]:  --> STAGNANT
 ```
+
+Note: The fallback checks the LAST completed iteration in the report, not
+the one matching the state file's iteration counter. This avoids an off-by-one
+where the state counter runs 1 ahead of Claude's iteration numbering.
 
 **In agent prompt (Step 5)** -- agent evaluates the same logic and emits `<promise>REVIEW STAGNANT</promise>` if true.
 
