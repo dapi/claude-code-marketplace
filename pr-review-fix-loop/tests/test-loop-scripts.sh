@@ -2373,6 +2373,27 @@ else
 fi
 teardown
 
+echo "=== stop-hook.sh quiet exit ==="
+
+# Test QE1: Hook produces no stderr when EXIT guard fires
+setup
+git init -q
+create_state_file 8 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 8 START
+REPORT
+create_transcript "Loop done."
+STDERR_OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>&1 1>/dev/null)
+if [[ -z "$STDERR_OUTPUT" ]] || [[ "$STDERR_OUTPUT" == *"EXIT guard"* ]]; then
+  pass "QE1: No stderr output (no banner) when EXIT guard fires"
+else
+  fail "QE1: No stderr output when EXIT guard fires" "stderr=$(echo "$STDERR_OUTPUT" | head -c 200)"
+fi
+teardown
+
 echo "=== stop-hook.sh off-by-one fallback ==="
 
 # Test OBO1: Fallback detects CLEAN when state iteration is ahead by 1
