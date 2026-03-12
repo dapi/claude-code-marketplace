@@ -142,6 +142,15 @@ if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
 fi
 
+# --- Guard: already terminated? ---
+# If the report already has an EXIT marker, the loop is done.
+# This prevents infinite re-entry when state file lingers after post-loop.
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE" 2>/dev/null; then
+  dbg "EXIT guard: report already has EXIT marker, cleaning up"
+  rm -f "$STATE_FILE"
+  exit 0
+fi
+
 # Parse YAML frontmatter
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
 ITERATION=$(echo "$FRONTMATTER" | awk -F': *' '/^iteration:/{print $2}')

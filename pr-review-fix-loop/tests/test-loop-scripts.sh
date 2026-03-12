@@ -2215,6 +2215,91 @@ else
 fi
 teardown
 
+echo "=== stop-hook.sh EXIT guard ==="
+
+# Test EG1: Hook exits silently when report has [EXIT:SUCCESS]
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 7 START
+REPORT
+create_transcript "Loop already finished."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG1: Hook exits silently when report has EXIT:SUCCESS"
+else
+  fail "EG1: Hook exits silently when report has EXIT:SUCCESS" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "EG1: State file removed on EXIT guard"
+else
+  fail "EG1: State file removed on EXIT guard"
+fi
+teardown
+
+# Test EG2: Hook exits silently when report has [EXIT:STAGNANT]
+setup
+git init -q
+create_state_file 8 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 6 COMPLETED issues_count=5
+[!!] [EXIT:STAGNANT] Report fallback: stagnation detected at iteration 6
+ITERATION 8 START
+REPORT
+create_transcript "Stagnation already detected."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG2: Hook exits silently when report has EXIT:STAGNANT"
+else
+  fail "EG2: Hook exits silently when report has EXIT:STAGNANT" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+# Test EG3: Hook exits silently when report has [EXIT:LIMIT]
+setup
+git init -q
+create_state_file 21 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 20 COMPLETED issues_count=3
+[!!] [EXIT:LIMIT] Max iterations (20) reached
+ITERATION 21 START
+REPORT
+create_transcript "Limit already reached."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG3: Hook exits silently when report has EXIT:LIMIT"
+else
+  fail "EG3: Hook exits silently when report has EXIT:LIMIT" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+# Test EG4: Hook does NOT exit when report has no EXIT marker (normal flow)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+create_transcript "Working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EG4: Normal flow continues when no EXIT marker"
+else
+  fail "EG4: Normal flow continues when no EXIT marker" "decision=$DECISION"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
