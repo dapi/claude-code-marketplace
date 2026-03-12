@@ -148,7 +148,7 @@ fi
 # it and stops again, triggering this hook. By then the state file is deleted,
 # but if post-loop itself writes/recreates it (e.g. a bug), this guard
 # prevents infinite re-entry.
-if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE"; then
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE" 2>/dev/null; then
   dbg "EXIT guard: report already has EXIT marker, cleaning up"
   rm -f "$STATE_FILE"
   exit 0
@@ -198,7 +198,6 @@ fi
 # If a promise is found in any message, use that message's text.
 # Otherwise, use the most recent message text (for logging/fallback).
 SEARCH_DEPTH=5
-FIRST_TEXT=""
 
 LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
   | grep '"role":"assistant"' \

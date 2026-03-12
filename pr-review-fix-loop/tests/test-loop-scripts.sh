@@ -2573,6 +2573,7 @@ APPEND
 # --- Iteration 2-4: decreasing issues ---
 for iter in 2 3 4; do
   count=$((9 - iter * 2))
+  create_state_file "$iter" 20 "REVIEW CLEAN|REVIEW STAGNANT"
   create_transcript "Iteration $((iter-1)) done, $count issues remain."
   OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
   D=$(echo "$OUTPUT" | jq -r '.decision // empty')
@@ -2584,6 +2585,7 @@ APPEND
 done
 
 # --- Iteration 5: 0 issues, CLEAN ---
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
 create_transcript "All clean! <promise>REVIEW CLEAN</promise>"
 OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
 D=$(echo "$OUTPUT" | jq -r '.decision // empty')
