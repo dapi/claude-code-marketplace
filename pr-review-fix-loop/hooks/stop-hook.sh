@@ -68,6 +68,9 @@ check_report_for_completion() {
   local n=${#count_array[@]}
   local last_count=${count_array[$((n-1))]}
 
+  # Guard: ensure values are numeric
+  [[ "$last_count" =~ ^[0-9]+$ ]] || return 1
+
   # CLEAN: last completed iteration found 0 issues
   if [[ "$last_count" == "0" ]]; then
     echo "CLEAN"
@@ -77,6 +80,7 @@ check_report_for_completion() {
   # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
   if [[ $n -ge 5 ]]; then
     local five_ago=${count_array[$((n-5))]}
+    [[ "$five_ago" =~ ^[0-9]+$ ]] || return 1
     if [[ $last_count -ge $five_ago ]]; then
       echo "STAGNANT"
       return 0
@@ -208,7 +212,7 @@ LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
         | map(select(.type == "text"))
         | map(.text)
         | join("\n")
-      ' 2>/dev/null)
+      ' 2>>"$DEBUG_LOG")
       if [[ -n "$text" ]] && echo "$text" | grep -q '<promise>'; then
         echo "$text"
         break
@@ -226,7 +230,7 @@ if [[ -z "$LAST_OUTPUT" ]]; then
           | map(select(.type == "text"))
           | map(.text)
           | join("\n")
-        ' 2>/dev/null)
+        ' 2>>"$DEBUG_LOG")
         if [[ -n "$text" ]]; then
           echo "$text"
           break

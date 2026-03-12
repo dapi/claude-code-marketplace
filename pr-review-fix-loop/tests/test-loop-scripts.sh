@@ -2616,6 +2616,100 @@ fi
 
 teardown
 
+echo "=== EXIT guard: no state file (normal path) ==="
+
+# Test EG6: No state file + EXIT marker = silent exit at state-file check (line 142), not guard
+setup
+git init -q
+# Do NOT create state file
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+REPORT
+create_transcript "Post-loop summary complete."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG6: No state file + EXIT marker = silent exit (state-file check, not guard)"
+else
+  fail "EG6: No state file + EXIT marker = silent exit" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Stagnation boundary: exactly 5 iterations ==="
+
+# Test SB1: Exactly 5 completed iterations where last >= five_ago (stagnant)
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=4
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=4
+ITERATION 5 COMPLETED issues_count=5
+ITERATION 6 START
+REPORT
+create_transcript "Issues not improving..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "stagnation\|стагнац"; then
+  pass "SB1: Exactly 5 iterations with last(5) >= first(5) triggers stagnation"
+else
+  fail "SB1: Exactly 5 iterations stagnation boundary" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Multi-message promise: boundary and duplicates ==="
+
+# Test MP5: Promise exactly at position 5 (search depth boundary)
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Promise is exactly 5 messages back (at boundary of SEARCH_DEPTH=5)
+{
+  echo '{"role":"assistant","message":{"content":[{"type":"text","text":"Done!\n<promise>REVIEW CLEAN</promise>"}]}}'
+  for i in $(seq 1 4); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"t$i\",\"name\":\"Bash\",\"input\":{\"command\":\"echo $i\"}}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP5: Promise at exact search depth boundary (position 5) is detected"
+else
+  fail "MP5: Promise at exact search depth boundary" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP6: Both messages have same promise — no double processing
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=0
+ITERATION 3 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"First clean.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Second clean.\n<promise>REVIEW CLEAN</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP6: Duplicate promises don't cause double processing"
+else
+  fail "MP6: Duplicate promises don't cause double processing" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
