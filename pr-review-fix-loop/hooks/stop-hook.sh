@@ -245,7 +245,8 @@ if [[ -z "$LAST_OUTPUT" ]]; then
   # Log diagnostic info for debugging race conditions
   ASSISTANT_COUNT=$(grep -c '"role":"assistant"' "$TRANSCRIPT_PATH" 2>/dev/null || echo "0")
   LAST_TYPES=$(tac "$TRANSCRIPT_PATH" | grep -m3 '"role":"assistant"' | jq -c '[.message.content[].type]' 2>/dev/null || echo "parse_failed")
-  dbg "EMPTY TEXT: assistant_count=$ASSISTANT_COUNT last_3_types=$LAST_TYPES"
+  LINES_FOUND=$([[ -n "$ASSISTANT_LINES" ]] && echo "yes" || echo "no")
+  dbg "EMPTY TEXT: assistant_count=$ASSISTANT_COUNT last_3_types=$LAST_TYPES lines_extracted=$LINES_FOUND"
   write_exit_reason "WARN" "No text in recent assistant messages (continuing loop)"
   continue_loop "$NEXT_ITERATION"
 fi
@@ -279,10 +280,7 @@ fi
 
 # --- Fallback: check report file for terminal conditions ---
 # Handles case where agent writes correct COMPLETED markers but forgets <promise> tags
-REPORT_STATUS=""
-if ! REPORT_STATUS=$(check_report_for_completion); then
-  [[ -z "$REPORT_STATUS" ]] || dbg "WARN: check_report_for_completion failed unexpectedly"
-fi
+REPORT_STATUS=$(check_report_for_completion || true)
 if [[ -n "$REPORT_STATUS" ]]; then
   case "$REPORT_STATUS" in
     CLEAN)

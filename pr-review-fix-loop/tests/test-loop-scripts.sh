@@ -2908,6 +2908,29 @@ else
 fi
 teardown
 
+echo "=== Single completed iteration ==="
+
+# Test SC1: 1 completed iteration with non-zero count — no stagnation, no clean, continue
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 START
+REPORT
+create_transcript "Working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк\|stagnation\|стагнац"; then
+  pass "SC1: Single completed iteration with non-zero count — loop continues"
+else
+  fail "SC1: Single completed iteration" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
