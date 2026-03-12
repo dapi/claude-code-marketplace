@@ -2710,6 +2710,58 @@ else
 fi
 teardown
 
+echo "=== Numeric guard in check_report_for_completion ==="
+
+# Test NG1: Non-numeric issues_count does not crash or trigger false positive
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=NaN
+ITERATION 3 START
+REPORT
+create_transcript "Working on iteration 3..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+# Should continue loop (block), not crash or trigger fallback
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк"; then
+  pass "NG1: Non-numeric issues_count handled gracefully (loop continues)"
+else
+  fail "NG1: Non-numeric issues_count handled gracefully" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== All-tool_use messages scenario ==="
+
+# Test TU1: All SEARCH_DEPTH messages are tool_use only — LAST_OUTPUT empty, loop continues
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Create 5 assistant messages, all tool_use only (no text content)
+{
+  for i in $(seq 1 5); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"t$i\",\"name\":\"Bash\",\"input\":{\"command\":\"echo $i\"}}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should continue loop (LAST_OUTPUT empty → WARN path → continue_loop)
+if [[ "$DECISION" == "block" ]]; then
+  pass "TU1: All tool_use messages — loop continues (WARN path)"
+else
+  fail "TU1: All tool_use messages — loop continues" "decision=$DECISION"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""

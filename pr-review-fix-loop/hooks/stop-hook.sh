@@ -69,7 +69,7 @@ check_report_for_completion() {
   local last_count=${count_array[$((n-1))]}
 
   # Guard: ensure values are numeric
-  [[ "$last_count" =~ ^[0-9]+$ ]] || return 1
+  [[ "$last_count" =~ ^[0-9]+$ ]] || { dbg "WARN: non-numeric last_count='$last_count'"; return 1; }
 
   # CLEAN: last completed iteration found 0 issues
   if [[ "$last_count" == "0" ]]; then
@@ -80,7 +80,7 @@ check_report_for_completion() {
   # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
   if [[ $n -ge 5 ]]; then
     local five_ago=${count_array[$((n-5))]}
-    [[ "$five_ago" =~ ^[0-9]+$ ]] || return 1
+    [[ "$five_ago" =~ ^[0-9]+$ ]] || { dbg "WARN: non-numeric five_ago='$five_ago'"; return 1; }
     if [[ $last_count -ge $five_ago ]]; then
       echo "STAGNANT"
       return 0
@@ -199,43 +199,41 @@ if [[ ! -f "$TRANSCRIPT_PATH" ]]; then
 fi
 
 # Search up to SEARCH_DEPTH assistant messages for promise tags.
-# If a promise is found in any message, use that message's text.
-# Otherwise, use the most recent message text (for logging/fallback).
+# Extract lines first (grep may return 1 = no matches), then process with jq.
 SEARCH_DEPTH=5
 
-LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
-  | grep '"role":"assistant"' \
-  | head -n "$SEARCH_DEPTH" \
-  | while IFS= read -r line; do
+ASSISTANT_LINES=$(tac "$TRANSCRIPT_PATH" | grep '"role":"assistant"' | head -n "$SEARCH_DEPTH" || true)
+
+if [[ -n "$ASSISTANT_LINES" ]]; then
+  # Pass 1: find message containing a promise tag
+  LAST_OUTPUT=$(echo "$ASSISTANT_LINES" | while IFS= read -r line; do
+    text=$(echo "$line" | jq -r '
+      .message.content
+      | map(select(.type == "text"))
+      | map(.text)
+      | join("\n")
+    ' 2>>"$DEBUG_LOG") || { dbg "jq error in promise search pass"; continue; }
+    if [[ -n "$text" ]] && echo "$text" | grep -q '<promise>'; then
+      echo "$text"
+      break
+    fi
+  done)
+
+  # Pass 2: if no promise found, get the most recent text (for fallback/logging)
+  if [[ -z "$LAST_OUTPUT" ]]; then
+    LAST_OUTPUT=$(echo "$ASSISTANT_LINES" | while IFS= read -r line; do
       text=$(echo "$line" | jq -r '
         .message.content
         | map(select(.type == "text"))
         | map(.text)
         | join("\n")
-      ' 2>>"$DEBUG_LOG")
-      if [[ -n "$text" ]] && echo "$text" | grep -q '<promise>'; then
+      ' 2>>"$DEBUG_LOG") || { dbg "jq error in fallback pass"; continue; }
+      if [[ -n "$text" ]]; then
         echo "$text"
         break
       fi
-    done || true)
-
-# If no promise found in any message, get the most recent text (for fallback/logging)
-if [[ -z "$LAST_OUTPUT" ]]; then
-  LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
-    | grep '"role":"assistant"' \
-    | head -n "$SEARCH_DEPTH" \
-    | while IFS= read -r line; do
-        text=$(echo "$line" | jq -r '
-          .message.content
-          | map(select(.type == "text"))
-          | map(.text)
-          | join("\n")
-        ' 2>>"$DEBUG_LOG")
-        if [[ -n "$text" ]]; then
-          echo "$text"
-          break
-        fi
-      done || true)
+    done)
+  fi
 fi
 
 if [[ -z "$LAST_OUTPUT" ]]; then
