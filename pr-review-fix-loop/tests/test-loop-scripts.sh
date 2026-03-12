@@ -2373,6 +2373,30 @@ else
 fi
 teardown
 
+# Test MP4: When multiple messages have promises, first (most recent) wins
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+# Most recent message has STAGNANT, earlier has CLEAN
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Issues persist.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Not improving.\n<promise>REVIEW STAGNANT</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+# Most recent assistant message (last in file = first via tac) has STAGNANT
+if grep -q "EXIT:STAGNANT.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP4: Most recent promise wins when multiple messages have promises"
+else
+  fail "MP4: Most recent promise wins when multiple messages have promises" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
 echo "=== stop-hook.sh quiet exit ==="
 
 # Test QE1: Hook produces no stderr when EXIT guard fires

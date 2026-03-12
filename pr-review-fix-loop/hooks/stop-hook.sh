@@ -192,10 +192,11 @@ if [[ ! -f "$TRANSCRIPT_PATH" ]]; then
   continue_loop "$NEXT_ITERATION"
 fi
 
-# Find assistant text from last N messages (not just the last one).
-# Claude may stop after tool_use messages, so the promise tag
-# could be in an earlier message. Search up to 5 messages back.
+# Search up to SEARCH_DEPTH assistant messages for promise tags.
+# If a promise is found in any message, use that message's text.
+# Otherwise, use the most recent message text (for logging/fallback).
 SEARCH_DEPTH=5
+FIRST_TEXT=""
 
 LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
   | grep '"role":"assistant"' \
@@ -207,10 +208,30 @@ LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
         | map(.text)
         | join("\n")
       ' 2>/dev/null)
-      if [[ -n "$text" ]]; then
+      if [[ -n "$text" ]] && echo "$text" | grep -q '<promise>'; then
         echo "$text"
+        break
       fi
     done || true)
+
+# If no promise found in any message, get the most recent text (for fallback/logging)
+if [[ -z "$LAST_OUTPUT" ]]; then
+  LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
+    | grep '"role":"assistant"' \
+    | head -n "$SEARCH_DEPTH" \
+    | while IFS= read -r line; do
+        text=$(echo "$line" | jq -r '
+          .message.content
+          | map(select(.type == "text"))
+          | map(.text)
+          | join("\n")
+        ' 2>/dev/null)
+        if [[ -n "$text" ]]; then
+          echo "$text"
+          break
+        fi
+      done || true)
+fi
 
 if [[ -z "$LAST_OUTPUT" ]]; then
   # Log diagnostic info for debugging race conditions
