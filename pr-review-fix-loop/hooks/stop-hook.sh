@@ -56,7 +56,6 @@ write_exit_reason() {
 # iteration, because the state file iteration is often 1 ahead of
 # Claude's numbering (Claude stops mid-iteration, hook increments).
 check_report_for_completion() {
-  local current_iter="$1"
   [[ -f "$REPORT_FILE" ]] || return 1
 
   # Get ALL completed iteration counts
@@ -146,7 +145,7 @@ fi
 # --- Guard: already terminated? ---
 # If the report already has an EXIT marker, the loop is done.
 # This prevents infinite re-entry when state file lingers after post-loop.
-if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE" 2>/dev/null; then
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE"; then
   dbg "EXIT guard: report already has EXIT marker, cleaning up"
   rm -f "$STATE_FILE"
   exit 0
@@ -271,7 +270,7 @@ fi
 
 # --- Fallback: check report file for terminal conditions ---
 # Handles case where agent writes correct COMPLETED markers but forgets <promise> tags
-REPORT_STATUS=$(check_report_for_completion "$ITERATION" || true)
+REPORT_STATUS=$(check_report_for_completion || true)
 if [[ -n "$REPORT_STATUS" ]]; then
   case "$REPORT_STATUS" in
     CLEAN)
