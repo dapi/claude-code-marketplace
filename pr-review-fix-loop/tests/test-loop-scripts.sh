@@ -3071,6 +3071,87 @@ else
 fi
 teardown
 
+# --- post-loop-prompt.sh failure tests ---
+
+echo ""
+echo "=== post-loop-prompt.sh failure ==="
+
+# Test PLF1: post-loop-prompt.sh failure on LIMIT path -> hook exits 0, state deleted
+setup
+create_state_file 5 5 "null"
+touch .claude/pr-review-loop-report.local.md
+# Patch stop-hook to use a broken post-loop-prompt.sh
+MOCK_DIR=$(mktemp -d)
+cat > "$MOCK_DIR/post-loop-prompt.sh" <<'MOCKEOF'
+#!/bin/bash
+exit 1
+MOCKEOF
+chmod +x "$MOCK_DIR/post-loop-prompt.sh"
+sed "s|HOOK_DIR/../scripts/post-loop-prompt.sh|$MOCK_DIR/post-loop-prompt.sh|g" "$STOP_HOOK" > "$MOCK_DIR/patched-hook.sh"
+chmod +x "$MOCK_DIR/patched-hook.sh"
+OUTPUT=$(echo '{}' | bash "$MOCK_DIR/patched-hook.sh" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[EXIT:LIMIT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "PLF1: post-loop-prompt.sh failure on LIMIT -> exits 0, state deleted"
+else
+  fail "PLF1: post-loop-prompt.sh failure on LIMIT -> exits 0, state deleted" "exit=$EXIT_CODE state=$(test -f .claude/pr-review-fix-loop.local.md && echo exists || echo gone)"
+fi
+rm -rf "$MOCK_DIR"
+teardown
+
+# Test PLF2: post-loop-prompt.sh failure on SUCCESS path -> hook exits 0, state deleted
+setup
+create_state_file 1 20 "REVIEW CLEAN"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>REVIEW CLEAN</promise>' transcript.jsonl
+MOCK_DIR=$(mktemp -d)
+cat > "$MOCK_DIR/post-loop-prompt.sh" <<'MOCKEOF'
+#!/bin/bash
+exit 1
+MOCKEOF
+chmod +x "$MOCK_DIR/post-loop-prompt.sh"
+sed "s|HOOK_DIR/../scripts/post-loop-prompt.sh|$MOCK_DIR/post-loop-prompt.sh|g" "$STOP_HOOK" > "$MOCK_DIR/patched-hook.sh"
+chmod +x "$MOCK_DIR/patched-hook.sh"
+OUTPUT=$(echo "{\"transcript_path\":\"$(pwd)/transcript.jsonl\"}" | bash "$MOCK_DIR/patched-hook.sh" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "PLF2: post-loop-prompt.sh failure on SUCCESS -> exits 0, state deleted"
+else
+  fail "PLF2: post-loop-prompt.sh failure on SUCCESS -> exits 0, state deleted" "exit=$EXIT_CODE state=$(test -f .claude/pr-review-fix-loop.local.md && echo exists || echo gone)"
+fi
+rm -rf "$MOCK_DIR"
+teardown
+
+# --- Empty hook input test ---
+
+echo ""
+echo "=== Empty hook input ==="
+
+# Test EHI1: Truly empty hook input -> graceful recovery (continues loop)
+setup
+create_state_file 1 10 "null" "Do review"
+touch .claude/pr-review-loop-report.local.md
+OUTPUT=$(echo "" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "EHI1: empty hook input -> graceful recovery (continues loop)"
+else
+  fail "EHI1: empty hook input -> graceful recovery (continues loop)" "exit=$EXIT_CODE output='$OUTPUT'"
+fi
+teardown
+
 # --- Summary ---
 
 echo ""
