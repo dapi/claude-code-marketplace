@@ -995,17 +995,20 @@ else
 fi
 teardown
 
-# Test 61: Malformed hook input JSON -> aborts (set -euo pipefail)
+# Test 61: Malformed hook input JSON -> graceful recovery (continues loop)
 setup
-create_state_file 1 10 "null"
+create_state_file 1 10 "null" "Do review"
 touch .claude/pr-review-loop-report.local.md
 OUTPUT=$(echo "NOT JSON" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
-# Master uses set -euo pipefail; jq fails on bad input -> non-zero exit
-if [[ $EXIT_CODE -ne 0 ]]; then
-  pass "malformed hook input -> non-zero exit (set -e)"
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "malformed hook input -> graceful recovery (continues loop)"
 else
-  fail "malformed hook input -> expected non-zero exit under set -euo pipefail" "exit=$EXIT_CODE"
+  fail "malformed hook input -> graceful recovery (continues loop)" "exit=$EXIT_CODE output='$OUTPUT'"
 fi
 teardown
 
@@ -2147,26 +2150,26 @@ else
 fi
 teardown
 
-# Test FB3: No fallback when current iteration has no COMPLETED marker
+# Test FB3: No fallback when issues still non-zero (last completed has issues)
 setup
 git init -q
 create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
 create_stats_file 20
 cat > .claude/pr-review-loop-report.local.md <<'REPORT'
 # PR Review Fix Loop Report
-ITERATION 1 COMPLETED issues_count=2
-ITERATION 2 COMPLETED issues_count=0
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=2
 ITERATION 3 START
 REPORT
 create_transcript "Working on iteration 3..."
 OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
 DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
 REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
-# Should continue loop (block), not exit with fallback
+# Should continue loop (block), not exit with fallback (issues still non-zero)
 if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary"; then
-  pass "No fallback when current iteration has no COMPLETED marker"
+  pass "No fallback when last completed iteration has non-zero issues"
 else
-  fail "No fallback when current iteration has no COMPLETED marker" "decision=$DECISION reason=$(echo "$REASON" | head -c 80)"
+  fail "No fallback when last completed iteration has non-zero issues" "decision=$DECISION reason=$(echo "$REASON" | head -c 80)"
 fi
 # State file should still exist
 if [[ -f .claude/pr-review-fix-loop.local.md ]]; then
@@ -2212,6 +2215,940 @@ if [[ "$DECISION" == "block" ]] && [[ -f .claude/pr-review-fix-loop.local.md ]];
   pass "No fallback for non-zero issues_count (continues loop)"
 else
   fail "No fallback for non-zero issues_count (continues loop)" "decision=$DECISION state_exists=$(test -f .claude/pr-review-fix-loop.local.md && echo yes || echo no)"
+fi
+teardown
+
+echo "=== stop-hook.sh EXIT guard ==="
+
+# Test EG1: Hook exits silently when report has [EXIT:SUCCESS]
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 7 START
+REPORT
+create_transcript "Loop already finished."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG1: Hook exits silently when report has EXIT:SUCCESS"
+else
+  fail "EG1: Hook exits silently when report has EXIT:SUCCESS" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "EG1: State file removed on EXIT guard"
+else
+  fail "EG1: State file removed on EXIT guard"
+fi
+teardown
+
+# Test EG2: Hook exits silently when report has [EXIT:STAGNANT]
+setup
+git init -q
+create_state_file 8 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 6 COMPLETED issues_count=5
+[!!] [EXIT:STAGNANT] Report fallback: stagnation detected at iteration 6
+ITERATION 8 START
+REPORT
+create_transcript "Stagnation already detected."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG2: Hook exits silently when report has EXIT:STAGNANT"
+else
+  fail "EG2: Hook exits silently when report has EXIT:STAGNANT" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+# Test EG3: Hook exits silently when report has [EXIT:LIMIT]
+setup
+git init -q
+create_state_file 21 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 20 COMPLETED issues_count=3
+[!!] [EXIT:LIMIT] Max iterations (20) reached
+ITERATION 21 START
+REPORT
+create_transcript "Limit already reached."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG3: Hook exits silently when report has EXIT:LIMIT"
+else
+  fail "EG3: Hook exits silently when report has EXIT:LIMIT" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+# Test EG4: Hook does NOT exit when report has no EXIT marker (normal flow)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+create_transcript "Working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EG4: Normal flow continues when no EXIT marker"
+else
+  fail "EG4: Normal flow continues when no EXIT marker" "decision=$DECISION"
+fi
+teardown
+
+# Test EG5: Hook does NOT exit on EXIT:ERROR marker (only SUCCESS/STAGNANT/LIMIT)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+[XX] [EXIT:ERROR] State corrupted
+ITERATION 3 START
+REPORT
+create_transcript "Recovering from error..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EG5: EXIT:ERROR does NOT trigger guard (only SUCCESS/STAGNANT/LIMIT)"
+else
+  fail "EG5: EXIT:ERROR does NOT trigger guard" "decision=$DECISION"
+fi
+teardown
+
+echo "=== stop-hook.sh multi-message promise ==="
+
+# Test MP1: Promise found in second-to-last message (last message is tool_use only)
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+# Create transcript with promise in earlier message, tool_use in last
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"All issues resolved.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo done"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP1: Promise found in second-to-last message"
+else
+  fail "MP1: Promise found in second-to-last message" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP2: Promise found in third-to-last message (two tool_use messages after)
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Review complete.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"record-iteration.sh 2 0"}}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"Write","input":{"path":"report.md","content":"done"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP2: Promise found in third-to-last message"
+else
+  fail "MP2: Promise found in third-to-last message" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP3: Search depth limit — don't search beyond 5 messages back
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Promise is 7 messages back — beyond search depth
+{
+  echo '{"role":"assistant","message":{"content":[{"type":"text","text":"<promise>REVIEW CLEAN</promise>"}]}}'
+  for i in $(seq 1 6); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"Working on step $i...\"}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should NOT detect promise (too far back) — should continue loop
+if [[ "$DECISION" == "block" ]] && ! grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP3: Promise beyond depth limit is not detected"
+else
+  fail "MP3: Promise beyond depth limit is not detected" "decision=$DECISION"
+fi
+teardown
+
+# Test MP4: When multiple messages have promises, first (most recent) wins
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=3
+ITERATION 3 START
+REPORT
+# Most recent message has STAGNANT, earlier has CLEAN
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Issues persist.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Not improving.\n<promise>REVIEW STAGNANT</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+# Most recent assistant message (last in file = first via tac) has STAGNANT
+if grep -q "EXIT:STAGNANT.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP4: Most recent promise wins when multiple messages have promises"
+else
+  fail "MP4: Most recent promise wins when multiple messages have promises" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== stop-hook.sh quiet exit ==="
+
+# Test QE1: Hook produces no stderr when EXIT guard fires
+setup
+git init -q
+create_state_file 8 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 8 START
+REPORT
+create_transcript "Loop done."
+STDERR_OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>&1 1>/dev/null)
+if [[ -z "$STDERR_OUTPUT" ]] || [[ "$STDERR_OUTPUT" == *"EXIT guard"* ]]; then
+  pass "QE1: No stderr output (no banner) when EXIT guard fires"
+else
+  fail "QE1: No stderr output when EXIT guard fires" "stderr=$(echo "$STDERR_OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== stop-hook.sh off-by-one fallback ==="
+
+# Test OBO1: Fallback detects CLEAN when state iteration is ahead by 1
+# State says iteration=6, but last COMPLETED is ITERATION 5 with issues_count=0
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=9
+ITERATION 2 COMPLETED issues_count=7
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=3
+ITERATION 5 COMPLETED issues_count=0
+ITERATION 6 START
+REPORT
+create_transcript "No issues found, everything clean."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should trigger EXIT:SUCCESS via fallback, not continue loop
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "REVIEW CLEAN\|summary\|сводк"; then
+  pass "OBO1: Fallback detects CLEAN with off-by-one (state=6, completed=5)"
+else
+  fail "OBO1: Fallback detects CLEAN with off-by-one (state=6, completed=5)" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "OBO1: State file removed"
+else
+  fail "OBO1: State file removed"
+fi
+teardown
+
+# Test OBO2: Fallback detects STAGNANT when state iteration is ahead by 1
+# State says iteration=7, COMPLETED iterations 1-6 show stagnation
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=6
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=7
+ITERATION 5 COMPLETED issues_count=5
+ITERATION 6 COMPLETED issues_count=6
+ITERATION 7 START
+REPORT
+create_transcript "Still working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "stagnation\|стагнац"; then
+  pass "OBO2: Fallback detects STAGNANT with off-by-one (state=7, completed=6)"
+else
+  fail "OBO2: Fallback detects STAGNANT with off-by-one (state=7, completed=6)" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test OBO3: No false positive — issues still being reduced
+setup
+git init -q
+create_state_file 4 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=10
+ITERATION 2 COMPLETED issues_count=7
+ITERATION 3 COMPLETED issues_count=4
+ITERATION 4 START
+REPORT
+create_transcript "Fixing remaining 4 issues..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк\|stagnation\|стагнац"; then
+  pass "OBO3: No false positive when issues still decreasing"
+else
+  fail "OBO3: No false positive when issues still decreasing" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+# Test OBO4: 5 completed iterations with issues decreasing — NOT stagnant
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=10
+ITERATION 2 COMPLETED issues_count=8
+ITERATION 3 COMPLETED issues_count=6
+ITERATION 4 COMPLETED issues_count=4
+ITERATION 5 COMPLETED issues_count=2
+ITERATION 6 START
+REPORT
+create_transcript "Only 2 issues left, almost done..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "stagnation\|стагнац\|fallback\|summary"; then
+  pass "OBO4: 5 iterations with decreasing issues — NOT stagnant"
+else
+  fail "OBO4: 5 iterations with decreasing issues — NOT stagnant" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== Integration: full loop lifecycle ==="
+
+# Test INT1: Simulate 5-iteration lifecycle with EXIT:SUCCESS, then post-loop stop
+setup
+git init -q
+
+# --- Iteration 1: 9 issues ---
+create_state_file 1 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 START
+REPORT
+
+create_transcript "Found 9 issues, fixing them now."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+[[ "$D" == "block" ]] && pass "INT1.1: Iteration 1 continues" || fail "INT1.1: Iteration 1 continues" "$D"
+
+# Simulate Claude writing iteration 1 results
+cat >> .claude/pr-review-loop-report.local.md <<'APPEND'
+## Iteration 1
+ITERATION 1 COMPLETED issues_count=9
+APPEND
+
+# --- Iteration 2-4: decreasing issues ---
+for iter in 2 3 4; do
+  count=$((9 - iter * 2))
+  create_state_file "$iter" 20 "REVIEW CLEAN|REVIEW STAGNANT"
+  create_transcript "Iteration $((iter-1)) done, $count issues remain."
+  OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+  D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+  [[ "$D" == "block" ]] && pass "INT1.$iter: Iteration $iter continues" || fail "INT1.$iter: Iteration $iter continues" "$D"
+  cat >> .claude/pr-review-loop-report.local.md <<APPEND
+## Iteration $iter
+ITERATION $iter COMPLETED issues_count=$count
+APPEND
+done
+
+# --- Iteration 5: 0 issues, CLEAN ---
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "All clean! <promise>REVIEW CLEAN</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+D=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should be "block" with post-loop prompt (EXIT:SUCCESS)
+if [[ "$D" == "block" ]] && grep -q "EXIT:SUCCESS" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "INT1.5: EXIT:SUCCESS detected, post-loop prompt injected"
+else
+  fail "INT1.5: EXIT:SUCCESS detected" "decision=$D report_has_exit=$(grep -c 'EXIT:SUCCESS' .claude/pr-review-loop-report.local.md 2>/dev/null)"
+fi
+
+# State file should be deleted after EXIT
+if [[ ! -f .claude/pr-review-fix-loop.local.md ]]; then
+  pass "INT1.6: State file deleted after EXIT:SUCCESS"
+else
+  fail "INT1.6: State file deleted after EXIT:SUCCESS"
+fi
+
+# --- Simulate post-loop: state file recreated (bug scenario) ---
+# Even if something goes wrong and state file reappears, the EXIT guard prevents re-entry
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "Post-loop complete, PR pushed."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "INT1.7: EXIT guard prevents re-entry even with recreated state file"
+else
+  fail "INT1.7: EXIT guard prevents re-entry" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+
+teardown
+
+echo "=== EXIT guard: no state file (normal path) ==="
+
+# Test EG6: No state file + EXIT marker = silent exit at state-file check (line 142), not guard
+setup
+git init -q
+# Do NOT create state file
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+REPORT
+create_transcript "Post-loop summary complete."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG6: No state file + EXIT marker = silent exit (state-file check, not guard)"
+else
+  fail "EG6: No state file + EXIT marker = silent exit" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Stagnation boundary: exactly 5 iterations ==="
+
+# Test SB1: Exactly 5 completed iterations where last >= five_ago (stagnant)
+setup
+git init -q
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=4
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=4
+ITERATION 5 COMPLETED issues_count=5
+ITERATION 6 START
+REPORT
+create_transcript "Issues not improving..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]] && echo "$OUTPUT" | jq -r '.reason' 2>/dev/null | grep -qi "stagnation\|стагнац"; then
+  pass "SB1: Exactly 5 iterations with last(5) >= first(5) triggers stagnation"
+else
+  fail "SB1: Exactly 5 iterations stagnation boundary" "decision=$DECISION output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Multi-message promise: boundary and duplicates ==="
+
+# Test MP5: Promise exactly at position 5 (search depth boundary)
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Promise is exactly 5 messages back (at boundary of SEARCH_DEPTH=5)
+{
+  echo '{"role":"assistant","message":{"content":[{"type":"text","text":"Done!\n<promise>REVIEW CLEAN</promise>"}]}}'
+  for i in $(seq 1 4); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"t$i\",\"name\":\"Bash\",\"input\":{\"command\":\"echo $i\"}}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP5: Promise at exact search depth boundary (position 5) is detected"
+else
+  fail "MP5: Promise at exact search depth boundary" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# Test MP6: Both messages have same promise — no double processing
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=0
+ITERATION 3 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"First clean.\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Second clean.\n<promise>REVIEW CLEAN</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MP6: Duplicate promises don't cause double processing"
+else
+  fail "MP6: Duplicate promises don't cause double processing" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Numeric guard in check_report_for_completion ==="
+
+# Test NG1: Non-numeric issues_count does not crash or trigger false positive
+setup
+git init -q
+create_state_file 3 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=NaN
+ITERATION 3 START
+REPORT
+create_transcript "Working on iteration 3..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+# Should continue loop (block), not crash or trigger fallback
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк"; then
+  pass "NG1: Non-numeric issues_count handled gracefully (loop continues)"
+else
+  fail "NG1: Non-numeric issues_count handled gracefully" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== All-tool_use messages scenario ==="
+
+# Test TU1: All SEARCH_DEPTH messages are tool_use only — LAST_OUTPUT empty, loop continues
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Create 5 assistant messages, all tool_use only (no text content)
+{
+  for i in $(seq 1 5); do
+    echo "{\"role\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"t$i\",\"name\":\"Bash\",\"input\":{\"command\":\"echo $i\"}}]}}"
+  done
+} > "$TMPDIR/transcript.jsonl"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should continue loop (LAST_OUTPUT empty → WARN path → continue_loop)
+if [[ "$DECISION" == "block" ]]; then
+  pass "TU1: All tool_use messages — loop continues (WARN path)"
+else
+  fail "TU1: All tool_use messages — loop continues" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Non-numeric five_ago guard ==="
+
+# Test NG2: Non-numeric five_ago (5th-from-last corrupted) does not crash
+setup
+git init -q
+create_state_file 7 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=abc
+ITERATION 2 COMPLETED issues_count=5
+ITERATION 3 COMPLETED issues_count=4
+ITERATION 4 COMPLETED issues_count=3
+ITERATION 5 COMPLETED issues_count=2
+ITERATION 6 COMPLETED issues_count=3
+ITERATION 7 START
+REPORT
+create_transcript "Still working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+# Should continue loop, not crash on non-numeric five_ago
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк"; then
+  pass "NG2: Non-numeric five_ago handled gracefully (loop continues)"
+else
+  fail "NG2: Non-numeric five_ago handled gracefully" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== Malformed JSON in transcript ==="
+
+# Test MJ1: Malformed JSON line is skipped, valid promise in next line is found
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Clean!\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"assistant","message":{"content":BROKEN_JSON}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MJ1: Malformed JSON skipped, valid promise found in other message"
+else
+  fail "MJ1: Malformed JSON skipped, valid promise found" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Multi-line promise tag ==="
+
+# Test MLP1: Promise tag split across lines is detected
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Create message where promise tag content spans multiple lines in the text
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"Done!\n<promise>\nREVIEW CLEAN\n</promise>"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MLP1: Multi-line promise tag detected via tr fallback"
+else
+  fail "MLP1: Multi-line promise tag detected" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Multiple EXIT markers ==="
+
+# Test EG7: Guard fires when report has both EXIT:SUCCESS and EXIT:STAGNANT
+setup
+git init -q
+create_state_file 10 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 5 COMPLETED issues_count=0
+[OK] [EXIT:SUCCESS] Promise detected: REVIEW CLEAN
+ITERATION 8 COMPLETED issues_count=5
+[!!] [EXIT:STAGNANT] Report fallback: stagnation detected
+ITERATION 10 START
+REPORT
+create_transcript "Multiple exits in report."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "EG7: Guard fires with multiple EXIT markers"
+else
+  fail "EG7: Guard fires with multiple EXIT markers" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Stagnation boundary: exactly 4 iterations ==="
+
+# Test SB2: Exactly 4 completed iterations — stagnation does NOT fire (needs 5)
+setup
+git init -q
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 COMPLETED issues_count=6
+ITERATION 3 COMPLETED issues_count=5
+ITERATION 4 COMPLETED issues_count=6
+ITERATION 5 START
+REPORT
+create_transcript "Still working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "stagnation\|стагнац\|fallback\|summary"; then
+  pass "SB2: Exactly 4 iterations — NOT stagnant (needs 5)"
+else
+  fail "SB2: Exactly 4 iterations — NOT stagnant" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== Mixed content messages ==="
+
+# Test MC1: Promise in message with both text and tool_use content blocks
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"assistant","message":{"content":[{"type":"text","text":"All done!\n<promise>REVIEW CLEAN</promise>"},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo ok"}}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "MC1: Promise detected in mixed content message (text + tool_use)"
+else
+  fail "MC1: Promise in mixed content" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+echo "=== Single completed iteration ==="
+
+# Test SC1: 1 completed iteration with non-zero count — no stagnation, no clean, continue
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+# PR Review Fix Loop Report
+ITERATION 1 COMPLETED issues_count=5
+ITERATION 2 START
+REPORT
+create_transcript "Working on fixes..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+REASON=$(echo "$OUTPUT" | jq -r '.reason // empty')
+if [[ "$DECISION" == "block" ]] && ! echo "$REASON" | grep -qi "fallback\|summary\|сводк\|stagnation\|стагнац"; then
+  pass "SC1: Single completed iteration with non-zero count — loop continues"
+else
+  fail "SC1: Single completed iteration" "decision=$DECISION reason=$(echo "$REASON" | head -c 120)"
+fi
+teardown
+
+echo "=== EXIT:ERROR recovery end-to-end ==="
+
+# Test ER1: After EXIT:ERROR, loop can continue and reach EXIT:SUCCESS
+setup
+git init -q
+
+# Step 1: Report has EXIT:ERROR, state file exists (bug scenario)
+create_state_file 4 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 2 COMPLETED issues_count=3
+[XX] [EXIT:ERROR] State corrupted
+ITERATION 4 START
+REPORT
+create_transcript "Recovering, found 2 issues..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# EXIT:ERROR should NOT trigger guard — loop continues
+if [[ "$DECISION" == "block" ]]; then
+  pass "ER1.1: EXIT:ERROR does not block recovery"
+else
+  fail "ER1.1: EXIT:ERROR does not block recovery" "decision=$DECISION"
+fi
+
+# Step 2: After recovery, agent writes CLEAN promise
+cat >> .claude/pr-review-loop-report.local.md <<'APPEND'
+ITERATION 4 COMPLETED issues_count=0
+APPEND
+create_state_file 5 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "All clean! <promise>REVIEW CLEAN</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+# Should detect EXIT:SUCCESS (not blocked by earlier EXIT:ERROR)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "ER1.2: Recovery → EXIT:SUCCESS after earlier EXIT:ERROR"
+else
+  fail "ER1.2: Recovery → EXIT:SUCCESS" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+
+# Step 3: Now with EXIT:SUCCESS in report, guard should prevent re-entry
+create_state_file 6 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_transcript "Post-loop."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if [[ -z "$OUTPUT" ]]; then
+  pass "ER1.3: Guard fires on EXIT:SUCCESS after recovery"
+else
+  fail "ER1.3: Guard fires on EXIT:SUCCESS after recovery" "output=$(echo "$OUTPUT" | head -c 120)"
+fi
+teardown
+
+echo "=== Empty report file ==="
+
+# Test EF1: Empty report file — fallback returns nothing, loop continues
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+touch .claude/pr-review-loop-report.local.md
+create_transcript "Working..."
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+if [[ "$DECISION" == "block" ]]; then
+  pass "EF1: Empty report file — loop continues"
+else
+  fail "EF1: Empty report file" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Transcript path validation ==="
+
+# Test TV1: Null transcript_path handled gracefully
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+# Send hook input with missing transcript_path
+OUTPUT=$(echo '{}' | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Should continue loop (transcript not found → WARN → continue)
+if [[ "$DECISION" == "block" ]]; then
+  pass "TV1: Null transcript_path — loop continues gracefully"
+else
+  fail "TV1: Null transcript_path" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Unrecognized promise text ==="
+
+# Test UP1: Promise tag with unknown text — not matched, falls through to fallback
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+create_transcript "Done! <promise>UNKNOWN PROMISE</promise>"
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+DECISION=$(echo "$OUTPUT" | jq -r '.decision // empty')
+# Unrecognized promise should NOT trigger exit — falls through to fallback/continue
+if [[ "$DECISION" == "block" ]] && ! grep -q "EXIT:SUCCESS\|EXIT:STAGNANT" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "UP1: Unrecognized promise text — loop continues"
+else
+  fail "UP1: Unrecognized promise text" "decision=$DECISION"
+fi
+teardown
+
+echo "=== Interleaved user/assistant lines ==="
+
+# Test IL1: Promise found in transcript with interleaved user and assistant lines
+setup
+git init -q
+create_state_file 2 20 "REVIEW CLEAN|REVIEW STAGNANT"
+create_stats_file 20
+cat > .claude/pr-review-loop-report.local.md <<'REPORT'
+ITERATION 1 COMPLETED issues_count=3
+ITERATION 2 START
+REPORT
+cat > "$TMPDIR/transcript.jsonl" <<'JSONL'
+{"role":"user","message":{"content":[{"type":"text","text":"Fix the issues"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"Working on it..."}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"Good"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"All done!\n<promise>REVIEW CLEAN</promise>"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"Thanks"}]}}
+JSONL
+OUTPUT=$(hook_input "$TMPDIR/transcript.jsonl" | bash "$STOP_HOOK" 2>/dev/null)
+if grep -q "EXIT:SUCCESS.*Promise detected" .claude/pr-review-loop-report.local.md 2>/dev/null; then
+  pass "IL1: Promise found in interleaved transcript"
+else
+  fail "IL1: Promise found in interleaved transcript" "output=$(echo "$OUTPUT" | head -c 200)"
+fi
+teardown
+
+# --- post-loop-prompt.sh failure tests ---
+
+echo ""
+echo "=== post-loop-prompt.sh failure ==="
+
+# Test PLF1: post-loop-prompt.sh failure on LIMIT path -> hook exits 0, state deleted
+setup
+create_state_file 5 5 "null"
+touch .claude/pr-review-loop-report.local.md
+# Patch stop-hook to use a broken post-loop-prompt.sh
+MOCK_DIR=$(mktemp -d)
+cat > "$MOCK_DIR/post-loop-prompt.sh" <<'MOCKEOF'
+#!/bin/bash
+exit 1
+MOCKEOF
+chmod +x "$MOCK_DIR/post-loop-prompt.sh"
+sed "s|HOOK_DIR/../scripts/post-loop-prompt.sh|$MOCK_DIR/post-loop-prompt.sh|g" "$STOP_HOOK" > "$MOCK_DIR/patched-hook.sh"
+chmod +x "$MOCK_DIR/patched-hook.sh"
+OUTPUT=$(echo '{}' | bash "$MOCK_DIR/patched-hook.sh" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[EXIT:LIMIT\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "PLF1: post-loop-prompt.sh failure on LIMIT -> exits 0, state deleted"
+else
+  fail "PLF1: post-loop-prompt.sh failure on LIMIT -> exits 0, state deleted" "exit=$EXIT_CODE state=$(test -f .claude/pr-review-fix-loop.local.md && echo exists || echo gone)"
+fi
+rm -rf "$MOCK_DIR"
+teardown
+
+# Test PLF2: post-loop-prompt.sh failure on SUCCESS path -> hook exits 0, state deleted
+setup
+create_state_file 1 20 "REVIEW CLEAN"
+touch .claude/pr-review-loop-report.local.md
+create_transcript '<promise>REVIEW CLEAN</promise>' transcript.jsonl
+MOCK_DIR=$(mktemp -d)
+cat > "$MOCK_DIR/post-loop-prompt.sh" <<'MOCKEOF'
+#!/bin/bash
+exit 1
+MOCKEOF
+chmod +x "$MOCK_DIR/post-loop-prompt.sh"
+sed "s|HOOK_DIR/../scripts/post-loop-prompt.sh|$MOCK_DIR/post-loop-prompt.sh|g" "$STOP_HOOK" > "$MOCK_DIR/patched-hook.sh"
+chmod +x "$MOCK_DIR/patched-hook.sh"
+OUTPUT=$(echo "{\"transcript_path\":\"$(pwd)/transcript.jsonl\"}" | bash "$MOCK_DIR/patched-hook.sh" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+[[ ! -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+grep -q '\[EXIT:SUCCESS\]' .claude/pr-review-loop-report.local.md 2>/dev/null || ok=false
+if $ok; then
+  pass "PLF2: post-loop-prompt.sh failure on SUCCESS -> exits 0, state deleted"
+else
+  fail "PLF2: post-loop-prompt.sh failure on SUCCESS -> exits 0, state deleted" "exit=$EXIT_CODE state=$(test -f .claude/pr-review-fix-loop.local.md && echo exists || echo gone)"
+fi
+rm -rf "$MOCK_DIR"
+teardown
+
+# --- Empty hook input test ---
+
+echo ""
+echo "=== Empty hook input ==="
+
+# Test EHI1: Truly empty hook input -> graceful recovery (continues loop)
+setup
+create_state_file 1 10 "null" "Do review"
+touch .claude/pr-review-loop-report.local.md
+OUTPUT=$(echo "" | bash "$STOP_HOOK" 2>/dev/null)
+EXIT_CODE=$?
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "EHI1: empty hook input -> graceful recovery (continues loop)"
+else
+  fail "EHI1: empty hook input -> graceful recovery (continues loop)" "exit=$EXIT_CODE output='$OUTPUT'"
 fi
 teardown
 

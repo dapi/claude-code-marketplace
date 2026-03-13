@@ -52,22 +52,13 @@ write_exit_reason() {
 # --- Fallback: check report file for terminal conditions ---
 # When the agent follows the prompt but forgets <promise> tags,
 # the report file COMPLETED markers are authoritative.
+# NOTE: We check the LAST completed iteration, not the current state
+# iteration, because the state file iteration is often 1 ahead of
+# Claude's numbering (Claude stops mid-iteration, hook increments).
 check_report_for_completion() {
-  local current_iter="$1"
   [[ -f "$REPORT_FILE" ]] || return 1
 
-  # Only trust COMPLETED marker for the current iteration
-  local current_count
-  current_count=$(grep -oP "ITERATION $current_iter COMPLETED issues_count=\\K\\d+" "$REPORT_FILE" | tail -1 || true)
-  [[ -n "$current_count" ]] || return 1
-
-  # CLEAN: current iteration found 0 issues
-  if [[ "$current_count" == "0" ]]; then
-    echo "CLEAN"
-    return 0
-  fi
-
-  # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
+  # Get ALL completed iteration counts
   local counts
   counts=$(grep -oP 'ITERATION \d+ COMPLETED issues_count=\K\d+' "$REPORT_FILE" || true)
   [[ -n "$counts" ]] || return 1
@@ -75,9 +66,22 @@ check_report_for_completion() {
   local count_array
   readarray -t count_array <<< "$counts"
   local n=${#count_array[@]}
+  local last_count=${count_array[$((n-1))]}
+
+  # Guard: ensure values are numeric
+  [[ "$last_count" =~ ^[0-9]+$ ]] || { dbg "WARN: non-numeric last_count='$last_count'"; return 1; }
+
+  # CLEAN: last completed iteration found 0 issues
+  if [[ "$last_count" == "0" ]]; then
+    echo "CLEAN"
+    return 0
+  fi
+
+  # STAGNANT: 5+ completed iterations, last count >= count 5 iterations ago
   if [[ $n -ge 5 ]]; then
     local five_ago=${count_array[$((n-5))]}
-    if [[ $current_count -ge $five_ago ]]; then
+    [[ "$five_ago" =~ ^[0-9]+$ ]] || { dbg "WARN: non-numeric five_ago='$five_ago'"; return 1; }
+    if [[ $last_count -ge $five_ago ]]; then
       echo "STAGNANT"
       return 0
     fi
@@ -142,6 +146,23 @@ if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
 fi
 
+# --- Guard: already terminated? ---
+# If the report already has an EXIT marker, the loop is done.
+# After EXIT, post-loop-prompt.sh injects a summary prompt. Claude processes
+# it and stops again, triggering this hook. By then the state file is deleted,
+# but if post-loop itself writes/recreates it (e.g. a bug), this guard
+# prevents infinite re-entry.
+# NOTE: EXIT:ERROR is excluded intentionally — allows loop to recover after transient errors.
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:(SUCCESS|STAGNANT|LIMIT)\]' "$REPORT_FILE" 2>/dev/null; then
+  dbg "EXIT guard: report already has EXIT marker, cleaning up"
+  rm -f "$STATE_FILE"
+  exit 0
+fi
+# Log if EXIT:ERROR present but not guarded (recovery path)
+if [[ -f "$REPORT_FILE" ]] && grep -qE '\[EXIT:ERROR\]' "$REPORT_FILE" 2>/dev/null; then
+  dbg "EXIT:ERROR marker found but not guarding (allowing recovery)"
+fi
+
 # Parse YAML frontmatter
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
 ITERATION=$(echo "$FRONTMATTER" | awk -F': *' '/^iteration:/{print $2}')
@@ -160,7 +181,7 @@ if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
   write_exit_reason "LIMIT" "Max iterations ($MAX_ITERATIONS) reached"
   rm -f "$STATE_FILE"
   # Return block response with post-loop prompt
-  bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "LIMIT" --message "Max iterations ($MAX_ITERATIONS) reached"
+  bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "LIMIT" --message "Max iterations ($MAX_ITERATIONS) reached" || dbg "WARN: post-loop-prompt.sh failed (LIMIT)"
   exit 0
 fi
 
@@ -168,7 +189,10 @@ fi
 NEXT_ITERATION=$((ITERATION + 1))
 
 # Get transcript path from hook input
-TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.transcript_path')
+TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.transcript_path' 2>/dev/null) || {
+  dbg "ERROR: failed to parse hook input JSON"
+  continue_loop "$NEXT_ITERATION"
+}
 dbg "transcript_path=$TRANSCRIPT_PATH exists=$(test -f "$TRANSCRIPT_PATH" && echo yes || echo no) iteration=$ITERATION"
 
 # --- Extract last assistant text from transcript ---
@@ -182,28 +206,56 @@ if [[ ! -f "$TRANSCRIPT_PATH" ]]; then
   continue_loop "$NEXT_ITERATION"
 fi
 
-# Find last assistant message WITH text content (skip tool_use-only entries)
-# Uses tac to search from end. Pipefail-safe: grep may exit 1 if no match.
-LAST_OUTPUT=$(tac "$TRANSCRIPT_PATH" \
-  | grep '"role":"assistant"' \
-  | while IFS= read -r line; do
-      text=$(echo "$line" | jq -r '
+# Search up to SEARCH_DEPTH assistant messages for promise tags.
+# Extract lines first (grep may return 1 = no matches), then process with jq.
+SEARCH_DEPTH=5
+
+ASSISTANT_LINES=$(tac "$TRANSCRIPT_PATH" | grep '"role":"assistant"' | head -n "$SEARCH_DEPTH" || true)
+
+if [[ -n "$ASSISTANT_LINES" ]]; then
+  # Pass 1: find message containing a promise tag
+  LAST_OUTPUT=$(echo "$ASSISTANT_LINES" | while IFS= read -r line; do
+    if ! text=$(echo "$line" | jq -r '
+      .message.content
+      | map(select(.type == "text"))
+      | map(.text)
+      | join("\n")
+    ' 2>>"$DEBUG_LOG"); then
+      dbg "jq error in promise search pass"
+      continue
+    fi
+    if [[ -n "$text" ]] && echo "$text" | grep -q '<promise>'; then
+      echo "$text"
+      break
+    fi
+  done)
+
+  # Pass 2: if no promise found, get the most recent text (for fallback/logging)
+  if [[ -z "$LAST_OUTPUT" ]]; then
+    LAST_OUTPUT=$(echo "$ASSISTANT_LINES" | while IFS= read -r line; do
+      if ! text=$(echo "$line" | jq -r '
         .message.content
         | map(select(.type == "text"))
         | map(.text)
         | join("\n")
-      ' 2>/dev/null)
+      ' 2>>"$DEBUG_LOG"); then
+        dbg "jq error in fallback pass"
+        continue
+      fi
       if [[ -n "$text" ]]; then
         echo "$text"
         break
       fi
-    done || true)
+    done)
+  fi
+fi
 
 if [[ -z "$LAST_OUTPUT" ]]; then
   # Log diagnostic info for debugging race conditions
   ASSISTANT_COUNT=$(grep -c '"role":"assistant"' "$TRANSCRIPT_PATH" 2>/dev/null || echo "0")
   LAST_TYPES=$(tac "$TRANSCRIPT_PATH" | grep -m3 '"role":"assistant"' | jq -c '[.message.content[].type]' 2>/dev/null || echo "parse_failed")
-  dbg "EMPTY TEXT: assistant_count=$ASSISTANT_COUNT last_3_types=$LAST_TYPES"
+  LINES_FOUND=$([[ -n "$ASSISTANT_LINES" ]] && echo "yes" || echo "no")
+  dbg "EMPTY TEXT: assistant_count=$ASSISTANT_COUNT last_3_types=$LAST_TYPES lines_extracted=$LINES_FOUND"
   write_exit_reason "WARN" "No text in recent assistant messages (continuing loop)"
   continue_loop "$NEXT_ITERATION"
 fi
@@ -228,7 +280,7 @@ if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
         write_exit_reason "$EXIT_TYPE" "Promise detected: $p"
         rm -f "$STATE_FILE"
         # Return block response with post-loop prompt
-        bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "$EXIT_TYPE" --message "Promise detected: $p"
+        bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "$EXIT_TYPE" --message "Promise detected: $p" || dbg "WARN: post-loop-prompt.sh failed ($EXIT_TYPE)"
         exit 0
       fi
     done
@@ -237,21 +289,21 @@ fi
 
 # --- Fallback: check report file for terminal conditions ---
 # Handles case where agent writes correct COMPLETED markers but forgets <promise> tags
-REPORT_STATUS=$(check_report_for_completion "$ITERATION" || true)
+REPORT_STATUS=$(check_report_for_completion || true)
 if [[ -n "$REPORT_STATUS" ]]; then
   case "$REPORT_STATUS" in
     CLEAN)
-      dbg "FALLBACK: report shows issues_count=0 for iteration $ITERATION (no promise tag found)"
-      write_exit_reason "SUCCESS" "Report fallback: issues_count=0 in iteration $ITERATION"
+      dbg "FALLBACK: report shows last issues_count=0 (state iteration=$ITERATION, no promise tag found)"
+      write_exit_reason "SUCCESS" "Report fallback: last completed iteration has issues_count=0"
       rm -f "$STATE_FILE"
-      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "SUCCESS" --message "Report fallback: issues_count=0"
+      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "SUCCESS" --message "Report fallback: issues_count=0" || dbg "WARN: post-loop-prompt.sh failed (SUCCESS fallback)"
       exit 0
       ;;
     STAGNANT)
-      dbg "FALLBACK: report shows stagnation at iteration $ITERATION (no promise tag found)"
-      write_exit_reason "STAGNANT" "Report fallback: stagnation detected at iteration $ITERATION"
+      dbg "FALLBACK: report shows stagnation (state iteration=$ITERATION, no promise tag found)"
+      write_exit_reason "STAGNANT" "Report fallback: stagnation detected (state iteration=$ITERATION)"
       rm -f "$STATE_FILE"
-      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "STAGNANT" --message "Report fallback: stagnation detected"
+      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "STAGNANT" --message "Report fallback: stagnation detected" || dbg "WARN: post-loop-prompt.sh failed (STAGNANT fallback)"
       exit 0
       ;;
   esac

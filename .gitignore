@@ -60,3 +60,10 @@ docs/plans
 
 # Claude Code ctags index
 .claude/tags
+
+# Codex review artifacts
+.codex-review.md
+.codex-review.stderr
+
+# pr-review-fix-loop local artifacts
+.claude/*.local.md
