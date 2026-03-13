@@ -995,17 +995,20 @@ else
 fi
 teardown
 
-# Test 61: Malformed hook input JSON -> aborts (set -euo pipefail)
+# Test 61: Malformed hook input JSON -> graceful recovery (continues loop)
 setup
-create_state_file 1 10 "null"
+create_state_file 1 10 "null" "Do review"
 touch .claude/pr-review-loop-report.local.md
 OUTPUT=$(echo "NOT JSON" | bash "$STOP_HOOK" 2>/dev/null)
 EXIT_CODE=$?
-# Master uses set -euo pipefail; jq fails on bad input -> non-zero exit
-if [[ $EXIT_CODE -ne 0 ]]; then
-  pass "malformed hook input -> non-zero exit (set -e)"
+ok=true
+[[ $EXIT_CODE -eq 0 ]] || ok=false
+echo "$OUTPUT" | jq -e '.decision == "block"' >/dev/null 2>&1 || ok=false
+[[ -f .claude/pr-review-fix-loop.local.md ]] || ok=false
+if $ok; then
+  pass "malformed hook input -> graceful recovery (continues loop)"
 else
-  fail "malformed hook input -> expected non-zero exit under set -euo pipefail" "exit=$EXIT_CODE"
+  fail "malformed hook input -> graceful recovery (continues loop)" "exit=$EXIT_CODE output='$OUTPUT'"
 fi
 teardown
 

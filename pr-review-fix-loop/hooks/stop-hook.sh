@@ -181,7 +181,7 @@ if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
   write_exit_reason "LIMIT" "Max iterations ($MAX_ITERATIONS) reached"
   rm -f "$STATE_FILE"
   # Return block response with post-loop prompt
-  bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "LIMIT" --message "Max iterations ($MAX_ITERATIONS) reached"
+  bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "LIMIT" --message "Max iterations ($MAX_ITERATIONS) reached" || dbg "WARN: post-loop-prompt.sh failed (LIMIT)"
   exit 0
 fi
 
@@ -189,7 +189,10 @@ fi
 NEXT_ITERATION=$((ITERATION + 1))
 
 # Get transcript path from hook input
-TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.transcript_path')
+TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.transcript_path' 2>/dev/null) || {
+  dbg "ERROR: failed to parse hook input JSON"
+  continue_loop "$NEXT_ITERATION"
+}
 dbg "transcript_path=$TRANSCRIPT_PATH exists=$(test -f "$TRANSCRIPT_PATH" && echo yes || echo no) iteration=$ITERATION"
 
 # --- Extract last assistant text from transcript ---
@@ -277,7 +280,7 @@ if [[ "$COMPLETION_PROMISE" != "null" ]] && [[ -n "$COMPLETION_PROMISE" ]]; then
         write_exit_reason "$EXIT_TYPE" "Promise detected: $p"
         rm -f "$STATE_FILE"
         # Return block response with post-loop prompt
-        bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "$EXIT_TYPE" --message "Promise detected: $p"
+        bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "$EXIT_TYPE" --message "Promise detected: $p" || dbg "WARN: post-loop-prompt.sh failed ($EXIT_TYPE)"
         exit 0
       fi
     done
@@ -293,14 +296,14 @@ if [[ -n "$REPORT_STATUS" ]]; then
       dbg "FALLBACK: report shows last issues_count=0 (state iteration=$ITERATION, no promise tag found)"
       write_exit_reason "SUCCESS" "Report fallback: last completed iteration has issues_count=0"
       rm -f "$STATE_FILE"
-      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "SUCCESS" --message "Report fallback: issues_count=0"
+      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "SUCCESS" --message "Report fallback: issues_count=0" || dbg "WARN: post-loop-prompt.sh failed (SUCCESS fallback)"
       exit 0
       ;;
     STAGNANT)
       dbg "FALLBACK: report shows stagnation (state iteration=$ITERATION, no promise tag found)"
       write_exit_reason "STAGNANT" "Report fallback: stagnation detected (state iteration=$ITERATION)"
       rm -f "$STATE_FILE"
-      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "STAGNANT" --message "Report fallback: stagnation detected"
+      bash "$HOOK_DIR/../scripts/post-loop-prompt.sh" --exit-type "STAGNANT" --message "Report fallback: stagnation detected" || dbg "WARN: post-loop-prompt.sh failed (STAGNANT fallback)"
       exit 0
       ;;
   esac
