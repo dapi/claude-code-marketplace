@@ -653,7 +653,7 @@ git commit -m "Add plugin-name: brief description"
 
 Special rules for this plugin:
 
-1. **NO `async: true`** in hooks -- hooks must run synchronously so the tab has focus when getting its name
+1. **NO `async: true`** in hooks -- keep status transitions ordered; zellij-tab-status resolves tabs via `$ZELLIJ_PANE_ID`
 2. **All hook commands must end with `|| true`** -- graceful degradation if zellij-tab-status is not installed
-3. **Requires zellij-tab-status plugin** (optional) -- install from https://github.com/dapi/zellij-tab-status
+3. **Requires zellij-tab-status CLI binary** (optional) -- install from https://github.com/dapi/zellij-tab-status
 4. **Before modifying hooks** -- read [doc/dev/hooks-reference.md](./doc/dev/hooks-reference.md) for all 17 Claude Code hook events, matchers, and state machine

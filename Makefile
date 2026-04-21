@@ -188,32 +188,23 @@ version:
 	@echo "Current version: $(CURRENT_VERSION)"
 
 # ============================================================================
-# ZELLIJ PLUGIN TARGETS
+# ZELLIJ TOOL TARGETS
 # ============================================================================
 
-ZELLIJ_PLUGINS_DIR = $(HOME)/.config/zellij/plugins
 SCRIPTS_DIR = $(HOME)/.local/bin
 
-ZELLIJ_TAB_STATUS_VERSION = v0.3.5
-ZELLIJ_TAB_STATUS_WASM_URL = https://github.com/dapi/zellij-tab-status/releases/download/$(ZELLIJ_TAB_STATUS_VERSION)/zellij-tab-status.wasm
-ZELLIJ_TAB_STATUS_RAW_URL = https://raw.githubusercontent.com/dapi/zellij-tab-status/$(ZELLIJ_TAB_STATUS_VERSION)/scripts
-ZELLIJ_TAB_STATUS_SCRIPTS = zellij-tab-status
+ZELLIJ_TAB_STATUS_VERSION = v0.8.1
+ZELLIJ_TAB_STATUS_REPO = https://github.com/dapi/zellij-tab-status.git
 
 install-zellij-tab-status:
 	@echo "Installing zellij-tab-status $(ZELLIJ_TAB_STATUS_VERSION)..."
-	@mkdir -p $(ZELLIJ_PLUGINS_DIR)
+	@command -v cargo >/dev/null 2>&1 || { echo "ERROR: cargo is required. Install Rust first: https://rustup.rs"; exit 1; }
 	@mkdir -p $(SCRIPTS_DIR)
-	@echo "   -> Downloading WASM plugin..."
-	@curl -sL "$(ZELLIJ_TAB_STATUS_WASM_URL)" -o "$(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
-	@echo "   -> Downloading scripts..."
-	@for script in $(ZELLIJ_TAB_STATUS_SCRIPTS); do \
-		curl -sL "$(ZELLIJ_TAB_STATUS_RAW_URL)/$$script" -o "$(SCRIPTS_DIR)/$$script"; \
-		chmod +x "$(SCRIPTS_DIR)/$$script"; \
-	done
+	cargo install --git "$(ZELLIJ_TAB_STATUS_REPO)" --tag "$(ZELLIJ_TAB_STATUS_VERSION)" --locked --force --root "$(HOME)/.local"
 	@echo ""
 	@echo "Installed:"
-	@echo "   Plugin: $(ZELLIJ_PLUGINS_DIR)/zellij-tab-status.wasm"
-	@echo "   Script: $(SCRIPTS_DIR)/zellij-tab-status"
+	@echo "   Binary: $(SCRIPTS_DIR)/zellij-tab-status"
+	@echo "   Version: $$($(SCRIPTS_DIR)/zellij-tab-status --version 2>/dev/null || echo unknown)"
 
 # ============================================================================
 # UTILITY TARGETS

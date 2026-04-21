@@ -50,7 +50,7 @@ Unified Zellij workflow: tab status indicators, issue development tabs, general-
 
 **Components:** skill `zellij-tab-pane`, commands `/start-issue-in-new-tab`, `/run-in-new-tab`, hooks
 
-**Status icons:** `◉` Working | `○` Ready | `✋` Needs input (requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
+**Status icons:** `◉` Working | `○` Ready | `✋` Needs input (requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) CLI)
 
 ```
 /start-issue-in-new-tab 123
@@ -200,7 +200,7 @@ Some plugins require external tools:
 |------|---------|---------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
-| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | See plugin README |
+| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | CLI binary; see plugin README |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Scripts

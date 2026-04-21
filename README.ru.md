@@ -50,7 +50,7 @@
 
 **Компоненты:** навык `zellij-tab-pane`, команды `/start-issue-in-new-tab`, `/run-in-new-tab`, хуки
 
-**Иконки статуса:** `◉` Работает | `○` Готов | `✋` Ждёт ввода (требуется [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
+**Иконки статуса:** `◉` Работает | `○` Готов | `✋` Ждёт ввода (требуется CLI [zellij-tab-status](https://github.com/dapi/zellij-tab-status))
 
 ```
 /start-issue-in-new-tab 123
@@ -200,7 +200,7 @@ Email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP
 |------------|---------|-----------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
 | [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
-| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | См. README плагина |
+| [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | CLI-бинарь; см. README плагина |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 
 ## Скрипты

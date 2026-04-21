@@ -62,19 +62,30 @@ if command -v zellij-tab-status &> /dev/null; then
     echo ""
     echo "Testing zellij-tab-status commands..."
 
-    # Get current tab name
-    BEFORE=$(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' | head -1)
-    echo "Tab before: $BEFORE"
+    STATUS_VERSION=$(zellij-tab-status --version)
+    BASE_NAME=$(zellij-tab-status --name)
+    BEFORE_STATUS=$(zellij-tab-status --get || true)
+    echo "zellij-tab-status: $STATUS_VERSION"
+    echo "Tab base name: $BASE_NAME"
+    echo "Status before: $BEFORE_STATUS"
 
-    zellij-tab-status '○' || true
+    zellij-tab-status '○'
     sleep 0.3
-    AFTER=$(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' | head -1)
-    echo "Tab after set: $AFTER"
+    AFTER_STATUS=$(zellij-tab-status --get)
+    echo "Status after set: $AFTER_STATUS"
+    if [ "$AFTER_STATUS" != "○" ]; then
+        echo "ERROR: Expected status '○', got '$AFTER_STATUS'"
+        exit 1
+    fi
 
-    zellij-tab-status --clear || true
+    if [ -n "$BEFORE_STATUS" ]; then
+        zellij-tab-status "$BEFORE_STATUS"
+    else
+        zellij-tab-status --clear
+    fi
     sleep 0.3
-    CLEARED=$(zellij action dump-layout 2>/dev/null | grep -oP 'tab name="\K[^"]+(?=".*focus=true)' | head -1)
-    echo "Tab after clear: $CLEARED"
+    RESTORED_STATUS=$(zellij-tab-status --get || true)
+    echo "Status restored: $RESTORED_STATUS"
 
     echo "Status indicator test: done"
 else

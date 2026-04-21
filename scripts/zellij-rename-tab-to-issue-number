@@ -18,7 +18,23 @@ if ! command -v zellij &> /dev/null || [[ -z "${ZELLIJ:-}" ]]; then
     exit 0
 fi
 
-zellij-tab-status "▷"
+set_tab_status() {
+    if command -v zellij-tab-status &> /dev/null; then
+        zellij-tab-status "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+rename_tab_preserving_status() {
+    local name="$1"
+
+    if command -v zellij-tab-status &> /dev/null; then
+        zellij-tab-status --set-name "$name" >/dev/null 2>&1 && return 0
+    fi
+
+    zellij action rename-tab "$name" >/dev/null 2>&1 || true
+}
+
+set_tab_status "▷"
 
 detect_issue_number() {
     # 1. From git branch: feature/issue-123-description
@@ -55,5 +71,5 @@ else
 fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
-    zellij-tab-status --set-name "#${ISSUE_NUMBER}"
+    rename_tab_preserving_status "#${ISSUE_NUMBER}"
 fi

@@ -15,7 +15,7 @@ Automatically shows Claude session state via icon prefix in tab name:
 | `✋` | Needs input | Permission prompt waiting |
 | `◌` | Compacting | Context compaction in progress |
 
-Requires [zellij-tab-status](https://github.com/dapi/zellij-tab-status) plugin.
+Requires the [zellij-tab-status](https://github.com/dapi/zellij-tab-status) CLI binary.
 
 ### Issue Development Tabs
 
@@ -48,19 +48,14 @@ Or say:
 
 ### Step 1: Install zellij-tab-status dependency (optional, for status icons)
 
-Install [zellij-tab-status](https://github.com/dapi/zellij-tab-status):
+Install the [zellij-tab-status](https://github.com/dapi/zellij-tab-status) CLI binary:
 
 ```bash
 make install-zellij-tab-status
 ```
 
-Add to `~/.config/zellij/config.kdl`:
-
-```kdl
-load_plugins {
-    "file:~/.config/zellij/plugins/zellij-tab-status.wasm"
-}
-```
+No `config.kdl` or `load_plugins` entry is needed. Current `zellij-tab-status`
+is a native CLI tool, not a WASM plugin.
 
 ### Step 2: Install plugin
 
@@ -70,8 +65,8 @@ load_plugins {
 
 ## Requirements
 
-- [Zellij](https://zellij.dev) terminal multiplexer
-- [zellij-tab-status](https://github.com/dapi/zellij-tab-status) (optional, for status icons)
+- [Zellij](https://zellij.dev) 0.44.0+ terminal multiplexer
+- [zellij-tab-status](https://github.com/dapi/zellij-tab-status) CLI in PATH (optional, for status icons)
 - [`start-issue`](https://github.com/dapi/start-issue) in PATH (for issue development tabs)
 - `claude` CLI in PATH (for Claude session tabs)
 
@@ -85,11 +80,12 @@ load_plugins {
 
 | Problem | Cause | Fix |
 |-|-|-|
-| No status icons on tabs | zellij-tab-status not installed or not loaded | Install plugin, add `load_plugins` to config.kdl, restart zellij |
-| `zellij-tab-status` command not found | Script not in PATH | Download from [releases](https://github.com/dapi/zellij-tab-status), place in PATH |
+| No status icons on tabs | zellij-tab-status CLI not installed or not in PATH | Run `make install-zellij-tab-status`; make sure `~/.local/bin` is in PATH |
+| `zellij-tab-status` command not found | Binary not in PATH | Add `~/.local/bin` to PATH and restart Claude |
+| zellij-tab-status exits with `list-panes`, `list-tabs`, or `rename-tab-by-id` errors | Zellij is too old or Claude is not running inside Zellij | Use Zellij 0.44.0+ and start Claude inside a Zellij pane |
 | Status stuck on `✋` | Rare: PostToolUse didn't fire after permission grant | Switch to tab — any next action will reset to `◉` |
-| Status stays `◉` after Claude stops | Stop hook didn't fire | Check plugin is installed: `/plugin list` |
-| Icons show on wrong tab | Multiple Claude sessions, stale WASM plugin | Update zellij-tab-status to v0.3.5+ |
+| Status stays `◉` after Claude stops | Stop hook didn't fire | Check zellij-workflow is installed: `/plugin list` |
+| Icons show on wrong tab | Old WASM/script version is still active | Remove old `zellij-tab-status.wasm` `load_plugins` config and install the v0.8.1+ CLI |
 | `Not in zellij session` error | Running Claude outside zellij | Start zellij first, then run Claude inside it |
 | `Timed out` on tab/pane creation | Zellij is hanging or overloaded | Restart zellij session |
 

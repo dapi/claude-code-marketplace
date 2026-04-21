@@ -4,63 +4,63 @@
     "SessionStart": [
       {
         "matcher": "resume|compact",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25c9' >/dev/null 2>&1 || true"}]
       },
       {
         "matcher": "startup|clear",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25cb' >/dev/null 2>&1 || true"}]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25c9' >/dev/null 2>&1 || true"}]
       }
     ],
     "SubagentStart": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25c9' >/dev/null 2>&1 || true"}]
       }
     ],
     "PermissionRequest": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u270b' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u270b' >/dev/null 2>&1 || true"}]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25c9' >/dev/null 2>&1 || true"}]
       }
     ],
     "PostToolUseFailure": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25c9' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25c9' >/dev/null 2>&1 || true"}]
       }
     ],
     "PreCompact": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cc' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25cc' >/dev/null 2>&1 || true"}]
       }
     ],
     "Stop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25cb' >/dev/null 2>&1 || true"}]
       }
     ],
     "SessionEnd": [
       {
         "matcher": "clear",
-        "hooks": [{"type": "command", "command": "zellij-tab-status '\u25cb' || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status '\u25cb' >/dev/null 2>&1 || true"}]
       },
       {
         "matcher": "logout|prompt_input_exit|bypass_permissions_disabled|other",
-        "hooks": [{"type": "command", "command": "zellij-tab-status --clear || true"}]
+        "hooks": [{"type": "command", "command": "command -v zellij-tab-status >/dev/null && zellij-tab-status --clear >/dev/null 2>&1 || true"}]
       }
     ]
   }
