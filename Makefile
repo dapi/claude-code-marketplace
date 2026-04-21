@@ -24,7 +24,7 @@ PLUGIN ?= github-workflow
 CLAUDE = env -u CLAUDECODE claude
 
 # Scripts installed to ~/.local/bin
-SCRIPTS = start-issue zellij-rename-tab-to-issue-number
+SCRIPTS = zellij-rename-tab-to-issue-number
 
 # Get current version from plugin.json
 CURRENT_VERSION = $(shell grep '"version"' $(PLUGIN_JSON) | sed 's/.*"version": "\([^"]*\)".*/\1/')

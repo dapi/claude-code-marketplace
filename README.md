@@ -207,14 +207,15 @@ Some plugins require external tools:
 
 ### start-issue
 
-Start work on GitHub issue: creates worktree, renames zellij tab, launches Claude.
+Moved to a standalone repository: [dapi/start-issue](https://github.com/dapi/start-issue).
 
 ```bash
-start-issue 123
-start-issue https://github.com/owner/repo/issues/123
+git clone https://github.com/dapi/start-issue.git
+cd start-issue
+make install
 ```
 
-See `scripts/start-issue` for details.
+This marketplace no longer installs `start-issue` directly. Install it from the standalone repository if you use zellij issue-development tabs or the terminal workflow.
 
 ## Development
 

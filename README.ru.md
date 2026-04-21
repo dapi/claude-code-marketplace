@@ -207,14 +207,15 @@ Email через [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP
 
 ### start-issue
 
-Начало работы над GitHub issue: создаёт worktree, переименовывает вкладку zellij, запускает Claude.
+Переехал в отдельный репозиторий: [dapi/start-issue](https://github.com/dapi/start-issue).
 
 ```bash
-start-issue 123
-start-issue https://github.com/owner/repo/issues/123
+git clone https://github.com/dapi/start-issue.git
+cd start-issue
+make install
 ```
 
-Подробности в `scripts/start-issue`.
+Этот marketplace больше не устанавливает `start-issue` напрямую. Устанавливай его из отдельного репозитория, если используешь zellij-вкладки для issue или терминальный workflow.
 
 ## Разработка
 
