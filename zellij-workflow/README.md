@@ -1,6 +1,8 @@
 # zellij-workflow
 
-Unified Zellij workflow plugin: tab status indicators, issue development tabs, and general-purpose tabs/panes.
+[English](./README.md) | [Русский](./README.ru.md)
+
+Unified Zellij workflow plugin: tab status indicators, general-purpose tabs/panes, and issue development tabs.
 
 ## Features
 
@@ -17,17 +19,26 @@ Automatically shows Claude session state via icon prefix in tab name:
 
 Requires the [zellij-tab-status](https://github.com/dapi/zellij-tab-status) CLI binary.
 
-### Issue Development Tabs
+Status indicators are driven by Claude Code hooks in
+[hooks/hooks.json](./hooks/hooks.json). The hooks translate Claude session
+lifecycle events into tab-name prefixes:
 
-Launch `start-issue` in a new zellij tab or pane:
+| Hook event | Matcher | Status | Meaning |
+|-|-|-|-|
+| `SessionStart` | `startup|clear` | `○` | New or cleared session is ready for input |
+| `SessionStart` | `resume|compact` | `◉` | Resumed session may still be active |
+| `UserPromptSubmit` | any | `◉` | User submitted work; Claude is processing |
+| `SubagentStart` | any | `◉` | Delegated work is running |
+| `PermissionRequest` | any | `✋` | Claude is blocked on a permission prompt |
+| `PostToolUse` / `PostToolUseFailure` | any | `◉` | Tool activity completed, main agent continues |
+| `PreCompact` | any | `◌` | Context compaction is in progress |
+| `Stop` | any | `○` | Claude finished the current turn |
+| `SessionEnd` | `clear` | `○` | Cleared session returns to ready |
+| `SessionEnd` | `logout|prompt_input_exit|bypass_permissions_disabled|other` | clear | Remove the status prefix |
 
-```
-/start-issue-in-new-tab 123
-/start-issue-in-new-tab #45
-/start-issue-in-new-tab https://github.com/owner/repo/issues/78
-```
-
-Or say: "Start issue #123 in a new tab" or "Start issue #45 in a pane"
+Each hook is best-effort: it checks for `zellij-tab-status`, suppresses hook
+command output, and ends with `|| true` so Claude still works normally when the
+CLI is missing or the session is not running inside Zellij.
 
 ### General-Purpose Tabs/Panes
 
@@ -43,6 +54,18 @@ Or say:
 - "Run npm test in a pane"
 - "Execute the plan in a new zellij tab"
 - "Delegate this to a pane"
+
+### Issue Development Tabs
+
+Launch `start-issue` in a new zellij tab or pane:
+
+```
+/start-issue-in-new-tab 123
+/start-issue-in-new-tab #45
+/start-issue-in-new-tab https://github.com/owner/repo/issues/78
+```
+
+Or say: "Start issue #123 in a new tab" or "Start issue #45 in a pane"
 
 ## Installation
 

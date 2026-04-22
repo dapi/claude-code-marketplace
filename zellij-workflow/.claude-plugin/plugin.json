@@ -1,7 +1,7 @@
 {
   "name": "zellij-workflow",
-  "description": "Zellij workflow: tab status indicators, issue development tabs, general-purpose tabs/panes",
-  "version": "1.5.1",
+  "description": "Zellij workflow: tab status indicators, general-purpose tabs/panes, issue development tabs",
+  "version": "1.5.3",
   "author": {
     "name": "Danil Pismenny",
     "email": "danilpismenny@gmail.com"
