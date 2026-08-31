@@ -24,7 +24,6 @@ Personal marketplace of Claude Code plugins for development workflows.
 | [cluster-efficiency](#cluster-efficiency) | Kubernetes cluster efficiency analysis | 5 agents, 1 skill, 1 command |
 | [doc-validate](#doc-validate) | Documentation quality validation | 1 skill, 1 command |
 | [github-workflow](#github-workflow) | GitHub issues, PRs, worktrees, sub-issues | 1 skill, 2 commands |
-| [himalaya](#himalaya) | Email via Himalaya CLI (IMAP/SMTP) | 1 skill |
 | [long-running-harness](#long-running-harness) | Multi-session project management | 1 skill |
 | [media-upload](#media-upload) | S3 media/image upload | 1 skill |
 | [requirements](#requirements) | Requirements registry via Google Sheets | 1 command |
@@ -168,18 +167,6 @@ Manage long-running development projects across multiple sessions.
 "continue working on [project]"
 ```
 
-### himalaya
-
-Email via [Himalaya CLI](https://github.com/pimalaya/himalaya) (IMAP/SMTP).
-
-**Components:** skill `himalaya`
-
-```
-"check my email"
-"send email to user@example.com"
-"проверить почту"
-```
-
 ### requirements
 
 Project requirements registry via Google Spreadsheet with GitHub issues sync.
@@ -199,7 +186,6 @@ Some plugins require external tools:
 | Tool | Plugins | Install |
 |------|---------|---------|
 | [gh CLI](https://cli.github.com) | github-workflow, requirements | `brew install gh` |
-| [Himalaya](https://github.com/pimalaya/himalaya) | himalaya | `brew install himalaya` |
 | [zellij-tab-status](https://github.com/dapi/zellij-tab-status) | zellij-workflow | CLI binary; see plugin README |
 | Ruby 3.0+ | bugsnag-skill, doc-validate | — |
 

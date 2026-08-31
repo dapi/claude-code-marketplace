@@ -18,7 +18,6 @@ claude-code-marketplace/
 ├── cluster-efficiency/            # Kubernetes cluster analysis (5 agents)
 ├── doc-validate/                  # Documentation validation
 ├── github-workflow/               # GitHub issues, PRs, worktrees
-├── himalaya/                      # Email via Himalaya CLI
 ├── long-running-harness/          # Multi-session project management
 ├── media-upload/                  # S3 media upload
 ├── requirements/                  # Requirements in Google Sheets
@@ -630,7 +629,7 @@ git commit -m "Add plugin-name: brief description"
 
 ## Current State
 
-**Plugins**: 12 active plugins in marketplace
+**Plugins**: 11 active plugins in marketplace
 
 | Plugin | Components |
 |--------|------------|
@@ -638,7 +637,6 @@ git commit -m "Add plugin-name: brief description"
 | cluster-efficiency | 5 agents, 1 skill, 1 command |
 | doc-validate | 1 skill, 1 command |
 | github-workflow | 1 skill, 1 command |
-| himalaya | 1 skill |
 | long-running-harness | 1 skill |
 | media-upload | 1 skill |
 | pr-review-fix-loop | 2 commands |
@@ -647,7 +645,7 @@ git commit -m "Add plugin-name: brief description"
 | task-router | 1 agent, 1 skill, 1 command |
 | zellij-workflow | 1 skill, 2 commands, hooks |
 
-**Totals**: 17 agents, 10 skills, 10 commands
+**Totals**: 17 agents, 9 skills, 10 commands
 
 ## zellij-workflow Plugin
 
